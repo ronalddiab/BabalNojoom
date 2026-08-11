@@ -436,8 +436,7 @@ class Cron_admin extends Base_Admin_Controller {
 
 	$currentmonth = date('Y-m-d', mktime(0, 0, 0, date("m"), 1, date("Y")));
 
-	// $lastmonth = '2026-04-01';
-	// $currentmonth = '2026-05-01';
+
 
 	$this->load->model('cron/cron_model');
 

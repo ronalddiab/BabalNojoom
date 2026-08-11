@@ -3023,6 +3023,9 @@ class Reports_model extends Base_Model
 		//Calculation of Utility Carbon footprint
 		$performanceReportData['CarbonFootprint'][$result['month_id']][$result['year_id']] =  round($totalCarbonFootprint) ?? 0;
 
+		//Calculation of Utility Carbon footprint per guest night
+		$performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][$result['year_id']] = isset($result['total_guests']) && $result['total_guests'] != 0 ? round($totalCarbonFootprint / $result['total_guests'], 2) : 0;
+
 		$totalUtilityConsumption = ($utilityConsumptionElectricityKwh + $utilityConsumptionDistrictHeatingKwh + $utilityConsumptionDistrictCoolingKwh + $utilityConsumptionFuelKwh + $utilityConsumptionLpgKwh + $utilityConsumptionNaturalGasKwh) - $onsite_generators_quantityKWH;
 		//Setting the Utility Consumption
 		$performanceReportData['UtilityConsumption'][$result['month_id']][$result['year_id']] = round($totalUtilityConsumption) ?? 0;
@@ -3066,6 +3069,7 @@ class Reports_model extends Base_Model
 		$performanceReportData['ScopeEmission'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['ScopeEmissionPerSquareFootage'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['CarbonFootprint'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
+		$performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['RenewableEnergyGenerated'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['RenewableEnergyGeneratedIntensity'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['UtilityConsumption'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy) ?? 0;
@@ -3092,6 +3096,7 @@ class Reports_model extends Base_Model
 		    unset($performanceReportData['ScopeEmission'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['ScopeEmissionPerSquareFootage'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['CarbonFootprint'][$result['month_id']][$TwoYearBack]);
+		    unset($performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['RenewableEnergyGenerated'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['RenewableEnergyGeneratedIntensity'][$result['month_id']][$TwoYearBack]);
 		    unset($utitlityRoomNight[$result['month_id']][$TwoYearBack]);
@@ -3110,6 +3115,7 @@ class Reports_model extends Base_Model
 		    unset($performanceReportData['ScopeEmission'][$result['month_id']][($TwoYearBack) . '_occupancy']);
 		    unset($performanceReportData['ScopeEmissionPerSquareFootage'][$result['month_id']][($TwoYearBack) . '_occupancy']);
 		    unset($performanceReportData['CarbonFootprint'][$result['month_id']][($TwoYearBack) . '_occupancy']);
+		    unset($performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][($TwoYearBack) . '_occupancy']);
 		}
 	    }
 	    }
@@ -3297,6 +3303,12 @@ class Reports_model extends Base_Model
 		$data['performanceReportArray'] = $performanceReportData['CarbonFootprint'];
 		$data['y_axis'] = $data['unit'] = 'kgCO2';
 		$data['report_title'] = 'Carbon Emissions (Scope 1 and 2)';
+		break;
+
+	    case 'carbon_emissions_kgco2_gn':
+		$data['performanceReportArray'] = $performanceReportData['CarbonFootprintGuestNight'];
+		$data['y_axis'] = $data['unit'] = 'kgCO2/GN';
+		$data['report_title'] = 'Carbon Emissions kgCO2/GN';
 		break;
 
 	    case 'tonnes_of_carbon_offsets_purchased':
