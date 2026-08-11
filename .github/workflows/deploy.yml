@@ -22,25 +22,6 @@ jobs:
             set net:reconnect-interval-base 5;
             set xfer:clobber on;
             mirror -R --verbose \
-              --exclude-glob .git/ \
-              --exclude-glob .github/ \
-              --exclude-glob core_modules/ \
-              --exclude-glob knowledgebase/ \
-              --exclude-glob system/ \
-              --exclude-glob user_guide/ \
-              --exclude-glob vendor/ \
-              --exclude-glob .editorconfig \
-              --exclude-glob annual_report.js \
-              --exclude-glob contributing.md \
-              --exclude-glob in.php \
-              --exclude-glob license.txt \
-              --exclude-glob logs.txt \
-              --exclude-glob mytd_report.js \
-              --exclude-glob pax_global_header \
-              --exclude-glob quarterly_report.js \
-              --exclude-glob readme.rst \
-              --exclude-glob upper_management_report.js \
-              --exclude-glob upper_management_utilities_report.js \
               . /public_html/BabAlNojoum;
             bye
           "
