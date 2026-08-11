@@ -1,28 +1,26 @@
 name: Deploy to cPanel
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Deploy via lftp
         run: |
           sudo apt-get update && sudo apt-get install -y lftp
-          lftp -u "$FTP_USER,$FTP_PASS" $FTP_HOST -e "
+          lftp -d -u "$FTP_USER,$FTP_PASS" $FTP_HOST -e "
             set ssl:verify-certificate no;
+            set ftp:ssl-allow no;
             set ftp:list-options -a;
             set net:timeout 10;
             set net:max-retries 3;
             set net:reconnect-interval-base 5;
             set xfer:clobber on;
             mirror -R --verbose \
-              . /public_html/BabAlNojoum;
+              . public_html/BabAlNojoum;
             bye
           "
         env:
