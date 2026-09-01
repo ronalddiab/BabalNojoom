@@ -483,7 +483,7 @@ class Reports_model extends Base_Model
 
 	$current_month = $filters['max_month_id'];
 
-	$query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district, COALESCE(district_cooling_fixed_cost, 0) as district_cooling_fixed_cost, COALESCE(district_heating_fixed_cost, 0) as district_heating_fixed_cost, COALESCE(lpg_fixed_cost, 0) as lpg_fixed_cost, COALESCE(natural_gas_fixed_cost, 0) as natural_gas_fixed_cost, COALESCE(water_fixed_cost, 0) as water_fixed_cost,
+	$query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district, COALESCE(district_cooling_fixed_cost, 0) as district_cooling_fixed_cost, COALESCE(district_heating_fixed_cost, 0) as district_heating_fixed_cost, COALESCE(lpg_fixed_cost, 0) as lpg_fixed_cost, COALESCE(natural_gas_fixed_cost, 0) as natural_gas_fixed_cost, COALESCE(water_fixed_cost, 0) as water_fixed_cost,
 
 			SUM(COALESCE(total_fuel_oil, 0)) as fuel, SUM(COALESCE(total_lpg, 0)) as lpg, SUM(COALESCE(total_natural_gas, 0)) as natural_gas
 
@@ -538,7 +538,7 @@ class Reports_model extends Base_Model
 
 
 
-	$query = "SELECT (COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity, COALESCE(district_heating, 0) as heating_district, COALESCE(district_cooling, 0) as cooling_district,
+	$query = "SELECT (COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as electricity, COALESCE(district_heating, 0) as heating_district, COALESCE(district_cooling, 0) as cooling_district,
 
 			COALESCE(total_fuel_oil, 0) as fuel, COALESCE(total_lpg, 0) as lpg, COALESCE(total_natural_gas, 0) as natural_gas
 
@@ -698,7 +698,7 @@ class Reports_model extends Base_Model
 			    COALESCE(u.fleet_petrol, 0) as fleet_petrol,
 			    COALESCE(u.total_fleet_petrol_cost, 0) as total_fleet_petrol_cost,
 
-			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as total_electricity_kwh_carbon,
+			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as total_electricity_kwh_carbon,
 			    COALESCE(u.total_electricity_kwh, 0) as total_electricity_kwh,
 
 			month_id,year_id,
@@ -781,7 +781,7 @@ class Reports_model extends Base_Model
 
 
 
-	$query = "SELECT (COALESCE(u.total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity,
+	$query = "SELECT (COALESCE(u.total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as electricity,
 
 			    COALESCE(u.total_fuel_oil, 0) as fuel,
 
@@ -814,7 +814,7 @@ class Reports_model extends Base_Model
 
 			    COALESCE(u.total_purchased_electricity_cost, 0) as total_purchased_electricity_cost,
 
-			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as total_electricity_kwh,
+			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as total_electricity_kwh,
 
 			month_id,year_id,
 			    COALESCE(total_room_night, 0) as total_room_night,
@@ -879,7 +879,7 @@ class Reports_model extends Base_Model
 
 
 
-	$query = "SELECT SUM(COALESCE(u.total_electricity_cost, 0)) as electricity, SUM(COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as electricity_unit,
+	$query = "SELECT SUM(COALESCE(u.total_electricity_cost, 0)) as electricity, SUM(COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as electricity_unit,
 
 			SUM(COALESCE(u.total_fuel_oil_cost, 0)) as fuel, SUM(COALESCE(u.total_fuel_oil, 0)) as fuel_unit,
 
@@ -914,7 +914,7 @@ class Reports_model extends Base_Model
 
 			((SUM(COALESCE(u.total_room_night, 0))/(COALESCE(s.rooms_keys, 0)*IF(u.year_id % 4 = 0, 366, 365))) * 100) as occupancy,
 
-			SUM(COALESCE(u.total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as total_electricity_kwh,
+			SUM(COALESCE(u.total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as total_electricity_kwh,
 
 			u.year_id as year_id,
 
@@ -948,7 +948,7 @@ class Reports_model extends Base_Model
 
 
 
-	$query = "SELECT (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as electricity, COALESCE(u.total_electricity_cost, 0) as electricity_cost,
+	$query = "SELECT (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as electricity, COALESCE(u.total_electricity_cost, 0) as electricity_cost,
 
 			    COALESCE(u.total_fuel_oil, 0) as fuel, COALESCE(u.total_fuel_oil_cost, 0) as fuel_cost,
 
@@ -1014,7 +1014,7 @@ class Reports_model extends Base_Model
 
 
 
-	$query = "SELECT SUM(COALESCE(u.total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity, SUM(COALESCE(u.total_electricity_cost, 0)) as electricity_cost,
+	$query = "SELECT SUM(COALESCE(u.total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as electricity, SUM(COALESCE(u.total_electricity_cost, 0)) as electricity_cost,
 
 			    SUM(COALESCE(u.total_fuel_oil, 0)) as fuel, SUM(COALESCE(u.total_fuel_oil_cost, 0)) as fuel_cost,
 
@@ -1040,7 +1040,7 @@ class Reports_model extends Base_Model
 
 			    SUM(COALESCE(u.cdd, 0)) as cdd,
 
-			    SUM(COALESCE(u.total_room_night, 0)/(COALESCE(s.rooms_keys, 0)*day(last_day(MAKEDATE(u.year_id,(u.month_id*28)))))) as occupancy,
+			    SUM(COALESCE(u.total_room_night, 0) * 1.0 / NULLIF(COALESCE(s.rooms_keys, 0) * DAY(LAST_DAY(MAKEDATE(u.year_id, (u.month_id * 28)))), 0)) as occupancy,
 
 			    u.site_id,
 
@@ -1167,15 +1167,25 @@ class Reports_model extends Base_Model
 
 	$this->db->where('s.status', 1);
 
-	if ($site_filters['region_id'] != '') {
+	if (!empty($site_filters['region_id'])) {
 
 	    $this->db->where('s.region_id', $site_filters['region_id']);
 	}
-	if ($site_filters['site_type'] == 1 || $site_filters['site_type'] == 2|| $site_filters['site_type'] == 4) {
-	    $this->db->where('s.site_type', $site_filters['site_type']);
-	} else if ($site_filters['site_type'] == 3 || $site_filters['site_type'] == 5 ) {
-
-	    $this->db->where_in('s.id', $site_filters['site_ids']);
+	// Dropdown after merge: 1=Resort, 2=City Hotel, 3=Standalone Residence, 4=Corporate Office, 5=Select Sites
+	$site_type = isset($site_filters['site_type']) ? (int) $site_filters['site_type'] : 0;
+	if (in_array($site_type, array(1, 2, 3, 4), true)) {
+	    $this->db->where('s.site_type', $site_type);
+	} else if ($site_type == 5) {
+	    $site_ids = isset($site_filters['site_ids']) ? $site_filters['site_ids'] : array();
+	    if (!is_array($site_ids)) {
+		$site_ids = explode(',', $site_ids);
+	    }
+	    $site_ids = array_filter($site_ids);
+	    if (!empty($site_ids)) {
+		$this->db->where_in('s.id', $site_ids);
+	    } else {
+		$this->db->where('s.id', 0);
+	    }
 	}
 
 
@@ -1643,7 +1653,7 @@ class Reports_model extends Base_Model
 
 			COALESCE(u.district_heating_total_budget_cost, 0) as district_heating_cost_budget,
 
-			(COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as total_electricity_kwh_actual,
+			(COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as total_electricity_kwh_actual,
 
 			COALESCE(u.electricity_total_budget, 0) as total_electricity_kwh_budget,
 
@@ -2055,7 +2065,7 @@ class Reports_model extends Base_Model
 
 				COALESCE(u.total_purchased_electricity_cost, 0) as total_purchased_electricity_cost,
 
-				(COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as total_electricity_kwh,
+				(COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as total_electricity_kwh,
 
 			    month_id,year_id,
 			    COALESCE(total_room_night, 0) as total_room_night,
@@ -2241,7 +2251,7 @@ class Reports_model extends Base_Model
 
 	    COALESCE(u.total_purchased_electricity_cost, 0) as total_purchased_electricity_cost,
 
-	    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as total_electricity_kwh,
+	    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as total_electricity_kwh,
 
 	    month_id,year_id,
 	    COALESCE(total_room_night, 0) as total_room_night,
@@ -2277,7 +2287,7 @@ class Reports_model extends Base_Model
 	$site_id = $filters['site_id'];
 
 	if (isset($site_id) && !empty($site_id) && $site_id != 0) {
-	    $query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
+	    $query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
 
 			    SUM(COALESCE(total_fuel_oil, 0)) as fuel,SUM(COALESCE(total_lpg, 0)) as lpg,SUM(COALESCE(total_natural_gas, 0)) as natural_gas
 
@@ -2306,7 +2316,7 @@ class Reports_model extends Base_Model
 
 
 
-	$query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
+	$query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
 
 			SUM(COALESCE(total_fuel_oil, 0)) as fuel,SUM(COALESCE(total_lpg, 0)) as lpg,SUM(COALESCE(total_natural_gas, 0)) as natural_gas
 
@@ -2388,7 +2398,7 @@ class Reports_model extends Base_Model
 
 
 
-	$query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
+	$query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
 
 			SUM(COALESCE(total_fuel_oil, 0)) as fuel,SUM(COALESCE(total_lpg, 0)) as lpg,SUM(COALESCE(total_natural_gas, 0)) as natural_gas
 
@@ -2424,7 +2434,7 @@ class Reports_model extends Base_Model
 	}
 
 	if (isset($site_id) && !empty($site_id) && $site_id != 0) {
-	    $query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
+	    $query = "SELECT SUM(COALESCE(total_electricity_kwh, 0) - COALESCE(onsite_generators_quantity, 0) - COALESCE(total_renewable_energy_production, 0)) as electricity, SUM(COALESCE(district_heating, 0)) as heating_district, SUM(COALESCE(district_cooling, 0)) as cooling_district,
 
 			    SUM(COALESCE(total_fuel_oil, 0)) as fuel,SUM(COALESCE(total_lpg, 0)) as lpg,SUM(COALESCE(total_natural_gas, 0)) as natural_gas
 
@@ -2530,7 +2540,7 @@ class Reports_model extends Base_Model
 
 			    COALESCE(u.total_purchased_electricity_cost, 0) as total_purchased_electricity_cost,
 
-			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as total_electricity_kwh,
+			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as total_electricity_kwh,
 
 			month_id,year_id,
 			COALESCE(total_room_night, 0) as total_room_night,
@@ -2642,7 +2652,7 @@ class Reports_model extends Base_Model
 
 			    COALESCE(u.total_purchased_electricity_cost, 0) as total_purchased_electricity_cost,
 
-			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0)) as total_electricity_kwh,
+			    (COALESCE(u.total_electricity_kwh, 0) - COALESCE(u.onsite_generators_quantity, 0) - COALESCE(u.total_renewable_energy_production, 0)) as total_electricity_kwh,
 
 			month_id,year_id,
 			COALESCE(total_room_night, 0) as total_room_night,
@@ -2663,9 +2673,30 @@ class Reports_model extends Base_Model
 	return $this->fetchUpdatedRoomKeys($result);
     }
 
+    /**
+     * Conversion factors for SQL interpolation. Empty/missing values become 1 so the query stays valid.
+     */
+    private function getMmbtuFactorsForQuery()
+    {
+	$keys = ['electricity', 'fuel_oil', 'lpg', 'natural_gas', 'district_heating', 'district_cooling', 'water'];
+	$dataFactor = getMmbtuFactorConversionAllUtility($this->site_id);
+	if (!is_array($dataFactor)) {
+	    $dataFactor = [];
+	}
+	foreach ($keys as $key) {
+	    $value = isset($dataFactor[$key]) ? $dataFactor[$key] : null;
+	    if (function_exists('sanitizeMmbtuFactorForQuery')) {
+		$dataFactor[$key] = sanitizeMmbtuFactorForQuery($value);
+	    } else {
+		$dataFactor[$key] = ($value === null || $value === '' || !is_numeric($value)) ? 1 : (float) $value;
+	    }
+	}
+	return $dataFactor;
+    }
+
     function monthlyUtilityProgress($filters = array())
     {
-	$dataFactor = getMmbtuFactorConversionAllUtility($this->site_id);
+	$dataFactor = $this->getMmbtuFactorsForQuery();
 
 	// For Jan month of new year
 	$default_pre_month = date('n') - 1;
@@ -2693,7 +2724,7 @@ class Reports_model extends Base_Model
 			(COALESCE(u.district_cooling,0) * " . $dataFactor['district_cooling'] . ") +
 			(COALESCE(u.total_fuel_oil,0) * " . $dataFactor['fuel_oil'] . ") +
 			(COALESCE(u.total_lpg,0) * " . $dataFactor['lpg'] . ") +
-			(COALESCE(u.total_natural_gas,0) * " . $dataFactor['natural_gas'] . ") - u.onsite_generators_quantity) as energy,
+			(COALESCE(u.total_natural_gas,0) * " . $dataFactor['natural_gas'] . ") - u.onsite_generators_quantity - COALESCE(u.total_renewable_energy_production,0)) as energy,
 			(COALESCE(u.total_renewable_energy_production,0)) as onsite_energy_generator_quantity,
 			(COALESCE(u.water_total_consumption,0) * " . $dataFactor['water'] . ") as water,
 			(COALESCE(u.total_room_night,0)) as room_night,
@@ -2718,7 +2749,7 @@ class Reports_model extends Base_Model
      */
     function monthlyUtilityProgressOnTarget($filters = array())
     {
-        $dataFactor = getMmbtuFactorConversionAllUtility($this->site_id);
+        $dataFactor = $this->getMmbtuFactorsForQuery();
         $dateParams = getProgressWidgetDateParams();
         
         $default_pre_month = $dateParams['month'];
@@ -2758,7 +2789,7 @@ class Reports_model extends Base_Model
 				COALESCE(u.total_fuel_oil,0) * {$dataFactor['fuel_oil']} +
 				COALESCE(u.total_lpg,0) * {$dataFactor['lpg']} +
 				COALESCE(u.total_natural_gas,0) * {$dataFactor['natural_gas']}
-			) - SUM(COALESCE(u.onsite_generators_quantity,0)) AS energy,
+			) - SUM(COALESCE(u.onsite_generators_quantity,0)) - SUM(COALESCE(u.total_renewable_energy_production,0)) AS energy,
 
 			SUM(COALESCE(u.total_renewable_energy_production,0)) AS onsite_energy_generator_quantity,
 			SUM(COALESCE(u.water_total_consumption,0) * {$dataFactor['water']}) AS water,
@@ -2830,7 +2861,7 @@ class Reports_model extends Base_Model
 
 	function groupUtilityChart()
 	{
-		$dataFactor = getMmbtuFactorConversionAllUtility($this->site_id);
+		$dataFactor = $this->getMmbtuFactorsForQuery();
 
 		if(date('n') == 1){
 			$startMonth = 1;
@@ -2851,7 +2882,7 @@ class Reports_model extends Base_Model
 						(u.year_id='$endYear' AND (u.month_id<='$endMonth'))
 						)";
 
-		$query = "SELECT ((COALESCE(u.total_electricity_kwh,0) * " . $dataFactor['electricity'] . ") - COALESCE(u.onsite_generators_quantity,0)) as electricity,
+		$query = "SELECT ((COALESCE(u.total_electricity_kwh,0) * " . $dataFactor['electricity'] . ") - COALESCE(u.onsite_generators_quantity,0) - COALESCE(u.total_renewable_energy_production,0)) as electricity,
 						((COALESCE(u.total_lpg,0) * " . $dataFactor['lpg'] . ") +
 			    (COALESCE(u.total_natural_gas,0) * " . $dataFactor['natural_gas'] . ")) as gases,
 			    ((COALESCE(u.district_heating,0) * " . $dataFactor['district_heating'] . ") +
@@ -2869,7 +2900,7 @@ class Reports_model extends Base_Model
 
 
 	function fetchReferenceYearEnergyTarget($filterTargetMonthly, $isRoomNight = false) {
-		$dataFactor = getMmbtuFactorConversionAllUtility($this->site_id);
+		$dataFactor = $this->getMmbtuFactorsForQuery();
 		$filterTargetMonthly['year_id'] = is_numeric($filterTargetMonthly['year_id']) && !empty($filterTargetMonthly['year_id']) ? $filterTargetMonthly['year_id'] : date('Y') - 1;
 
 		$query = "SELECT ((COALESCE(u.total_electricity_kwh,0) * " . $dataFactor['electricity'] . ") +
@@ -2877,7 +2908,7 @@ class Reports_model extends Base_Model
 			(COALESCE(u.district_cooling,0) * " . $dataFactor['district_cooling'] . ") +
 			(COALESCE(u.total_fuel_oil,0) * " . $dataFactor['fuel_oil'] . ") +
 			(COALESCE(u.total_lpg,0) * " . $dataFactor['lpg'] . ") +
-			(COALESCE(u.total_natural_gas,0) * " . $dataFactor['natural_gas'] . ") - u.onsite_generators_quantity) as energy,
+			(COALESCE(u.total_natural_gas,0) * " . $dataFactor['natural_gas'] . ") - u.onsite_generators_quantity - COALESCE(u.total_renewable_energy_production,0)) as energy,
 			s.cooled_builtup_area,u.month_id,u.year_id, u.total_room_night as room_night
 		    FROM {$this->_tbl_utilities} as u
 		    LEFT JOIN {$this->_tbl_sites} as s ON s.id=u.site_id
@@ -2899,7 +2930,7 @@ class Reports_model extends Base_Model
 
     function getPerformanceChartData($filters)
     {
-	$dataFactor = getMmbtuFactorConversionAllUtility($this->site_id);
+	$dataFactor = $this->getMmbtuFactorsForQuery();
 	$dataFactor['water'] = 1;
 	$multiplyValue = '1';
 	$areaUnit = [
@@ -2985,19 +3016,13 @@ class Reports_model extends Base_Model
 		$electricityKwh = (isset($result['total_electricity_kwh']) && $site_detail['show_utility_electricity'] == 1) ? $result['total_electricity_kwh'] : 0;
 		$electricityKwhExcludingOnsiteGenerator = 
 		(isset($result['total_electricity_kwh']) && $site_detail['show_utility_electricity'] == 1) ? 
-		$result['total_electricity_kwh'] - $result['onsite_generators_quantity'] : 0;
+		$result['total_electricity_kwh'] - $result['onsite_generators_quantity'] - ($result['total_renewable_energy_production'] ?? 0) : 0;
 		$districtHeatingKwh = (isset($result['district_heating']) && $site_detail['show_utility_district_heating'] == 1) ? $result['district_heating'] : 0;
 		$districtCoolingKwh = (isset($result['district_cooling']) && $site_detail['show_utility_district_cooling'] == 1) ? $result['district_cooling'] : 0;
 		$fuelKwh = (isset($result['total_fuel_oil']) && $site_detail['show_utility_fuel_oil'] == 1) ? $result['total_fuel_oil'] : 0;
 		$lpgKwh = (isset($result['total_lpg']) && $site_detail['show_utility_lpg'] == 1) ? $result['total_lpg'] : 0;
 		$naturalGasKwh = (isset($result['total_natural_gas']) && $site_detail['show_utility_natural_gas'] == 1) ? $result['total_natural_gas'] : 0;
 		$onsite_generators_quantityKWH = (isset($result['onsite_generators_quantity']) && $site_detail['show_utility_electricity'] == 1) ? $result['onsite_generators_quantity'] : 0;
-
-		//Calculation of Utility Consumption Room night
-		$totalUtilityConsumptionRoomNight = (isset($result['total_room_night']) && $result['total_room_night'] != 0) ? ($electricityKwh / $result['total_room_night']) + ($districtHeatingKwh / $result['total_room_night']) + ($districtCoolingKwh / $result['total_room_night']) + ($fuelKwh / $result['total_room_night']) + ($lpgKwh / $result['total_room_night']) + ($naturalGasKwh / $result['total_room_night']) : 0;
-
-		//Calculation of Utility Consumption per square footage
-		$totalUtilityConsumptionBuildUp = (isset($site_detail['site_builtup_area']) && $site_detail['site_builtup_area'] != 0) ? ($electricityKwh / $site_detail['site_builtup_area']) + ($districtHeatingKwh / $site_detail['site_builtup_area']) + ($districtCoolingKwh / $site_detail['site_builtup_area']) + ($fuelKwh / $site_detail['site_builtup_area']) + ($lpgKwh / $site_detail['site_builtup_area']) + ($naturalGasKwh / $site_detail['site_builtup_area']) : 0;
 
 		//Calculation Utility Consumption Start
 		$utilityConsumptionElectricityKwh = ($electricityKwh * $dataFactor['electricity'] * $multiplyValue);
@@ -3023,15 +3048,26 @@ class Reports_model extends Base_Model
 		//Calculation of Utility Carbon footprint
 		$performanceReportData['CarbonFootprint'][$result['month_id']][$result['year_id']] =  round($totalCarbonFootprint) ?? 0;
 
-		$totalUtilityConsumption = ($utilityConsumptionElectricityKwh + $utilityConsumptionDistrictHeatingKwh + $utilityConsumptionDistrictCoolingKwh + $utilityConsumptionFuelKwh + $utilityConsumptionLpgKwh + $utilityConsumptionNaturalGasKwh) - $onsite_generators_quantityKWH;
+		//Calculation of Utility Carbon footprint per guest night
+		$performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][$result['year_id']] = isset($result['total_guests']) && $result['total_guests'] != 0 ? round($totalCarbonFootprint / $result['total_guests'], 2) : 0;
+
+		$totalUtilityConsumption = ($utilityConsumptionElectricityKwh + $utilityConsumptionDistrictHeatingKwh + $utilityConsumptionDistrictCoolingKwh + $utilityConsumptionFuelKwh + $utilityConsumptionLpgKwh + $utilityConsumptionNaturalGasKwh) - $onsite_generators_quantityKWH - ($result['total_renewable_energy_production'] ?? 0);
 		//Setting the Utility Consumption
 		$performanceReportData['UtilityConsumption'][$result['month_id']][$result['year_id']] = round($totalUtilityConsumption) ?? 0;
 
-		//Calculation of Utility Consumption Room night
-		$performanceReportData['UtilityConsumptionRoomNight'][$result['month_id']][$result['year_id']] = isset($result['total_room_night']) && $result['total_room_night'] != 0 ? round($totalUtilityConsumptionRoomNight) : 0;
+		$cooledBuiltupArea = !empty($site_detail['cooled_builtup_area']) ? $site_detail['cooled_builtup_area'] : 0;
+		$totalUtilityConsumptionRoomNight = (isset($result['total_room_night']) && $result['total_room_night'] != 0)
+		    ? ($totalUtilityConsumption / $result['total_room_night'])
+		    : 0;
+		$totalUtilityConsumptionBuildUp = ($cooledBuiltupArea != 0)
+		    ? ($totalUtilityConsumption / $cooledBuiltupArea)
+		    : 0;
 
-		//Calculation of Utility Consumption Intensity
-		$performanceReportData['UtilityConsumptionIntensity'][$result['month_id']][$result['year_id']] = isset($site_detail['site_builtup_area']) && $site_detail['site_builtup_area'] != 0 ? round($totalUtilityConsumptionBuildUp) : 0;
+		//Calculation of Utility Consumption Room night
+		$performanceReportData['UtilityConsumptionRoomNight'][$result['month_id']][$result['year_id']] = isset($result['total_room_night']) && $result['total_room_night'] != 0 ? round($totalUtilityConsumptionRoomNight, 2) : 0;
+
+		//Calculation of Utility Consumption Intensity (per conditioned area, matching EUI chart)
+		$performanceReportData['UtilityConsumptionIntensity'][$result['month_id']][$result['year_id']] = ($cooledBuiltupArea != 0) ? round($totalUtilityConsumptionBuildUp, 2) : 0;
 
 		//calculation scope emission start
 		$scopeEmissionElectricityKwh = (isset($result['total_electricity_kwh']) && $site_detail['show_utility_electricity'] == 1) ? $result['total_electricity_kwh'] : 0;
@@ -3128,43 +3164,44 @@ class Reports_model extends Base_Model
 
 	    case 'utility_consumption_intesity_per_square_footage':
 		$data['performanceReportArray'] = $performanceReportData['UtilityConsumptionIntensity'];
-		$data['y_axis'] = 'Kwh';
+		$data['y_axis'] = 'Kwh'. '/' .  getLocalUnitText($site_detail['id']);
 		$data['report_title'] = 'Total Energy Consumption Intensity (per square '. getLocalUnitFullText($site_detail['id']).')';
 		$data['unit'] = $site_detail['local_currency'] . '/' .  getLocalUnitText($site_detail['id']);
 		break;
 
 	    case 'utility_consumption_intensity_per_room_night':
 		$data['performanceReportArray'] = $performanceReportData['UtilityConsumptionRoomNight'];
-		$data['y_axis'] = 'Kwh';
+		$data['y_axis'] = 'Kwh/RN';
 		$data['report_title'] = 'Total Energy Consumption Intensity (per room-night)';
 		$data['unit'] = $site_detail['local_currency'] . '/room-night)';
 		break;
 
 	    case 'diversion_rate':
 		$site_waste_setting = isset($site_waste_setting) ? $site_waste_setting[0]['s'] : [];
-		$checkTotalTrackedWaste =  $checkLandfillWaste = $reportData = [];
+		$checkTotalTrackedWaste =  $checkDivertedWaste = $reportData = [];
 		foreach ($site_waste_setting as $key => $value) {
 		    if (strpos($key, 'typical_destination_') !== false) {
 			$name = substr($key, strpos($key, 'typical_destination_') + strlen('typical_destination_'));
 			if ($site_waste_setting['monthly_tracking_' . $name] == 2) {
 			    array_push($checkTotalTrackedWaste, 'unit_measure_' . $name);
-			    if ($value == 1) {
-				array_push($checkLandfillWaste, 'unit_measure_' . $name);
+			    // Diverted = everything except Landfill (1) and Unknown (7)
+			    if (!in_array((int) $value, array(1, 7), true)) {
+				array_push($checkDivertedWaste, 'unit_measure_' . $name);
 			    }
 			}
 		    }
 		}
 		foreach ($site_waste_utility as $key => $value) {
-		    $monthlyTrackedTotalWaste = $monthlyTrackedLandfillWaste = 0;
+		    $monthlyTrackedTotalWaste = $monthlyTrackedDivertedWaste = 0;
 		    foreach ($value['s'] as $keyValue => $dataInLoop) {
 			if (in_array($keyValue, $checkTotalTrackedWaste)) {
 			    $monthlyTrackedTotalWaste = $monthlyTrackedTotalWaste + $dataInLoop;
 			}
-			if (in_array($keyValue, $checkLandfillWaste)) {
-			    $monthlyTrackedLandfillWaste = $monthlyTrackedLandfillWaste + $dataInLoop;
+			if (in_array($keyValue, $checkDivertedWaste)) {
+			    $monthlyTrackedDivertedWaste = $monthlyTrackedDivertedWaste + $dataInLoop;
 			}
 		    }
-		    $performanceReportData['DiversionRate'][$value['s']['month_id']][$value['s']['year_id']] = calculateDashboardPercentage($monthlyTrackedLandfillWaste, $monthlyTrackedTotalWaste);
+		    $performanceReportData['DiversionRate'][$value['s']['month_id']][$value['s']['year_id']] = round((float) calculateDashboardPercentage($monthlyTrackedDivertedWaste, $monthlyTrackedTotalWaste), 2);
 		}
 		for ($i = 1; $i < 13; $i++) {
 		    if (isset($performanceReportData['DiversionRate'][$i][$currentYear]) && !empty($performanceReportData['DiversionRate'][$i][$currentYear])) {
@@ -3309,19 +3346,32 @@ class Reports_model extends Base_Model
     }
 
     public function fetchUpdatedRoomKeys($result) {
+	if (empty($result) || !is_array($result)) {
+	    return $result;
+	}
+	$this->load->model('sites/sites_model');
 	foreach ($result as $key => $value) {
-	    foreach ($value as $subkey => $subvalue) {
-		if($subkey == 'rooms_keys' || $subkey == 'cooled_builtup_area') {
-		    $this->load->model('sites/sites_model');
-		    $dataFetch['site_id'] = $this->site_id;
-		    $dataFetch['area_update_field'] = $subkey;
-		    $latestAreaEntry = $this->sites_model->getlatestSiteArea($dataFetch);
-		    if(isset($latestAreaEntry) && !empty($latestAreaEntry)) {
-			$latestAreaEntry = (array) $latestAreaEntry;
+	    if (!is_array($value)) {
+		continue;
+	    }
+	    $row_site_id = !empty($value['site_id']) ? $value['site_id'] : $this->site_id;
+	    if (empty($row_site_id)) {
+		continue;
+	    }
+	    foreach (array('rooms_keys', 'cooled_builtup_area') as $subkey) {
+		if (!array_key_exists($subkey, $value)) {
+		    continue;
+		}
+		$dataFetch = array(
+		    'site_id' => $row_site_id,
+		    'area_update_field' => $subkey,
+		);
+		$latestAreaEntry = $this->sites_model->getlatestSiteArea($dataFetch);
+		if (!empty($latestAreaEntry)) {
+		    $latestAreaEntry = (array) $latestAreaEntry;
+		    if (isset($latestAreaEntry['area_update_value'])) {
 			$result[$key][$subkey] = $latestAreaEntry['area_update_value'];
 		    }
-		} else {
-		    continue;
 		}
 	    }
 	}

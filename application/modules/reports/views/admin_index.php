@@ -8,7 +8,7 @@
 <?php
 /* REGRESSION CHART APPEND ON END*/
 $regressionUtility = $showUtilityArray = [];
-$utility = ['electricity', 'fuel_oil', 'lpg', 'water', 'natural_gas', 'district_heating', 'district_cooling'];
+$utility = ['electricity', 'fuel_oil', 'lpg', 'water', 'natural_gas', 'district_heating', 'district_cooling', 'fleet'];
 foreach ($utility as $energy) {
 	$showLabel = "show_utility_" . $energy;
 	if (isset($energy_modelling_data[$energy]['report']) && $energy_modelling_data[$energy]['report'] == 1 && $site_detail[$showLabel] == 1) {
@@ -33,11 +33,7 @@ if ($utility_year_selected != $current_year) {
 	$utility_current_year = $utility_year_selected;
 	$utility_last_year = $utility_year_selected - 1;
 }
-//define currency;
 $isLocal = true;
-if ($currency == "base") {
-	$isLocal = false;
-}
 if ($filters['filters_comparision_chart']["start_year"] == $filters['filters_comparision_chart']["end_year"]) { // If start and end year is same
 	for ($i = $filters['filters_comparision_chart']['start_month']; $i <= $filters['filters_comparision_chart']["end_month"]; $i++) {
 		$startmonthsarray[] = $i;
@@ -90,6 +86,7 @@ $colorNaturalGas = $chart_legend_colors['Natural_Gas'];
 $colorWater = $chart_legend_colors['Water'];
 $colorHeatingDistrict = $chart_legend_colors['District_Heating'];
 $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
+$colorFleetPetrol = $chart_legend_colors['Fleet_Petrol'];
 ?>
 <style>
 	table.table-condensed .disable-year {
@@ -1080,7 +1077,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 				},
 				vAxes: {
 					0: {
-						title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . BASE_CURRENCY_SYMBOL . ')'; ?>',
+						title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . ')'; ?>',
 						titleTextStyle: {
 							fontName: 'Arial',
 							fontSize: 24
@@ -1139,11 +1136,13 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			<?php if (in_array('district_cooling', $showUtilityArray) && !empty($totalCoolingDistrict)) { ?>
 				arrTitle.push('<?php echo lang("cooling-district"); ?>');
 			<?php } ?>
-			arrTitle.push('<?php echo lang("occupancy") . "-" . $last_year; ?>');
-			arrTitle.push('<?php echo lang("occupancy") . "-" . $current_year; ?>');
+			arrTitle.push('<?php echo lang("occupancy") . "-" . $utility_last_year; ?>');
+			arrTitle.push('<?php echo lang("occupancy") . "-" . $utility_current_year; ?>');
 			arrValuesMulti.push(arrTitle);
 			<?php
 				$total_months = 0;
+				$carbon_chart_prev_year = $utility_last_year;
+				$carbon_chart_current_year = $utility_current_year;
 				$total_sum_pre_data_electricity = 0;
 				$total_sum_pre_data_fuel = 0;
 				$total_sum_pre_data_lpg = 0;
@@ -1339,6 +1338,9 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 				$AVG_pre_data_budget = ($total_sum_pre_data_budget / $total_months);
 				// Average Current year data
 				$YTD_total_months = $this->_ci->config->config['YTD_month_count'];
+				if ($utility_year_selected != date('Y')) {
+					$YTD_total_months = $total_months;
+				}
 				$AVG_data_electricity = ($total_sum_data_electricity / $YTD_total_months);
 				$AVG_data_fuel = ($total_sum_data_fuel / $YTD_total_months);
 				$AVG_data_lpg = ($total_sum_data_lpg / $YTD_total_months);
@@ -1375,7 +1377,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			<?php } ?>
 			arrAvgNull.push(null);
 			arrAvgNull.push(null);
-			var arrAvgPre = ['<?php echo ($prevYear) . " " . lang("average"); ?>'];
+			var arrAvgPre = ['<?php echo ($carbon_chart_prev_year) . " " . lang("average"); ?>'];
 			<?php if (in_array('electricity', $showUtilityArray) && !empty($totalElectricity)) { ?>
 				arrAvgPre.push(<?php echo (!empty($AVG_pre_data_electricity) && is_finite($AVG_pre_data_electricity)) ? $AVG_pre_data_electricity : 0; ?>);
 			<?php } ?>
@@ -1396,7 +1398,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			<?php } ?>
 			arrAvgPre.push(<?php echo (!empty($AVG_pre_data_occupancy) && is_finite($AVG_pre_data_occupancy)) ? $AVG_pre_data_occupancy : 0; ?>);
 			arrAvgPre.push(null);
-			var arrAvg = ['<?php echo ($year) . " " . lang("average"); ?>'];
+			var arrAvg = ['<?php echo ($carbon_chart_current_year) . " " . lang("average"); ?>'];
 			<?php if (in_array('electricity', $showUtilityArray) && !empty($totalElectricity)) { ?>
 				arrAvg.push(<?php echo (!empty($AVG_data_electricity) && is_finite($AVG_data_electricity)) ? $AVG_data_electricity : 0; ?>);
 			<?php } ?>
@@ -1548,11 +1550,13 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			<?php if (in_array('district_cooling', $showUtilityArray) && !empty($totalCoolingDistrict_utility_cost_pre)) { ?>
 				arrTitle.push('<?php echo lang("cooling-district"); ?>');
 			<?php } ?>
-			arrTitle.push('<?php echo lang("occupancy") . "-" . ($filters['filters_comparision_chart_pre']["start_year"] - 1); ?>');
-			arrTitle.push('<?php echo lang("occupancy") . "-" . $filters['filters_comparision_chart_pre']["start_year"]; ?>');
+			arrTitle.push('<?php echo lang("occupancy") . "-" . $utility_last_year; ?>');
+			arrTitle.push('<?php echo lang("occupancy") . "-" . $utility_current_year; ?>');
 			arrValuesMulti.push(arrTitle);
 			<?php
 				$total_months = 0;
+				$carbon_annual_prev_year = $utility_last_year;
+				$carbon_annual_current_year = $utility_current_year;
 				$total_sum_pre_data_electricity = 0;
 				$total_sum_pre_data_fuel = 0;
 				$total_sum_pre_data_lpg = 0;
@@ -1765,7 +1769,6 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 				$AVG_pre_data_annual_occupancy = round($AVG_pre_data_annual_occupancy, 2);
 				$AVG_data_annual_occupancy = round($AVG_data_annual_occupancy, 2);
 				$chart_legend_colors = $this->_ci->config->config['chart_legend_colors'];
-				$prevYear = $year - 1;
 				?>
 			var arrAvgNull = [null];
 			<?php if (in_array('electricity', $showUtilityArray) && !empty($totalElectricity_utility_cost_pre)) { ?>
@@ -1788,7 +1791,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			<?php } ?>
 			arrAvgNull.push(null);
 			arrAvgNull.push(null);
-			var arrAvgPre = ['<?php echo ($prevYear) . " " . lang("average"); ?>'];
+			var arrAvgPre = ['<?php echo ($carbon_annual_prev_year) . " " . lang("average"); ?>'];
 			<?php if (in_array('electricity', $showUtilityArray) && !empty($totalElectricity_utility_cost_pre)) { ?>
 				arrAvgPre.push(<?php echo (!empty($AVG_pre_data_annual_electricity) && is_finite($AVG_pre_data_annual_electricity)) ? $AVG_pre_data_annual_electricity : 0; ?>);
 			<?php } ?>
@@ -1809,7 +1812,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			<?php } ?>
 			arrAvgPre.push(<?php echo (!empty($AVG_pre_data_annual_occupancy) && is_finite($AVG_pre_data_annual_occupancy)) ? $AVG_pre_data_annual_occupancy : 0; ?>);
 			arrAvgPre.push(null);
-			var arrAvg = ['<?php echo ($year) . " " . lang("average"); ?>'];
+			var arrAvg = ['<?php echo ($carbon_annual_current_year) . " " . lang("average"); ?>'];
 			<?php if (in_array('electricity', $showUtilityArray) && !empty($totalElectricity_utility_cost_pre)) { ?>
 				arrAvg.push(<?php echo (!empty($AVG_data_annual_electricity) && is_finite($AVG_data_annual_electricity)) ? $AVG_data_annual_electricity : 0; ?>);
 			<?php } ?>
@@ -2234,7 +2237,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			var options = {
 				height: 700,
 				isStacked: true,
-				title: '<?php echo $isLocal ? lang("utility-cost-chart-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-title") . '(' . BASE_CURRENCY . BASE_CURRENCY_SYMBOL . ')'; ?>',
+				title: '<?php echo $isLocal ? lang("utility-cost-chart-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-title") . '(' . BASE_CURRENCY . ')'; ?>',
 				titleTextStyle: {
 					fontName: 'Arial',
 					fontSize: 30
@@ -2250,7 +2253,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 				},
 				vAxes: {
 					0: {
-						title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . BASE_CURRENCY_SYMBOL . ')'; ?>',
+						title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . ')'; ?>',
 						titleTextStyle: {
 							fontName: 'Arial',
 							fontSize: 24
@@ -3210,7 +3213,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			var options = {
 				height: 700,
 				isStacked: true,
-				title: '<?php echo ($isLocal) ? lang("utility-cost-chart-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-title") . '(' . BASE_CURRENCY . BASE_CURRENCY_SYMBOL . ')'; ?>',
+				title: '<?php echo ($isLocal) ? lang("utility-cost-chart-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-title") . '(' . BASE_CURRENCY . ')'; ?>',
 				titleTextStyle: {
 					fontName: 'Arial',
 					fontSize: 30
@@ -3226,7 +3229,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 				},
 				vAxes: {
 					0: {
-						title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . BASE_CURRENCY_SYMBOL . ')'; ?>',
+						title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . ')'; ?>',
 						titleTextStyle: {
 							fontName: 'Arial',
 							fontSize: 24
@@ -3635,13 +3638,17 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 			});
 		<?php } ?>
 		<?php
+		$monthlyPieTitleMonth = !empty($filters['monthly_pie_month']) ? (int) $filters['monthly_pie_month'] : (int) $filters['previous_month'];
+		$monthlyPieTitleYear = !empty($filters['monthly_pie_year']) ? $filters['monthly_pie_year'] : $filters['previous_year'];
 		if (!empty($kwh_pie_chart_previousmonth)) {
+			$kwhPiePreSeriesArray = array();
 			foreach ($kwh_pie_chart_previousmonth as $kwhPiePrekey => $kwhPiePreValue) {
 				if ($kwhPiePreValue != 0) {
 					$kwhPiePreName = lang($kwhPiePrekey);
-					$kwhPiePreSeriesArray[$kwhPiePreName] .= $kwhPiePreValue;
+					$kwhPiePreSeriesArray[$kwhPiePreName] = isset($kwhPiePreSeriesArray[$kwhPiePreName]) ? $kwhPiePreSeriesArray[$kwhPiePreName] + $kwhPiePreValue : $kwhPiePreValue;
 				}
 			}
+			if (!empty($kwhPiePreSeriesArray)) {
 			?>
 			var kwhPieChartPreviousMonth = '<?php echo json_encode($kwhPiePreSeriesArray); ?>';
 			var kwhPieChartPreviousMonthData = JSON.parse(kwhPieChartPreviousMonth);
@@ -3707,7 +3714,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 					type: 'pie'
 				},
 				title: {
-					text: '<?php echo lang("kWh-pie-chart-last12month-title-monthly") . ' - ' . $fullmontharray[$filters["previous_month"]] . ' ' . $filters["previous_year"]; ?>',
+					text: '<?php echo lang("kWh-pie-chart-last12month-title-monthly") . ' - ' . $fullmontharray[$monthlyPieTitleMonth] . ' ' . $monthlyPieTitleYear; ?>',
 					style: {
 						color: Highcharts.getOptions().colors[1],
 						fontFamily: 'Arial',
@@ -3762,15 +3769,20 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 					data: kwhPieChartPreviousMonthArray
 				}]
 			});
-		<?php  } ?>
+		<?php
+			}
+		}
+		?>
 		<?php
 		if (!empty($cost_pie_chart_previousmonth)) {
+			$costPiePreSeriesArray = array();
 			foreach ($cost_pie_chart_previousmonth as $costPiePreKey => $costPiePreVal) {
 				if ($costPiePreVal != 0) {
 					$costPiePreName = lang($costPiePreKey);
-					$costPiePreSeriesArray[$costPiePreName] .= $costPiePreVal;
+					$costPiePreSeriesArray[$costPiePreName] = isset($costPiePreSeriesArray[$costPiePreName]) ? $costPiePreSeriesArray[$costPiePreName] + $costPiePreVal : $costPiePreVal;
 				}
 			}
+			if (!empty($costPiePreSeriesArray)) {
 			?>
 			var costPieChartPreviousMonth = '<?php echo json_encode($costPiePreSeriesArray); ?>';
 			var costPieChartPreviousMonthData = JSON.parse(costPieChartPreviousMonth);
@@ -3836,7 +3848,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 					type: 'pie'
 				},
 				title: {
-					text: '<?php echo lang("cost-pie-chart-last12month-title") . ' - ' . $fullmontharray[$filters["previous_month"]] . ' ' . $filters["previous_year"]; ?>',
+					text: '<?php echo lang("cost-pie-chart-last12month-title") . ' - ' . $fullmontharray[$monthlyPieTitleMonth] . ' ' . $monthlyPieTitleYear; ?>',
 					style: {
 						color: Highcharts.getOptions().colors[1],
 						fontFamily: 'Arial',
@@ -3891,8 +3903,10 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 					data: costPieChartPreviousMonthArray
 				}]
 			});
-		<?php } ?>
-		removeHighcharts();
+		<?php
+			}
+		}
+		?>
 	}
 </script>
 <div id="ajax_table" class="report-detail">
@@ -3902,18 +3916,12 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 				<div class="col-sm-6">
 					<?php echo lang('site_total_utilities_reports'); ?>
 				</div>
-				<div class="col-sm-6 pull-right">
-					<form name="currency_form" method="post">
-						<button type="submit" class="btn btn-secondary btn-submit pull-right <?php echo ($currency == "base") ? "btn-active" : ""; ?>" id="base" name="currency" value="base">Base Currency</button>
-						<button type="submit" class="btn btn-secondary btn-submit pull-right <?php echo ($currency == "local") ? "btn-active" : ""; ?>" id="local" name="currency" value="local" style="margin: 0px 5px;">Local Currency</button>
-					</form>
-				</div>
 			</div>
 		</div>
 		<div>
 			<form name="report_form" id="report_form" enctype="multipart/form-data" method="post" action="<?php echo site_url() . BASE_ADMIN_URL_CUSTOM; ?>reports">
 				<input type="hidden" name="view_type" id="view_type" value="pdf">
-				<input type="hidden" name="currency" id="currency" value="<?php echo $currency; ?>">
+				<input type="hidden" name="currency" id="currency" value="local">
 				<input type="hidden" name="columnChartImg" id="columnChartImg" value="">
 				<input type="hidden" name="columnChartCarbonFootprintImg" id="columnChartCarbonFootprintImg" value="">
 				<input type="hidden" name="chsb_report_chart_1" id="chsb_report_chart_1" value="">
@@ -4172,7 +4180,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 					<div class="panel panel-primary">
 						<div class="panel-body">
 							<div class="col-sm-6">
-								<div id="kwh_pie_chart_previousmonth">
+								<div id="kwh_pie_chart_previousmonth" data-monthly-pie="kwh">
 									<?php if (empty($kwh_pie_chart_previousmonth)) { ?>
 										<div class="table-responsive">
 											<table class="table table-striped">
@@ -4191,7 +4199,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 								</form>
 							</div>
 							<div class="col-sm-6">
-								<div id="cost_pie_chart_previousmonth">
+								<div id="cost_pie_chart_previousmonth" data-monthly-pie="cost">
 									<?php if (empty($cost_pie_chart_previousmonth)) { ?>
 										<div class="table-responsive">
 											<table class="table table-striped">
@@ -4384,7 +4392,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 						yearly_report_year: fullYear,
 						monthly_report_year: fullYear,
 						monthly_report_month: 0,
-						currency: '<?php echo $currency; ?>',
+						currency: 'local',
 						submit: 'download_hidden'
 					},
 					success: function(response) {
@@ -4416,7 +4424,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 						view_type: 'ajax',
 						monthly_report_month: month,
 						monthly_report_year: year,
-						currency: '<?php echo $currency; ?>',
+						currency: 'local',
 						submit: 'download_monthly_hidden'
 					},
 					dataType: 'json',
@@ -4533,7 +4541,7 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 							},
 							vAxes: {
 								0: {
-									title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . BASE_CURRENCY_SYMBOL . ')'; ?>',
+									title: '<?php echo $isLocal ? lang("utility-cost-chart-yaxis-0-title") . ' (' . currency_symbol($isLocal) . ')' : lang("utility-cost-chart-yaxis-0-title") . ' (' . BASE_CURRENCY . ')'; ?>',
 									titleTextStyle: {
 										fontName: 'Arial',
 										fontSize: 24
@@ -4620,6 +4628,15 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 									color: '<?php echo $colorCoolingDistrict; ?>'
 								};
 							}
+							<?php } ?>
+							<?php if (in_array('fleet', $showUtilityArray)) { ?>
+							if (value == "fleet_petrol") {
+								series[index] = {
+									targetAxisIndex: 0,
+									color: '<?php echo $colorFleetPetrol; ?>'
+								};
+							}
+							<?php } ?>
 							i = index;
 						});
 						series[i + 1] = {
@@ -5071,19 +5088,21 @@ $colorCoolingDistrict = $chart_legend_colors['District_Cooling'];
 				<?php echo $this->ci()->security->get_csrf_token_name(); ?>: '<?php echo $this->ci()->security->get_csrf_hash(); ?>',
 				view_type: $('#view_type').val(),
 				yearly_report_year: selectedyear,
-				currency: '<?php echo $currency; ?>',
+				utility_year_selected: selectedyear,
+				currency: 'local',
 			},
-			success: function(response) {
-				$('#utility_cost_chart_roomnight_div').html(response);
-				$.ajax({
-					type: 'POST',
-					url: '<?php echo base_url() . BASE_ADMIN_URL_CUSTOM; ?>reports/carbon_footprint',
-					data: {
-						<?php echo $this->ci()->security->get_csrf_token_name(); ?>: '<?php echo $this->ci()->security->get_csrf_hash(); ?>',
-						view_type: $('#view_type').val(),
-						yearly_report_year: selectedyear,
-						currency: '<?php echo $currency; ?>',
-					},
+					success: function(response) {
+						$('#utility_cost_chart_roomnight_div').html(response);
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo base_url() . BASE_ADMIN_URL_CUSTOM; ?>reports/carbon_footprint',
+							data: {
+								<?php echo $this->ci()->security->get_csrf_token_name(); ?>: '<?php echo $this->ci()->security->get_csrf_hash(); ?>',
+								view_type: $('#view_type').val(),
+								yearly_report_year: selectedyear,
+								utility_year_selected: selectedyear,
+								currency: 'local',
+							},
 					success: function(response) {
 						$('#utility_cost_chart_carbon_footprint_div').html(response);
 

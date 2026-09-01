@@ -34,7 +34,7 @@ class Sites_admin extends Base_Admin_Controller
 {
 
 
-
+// GARIMA TEST DEPLOYMENT
 	public $search_term;
 
 	private $site_id                 = '';
@@ -83,7 +83,7 @@ class Sites_admin extends Base_Admin_Controller
 		return array(
 
 			array(
-				'actions' => array('index', 'edit', 'add', 'action', 'delete', 'save', 'view_data', 'set_user_theme', 'set_notification', 'pdf', 'cron_settings', 'get_sites', 'waste', 'emission', 'delete_emission_image', 'view_area_history', 'residence', 'export_waste', 'replicate_residence', 'export_utility', 'permission', 'export_prev_utility', 'setSiteNotificationManually', 'export_site_info', 'export_utility_choices', 'export_utility_invoices','export_utility_last_updated_log', 'group_utility_report', 'export_group_waste_corporate_report'),
+				'actions' => array('index', 'edit', 'add', 'action', 'delete', 'save', 'view_data', 'set_user_theme', 'set_notification', 'pdf', 'cron_settings', 'get_sites', 'waste', 'emission', 'delete_emission_image', 'view_area_history', 'residence', 'export_waste', 'replicate_residence', 'export_utility', 'permission', 'export_prev_utility', 'setSiteNotificationManually', 'export_site_info', 'export_utility_choices', 'export_utility_invoices','export_utility_last_updated_log', 'group_utility_report', 'export_group_waste_corporate_report', 'download_corporate_utilities_dashboard'),
 				'users'   => array('@'),
 
 			),
@@ -536,7 +536,7 @@ class Sites_admin extends Base_Admin_Controller
 		$this->form_validation->set_rules('water_intensity_benchmark_target', lang('water-intensity'), 'trim');
 		$this->form_validation->set_rules('waste_intensity_benchmark_target', lang('waste-intensity'), 'trim');
 
-		$utilities        = array('show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_waste_management');
+		$utilities        = array('show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_waste_management', 'show_utility_fleet');
 
 		$energy_modelling = [
 
@@ -1079,6 +1079,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_heating = intval($data['show_utility_district_heating']);
 			$show_utility_district_heating_boiler = intval($data['show_utility_district_heating_boiler']);
 			$show_waste_management         = intval($data['show_waste_management']);
+			$show_utility_fleet         = intval($data['show_utility_fleet']);
 
 			$utility_unit_electricity      = intval($data['utility_unit_electricity']);
 			$utility_unit_fuel_oil         = intval($data['utility_unit_fuel_oil']);
@@ -1520,6 +1521,7 @@ class Sites_admin extends Base_Admin_Controller
 				$data_array['utility_unit_district_heating']   = $utility_unit_district_heating;
 
 				$data_array['show_waste_management']           = $show_waste_management;
+				$data_array['show_utility_fleet']           = $show_utility_fleet;
 
 				$data_array['baseline_regression_year']        = trim($data['baseline_regression_year']);
 
@@ -1594,6 +1596,7 @@ class Sites_admin extends Base_Admin_Controller
 					$site_notification_lists = getNotificationStaticList($site_id);
 					$this->sites_model->save_default_notifications($site_id, $site_notification_lists);
 				}
+				$this->sites_model->assign_site_to_corporate_and_super_admins($site_id, isset($data_array['region_id']) ? $data_array['region_id'] : 0);
 
 
 
@@ -1802,6 +1805,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_heating = $result['show_utility_district_heating'];
 			$show_utility_district_heating_boiler = $result['show_utility_district_heating_boiler'];
 			$show_waste_management         = $result['show_waste_management'];
+			$show_utility_fleet         = $result['show_utility_fleet'];
 
 			$chsb_reporting          = $result['chsb_reporting'];
 			$chsb_segment          = $result['chsb_segment'];
@@ -2014,6 +2018,7 @@ class Sites_admin extends Base_Admin_Controller
 		$data['show_utility_district_heating'] = $show_utility_district_heating;
 		$data['show_utility_district_heating_boiler'] = $show_utility_district_heating_boiler;
 		$data['show_waste_management']         = $show_waste_management;
+		$data['show_utility_fleet']           = $show_utility_fleet;
 
 		$data['show_total_utility_notification'] = $show_total_utility_notification;
 
@@ -2347,6 +2352,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_cooling = intval($data['show_utility_district_cooling']);
 			$show_utility_district_heating = intval($data['show_utility_district_heating']);
 			$show_utility_district_heating_boiler = intval($data['show_utility_district_heating_boiler']);
+			$show_utility_fleet         = intval($data['show_utility_fleet']);
 			$show_waste_management         = intval($data['show_waste_management']);
 			$utility_unit_electricity      = intval($data['utility_unit_electricity']);
 			$utility_unit_fuel_oil         = intval($data['utility_unit_fuel_oil']);
@@ -2612,6 +2618,7 @@ class Sites_admin extends Base_Admin_Controller
 				$data_array['utility_unit_district_heating']   = $utility_unit_district_heating;
 
 				$data_array['show_waste_management']           = $show_waste_management;
+				$data_array['show_utility_fleet']           = $show_utility_fleet;
 
 				$data_array['baseline_regression_year']        = trim($data['baseline_regression_year']);
 				$data_array['local_currency']                  = trim($data['local_currency']);
@@ -2661,6 +2668,7 @@ class Sites_admin extends Base_Admin_Controller
 					$site_notification_lists = getNotificationStaticList($site_id);
 					$this->sites_model->save_default_notifications($site_id, $site_notification_lists);
 				}
+				$this->sites_model->assign_site_to_corporate_and_super_admins($site_id, isset($data_array['region_id']) ? $data_array['region_id'] : 0);
 
 				if ($id == 0) {
 					$this->theme->set_message(lang('site-add-success'), 'success');
@@ -2782,6 +2790,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_heating = $result['show_utility_district_heating'];
 			$show_utility_district_heating_boiler = $result['show_utility_district_heating_boiler'];
 			$show_waste_management         = $result['show_waste_management'];
+			$show_utility_fleet         = $result['show_utility_fleet'];
 			$chsb_reporting          = $result['chsb_reporting'];
 			$chsb_segment          = $result['chsb_segment'];
 			$csr                     = $result['csr'];
@@ -2911,6 +2920,7 @@ class Sites_admin extends Base_Admin_Controller
 		$data['show_utility_district_heating'] = $show_utility_district_heating;
 		$data['show_utility_district_heating_boiler'] = $show_utility_district_heating_boiler;
 		$data['show_waste_management']         = $show_waste_management;
+		$data['show_utility_fleet']           = $show_utility_fleet;
 
 		$data['show_total_utility_notification'] = $show_total_utility_notification;
 		$data['chsb_reporting'] = $chsb_reporting;
@@ -3435,7 +3445,7 @@ class Sites_admin extends Base_Admin_Controller
 
 		ob_end_clean();
 
-		$pdf->writeHTML($content, true, false, true, false, '');
+		$pdf->writeHTML(sanitize_report_output_html($content), true, false, true, false, '');
 
 		$pdf->Output($pdfName, 'D'); // D - downlaod, F- Save
 
@@ -3741,6 +3751,7 @@ class Sites_admin extends Base_Admin_Controller
 		$this->site_waste_model->user_id = $this->user_id;
 		$this->site_waste_model->year_id = NULL;
 		$this->site_waste_model->month_id = NULL;
+		$this->site_waste_model->rebates = NULL;
 
 		if (!$this->input->post()) {
 			$site_waste_result = $this->site_waste_model->get_site_waste_model_detail_by_siteId_userId();
@@ -4267,10 +4278,10 @@ class Sites_admin extends Base_Admin_Controller
 		$data['tab_data'] = isset($tabData) ?  $tabData : [];
 		$data['site_waste'] = isset($site_waste) ?  $site_waste : [];
 		$data['site_detail'] = $this->sites_model->get_site_detail($siteId, $user_id, $role_id);
-		$data_action = 'Import';
+		$data_action = 'Update';
 		$site_id = $_SESSION['admin']['site_id'];
 		$user_id = $_SESSION['admin']['user_id'];
-		saveAuditTrail($user_id, $site_id, 'Import Waste', $data_action);
+		saveAuditTrail($user_id, $siteId, 'Site Waste Settings', $data_action);
 		//Render view
 		$this->theme->view($data, 'admin_waste');
 	}
@@ -4629,7 +4640,14 @@ class Sites_admin extends Base_Admin_Controller
 			$objPHPExcel->getActiveSheet()->getStyle('1')->getAlignment()->setWrapText(true);
 			$objPHPExcel->getActiveSheet()->getStyle('1')->applyFromArray($style);
 			$objPHPExcel->getActiveSheet()->getRowDimension('1')->setRowHeight(70);
-			$objPHPExcel->getActiveSheet()->getStyle('A1:G1')->applyFromArray(
+			if($index == 0){
+				$fixedColumns = ['A1:H1','A2:H2'];
+			}
+			else
+			{
+				$fixedColumns = ['A1:G1','A2:G2'];
+			}
+			$objPHPExcel->getActiveSheet()->getStyle($fixedColumns[0])->applyFromArray(
 				array(
 					'fill' => array(
 						'type' => PHPExcel_Style_Fill::FILL_SOLID,
@@ -4637,7 +4655,7 @@ class Sites_admin extends Base_Admin_Controller
 					)
 				)
 			);
-			$objPHPExcel->getActiveSheet()->getStyle('A2:G2')->applyFromArray(
+			$objPHPExcel->getActiveSheet()->getStyle($fixedColumns[1])->applyFromArray(
 				array(
 					'fill' => array(
 						'type' => PHPExcel_Style_Fill::FILL_SOLID,
@@ -4645,7 +4663,7 @@ class Sites_admin extends Base_Admin_Controller
 					)
 				)
 			);
-			$objPHPExcel->getActiveSheet()->setAutoFilter('A2:G2');
+			$objPHPExcel->getActiveSheet()->setAutoFilter($fixedColumns[1]);
 			$this->load->model('sites/site_waste_model');
 			$sites = $this->site_waste_model->getAllSiteRegionWasteData();
 			$columns["attribute"] = 'Attribute';
@@ -4656,6 +4674,7 @@ class Sites_admin extends Base_Admin_Controller
 			if ($index == 0) {
 				$columns["month_id"] = 'Reporting Month';
 				$columns["year_id"] = 'Reporting Year';
+				$columns["rebates"] = 'Rebates';
 			} else {
 				$columns["last_update_by"] = 'Last update by';
 				$columns["last_update_date"] = 'Last update date';
@@ -4678,15 +4697,31 @@ class Sites_admin extends Base_Admin_Controller
 			}
 			$indexColor = 0;
 			// Row 1 to display tabData 6 main heading
+			// If index is 0 then add rebate column
+			if($index == 0){
+				$Heading1MergeIndexDynamic = [
+					'I1:I1',
+					'J1:J1',
+					'K1:X1',
+					'Y1:AF1',
+					'AG1:AM1',
+					'AN1:AV1',
+					'AW1:BB1'
+				];
+			}
+			else
+			{
+				$Heading1MergeIndexDynamic = $Heading1MergeIndex;
+			}
 			foreach ($row1Headings as $key => $column) {
-				$objPHPExcel->getActiveSheet()->mergeCells($Heading1MergeIndex[$indexColor]);
-				$objPHPExcel->getActiveSheet()->getStyle($Heading1MergeIndex[$indexColor])->getFill()->applyFromArray(array(
+				$objPHPExcel->getActiveSheet()->mergeCells($Heading1MergeIndexDynamic[$indexColor]);
+				$objPHPExcel->getActiveSheet()->getStyle($Heading1MergeIndexDynamic[$indexColor])->getFill()->applyFromArray(array(
 					'type' => PHPExcel_Style_Fill::FILL_SOLID,
 					'startcolor' => array(
 						'rgb' => $row1HeadingColors[$indexColor]
 					)
 				));
-				$arr = explode(":", $Heading1MergeIndex[$indexColor], 2);
+				$arr = explode(":", $Heading1MergeIndexDynamic[$indexColor], 2);
 				$cellCord = $arr[0];
 				$objPHPExcel->getActiveSheet()->setCellValue($cellCord, $column);
 				$indexColor++;
@@ -4698,7 +4733,7 @@ class Sites_admin extends Base_Admin_Controller
 			$later2 = 'A';
 			$flag = 0;
 			foreach ($columns as $key => $column) {
-				if ($later1 . $later2 == 'AZ') {
+				if ($later1 . $later2 == 'BB') {
 					break;
 				} else {
 					if (isset($row2Headings[$key]) && !empty($row2Headings[$key])) {
@@ -4742,7 +4777,7 @@ class Sites_admin extends Base_Admin_Controller
 			$later2Row3 = 'H';
 			$flagRow3 = 0;
 			foreach ($columns as $column) {
-				if ($later1Row3 . $later2Row3 == 'AZ') {
+				if ($later1Row3 . $later2Row3 == 'BB') {
 					break;
 				} else {
 					$objPHPExcel->setActiveSheetIndex($index)->setCellValue($later1Row3 . $later2Row3 . "3", $describingLabel);
@@ -4760,7 +4795,7 @@ class Sites_admin extends Base_Admin_Controller
 					}
 					$phpColor = new PHPExcel_Style_Color();
 					$phpColor->setRGB('808080');
-					$objPHPExcel->getActiveSheet()->getStyle('A3:AY3')->getFont()->setColor($phpColor);
+					$objPHPExcel->getActiveSheet()->getStyle('A3:BA3')->getFont()->setColor($phpColor);
 				}
 			}
 
@@ -4772,19 +4807,25 @@ class Sites_admin extends Base_Admin_Controller
 					$sites[$key]['last_update_by'] = $audit_detail['last_update_by'];
 				}
 			} else {
-				$indexWasteData = 0;
-				foreach ($sites as $keyWasteSetting => $wasteSetting) {
+				// Waste Amount: one row per (site, month, year).
+				$expandedSites = [];
+				foreach ($sites as $wasteSetting) {
 					$siteWasteUtility = $this->site_waste_model->get_site_waste_utility_data($wasteSetting['id']);
-					foreach ($siteWasteUtility as $keyWasteData => $wasteData) {
-						if ($wasteData['month_id'] <= 12 && $wasteData['month_id'] >= 1 && $wasteData['year_id'] >= 2016) {
-							$sites[$indexWasteData] = $wasteSetting;
-							$sites[$indexWasteData]['year_id'] = $wasteData['year_id'];
-							$sites[$indexWasteData]['month_id'] = $wasteData['month_id'];
-							$siteWasteUtilityData[$wasteData['site_id']][$wasteData['month_id']][$wasteData['year_id']] = isset($wasteData) && $wasteData != 0 ? $wasteData : '';
-							$indexWasteData++;
+					foreach ($siteWasteUtility as $wasteData) {
+						$monthId = (int) $wasteData['month_id'];
+						$yearId = (int) $wasteData['year_id'];
+						if ($monthId <= 12 && $monthId >= 1 && $yearId >= 2016) {
+							$uniqueKey = $wasteSetting['id'] . '_' . $monthId . '_' . $yearId;
+							$row = $wasteSetting;
+							$row['year_id'] = $yearId;
+							$row['month_id'] = $monthId;
+							$expandedSites[$uniqueKey] = $row;
+							$siteWasteUtilityData[$wasteData['site_id']][$monthId][$yearId] =
+								(!empty($wasteData)) ? $wasteData : '';
 						}
 					}
 				}
+				$sites = array_values($expandedSites);
 			}
 
 			// Display data from row 4 for each site
@@ -4846,6 +4887,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -5061,6 +5103,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 
@@ -5350,6 +5393,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 
@@ -5503,6 +5547,7 @@ class Sites_admin extends Base_Admin_Controller
 		$columns['show_utility_district_heating'] = 'Show Utility District Heating';
 		$columns['show_utility_district_heating_boiler'] = 'Show Utility District Heating Boiler';
 		$columns['show_waste_management'] = 'Show Waste Management';
+		$columns['show_utility_fleet'] = 'Show Utility Fleet';
 		$columns['show_utility_water_waste'] = 'Show Utility Water Waste';
 		$columns['show_total_utility_notification'] = 'Show Total Utility Notification';
 		$columns['utility_unit_electricity'] = 'Utility Unit Electricity';
@@ -5627,7 +5672,7 @@ class Sites_admin extends Base_Admin_Controller
 								$val = $countries[$SearchKey]['c']['country'];
 							} else if ($key == 'site_type') {
 								$val = $site_types[$val];
-							} else if (in_array($key, ['chsb_reporting', 'chsb_segment', 'csr', 'daily_metering', 'is_chilled_water_system', 'is_split_dx_unit', 'is_vrv', 'is_ro_plant', 'is_renewable_energy', 'is_used_in_cron', 'is_hourly', 'show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_utility_district_heating_boiler', 'show_waste_management', 'show_utility_water_waste', 'show_total_utility_notification'])) {
+							} else if (in_array($key, ['chsb_reporting', 'chsb_segment', 'csr', 'daily_metering', 'is_chilled_water_system', 'is_split_dx_unit', 'is_vrv', 'is_ro_plant', 'is_renewable_energy', 'is_used_in_cron', 'is_hourly', 'show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_utility_district_heating_boiler', 'show_waste_management', 'show_utility_fleet', 'show_utility_water_waste', 'show_total_utility_notification'])) {
 								if ($val == 1) {
 									$val = 'Yes';
 								}
@@ -5696,6 +5741,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -5752,6 +5798,7 @@ class Sites_admin extends Base_Admin_Controller
 		$columns['utility_unit_district_heating'] = 'District Heating Unit Choice';
 		$columns['show_utility_waste_water'] = 'Show waste water';
 		$columns['show_utility_waste_management'] = 'Show Waste Management';
+		$columns['show_utility_fleet'] = 'Show Utility Fleet';
 		$columns['show_utility_irrigation_water'] = 'Show Irrigation Water';
 		$site_id = 1;
 		$sites = $this->sites_model->get_site_listing_for_users($site_id, $role_id, $user_id);
@@ -5832,6 +5879,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -5894,6 +5942,11 @@ class Sites_admin extends Base_Admin_Controller
 			}
 		}
 
+		if(empty($filesToZip)) {
+			$this->theme->set_message("No invoices found for the selected site and year.", 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites#group-report2');
+			return;
+		}
 
 		if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
 			$this->addArrayToZip($zip, $filesToZip, $basePath);
@@ -5907,14 +5960,17 @@ class Sites_admin extends Base_Admin_Controller
 				header('Content-Length: ' . filesize($zipFileName));
 				readfile($zipFileName);
 			}
-			echo "ZIP archive created successfully.";
 			$data_action = 'Update';
 			$site_id = $_SESSION['admin']['site_id'];
 			$user_id = $_SESSION['admin']['user_id'];
 			saveAuditTrail($user_id, $site_id, 'Export Utility Invoices', $data_action);
-			exit;
+			$this->theme->set_message("ZIP archive created successfully.", 'success');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites#group-report2');
+			return;
 		} else {
-			echo "Failed to create ZIP archive.";
+			$this->theme->set_message("Failed to create ZIP archive.", 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites#group-report2');
+			return;
 		}
 	}
 
@@ -6064,6 +6120,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -6080,6 +6137,10 @@ class Sites_admin extends Base_Admin_Controller
 	    $lastYear = (int) (clone $baseDate)->modify('-1 year')->format('Y');
 		$this->load->model('sites/sites_model');
 		$objWriter = $this->sites_model->generateGroupUtilityReport($currentYear,$currMonth,$prevYear,$prevMonth,$lastYear);
+		if ($objWriter === false) {
+			$this->theme->set_message('No hotels are ticked for monthly reporting. The Group Utility Report cannot be generated.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+		}
 		exit;
 	}
 
@@ -6113,7 +6174,8 @@ class Sites_admin extends Base_Admin_Controller
 			'Waste diverted from landfill (%)',
 			'Waste per occupied room (kg)',
 			'Organic waste per guest (kg)',
-			'Recyclables per guest (kg)'
+			'Recyclables per guest (kg)',
+			'Rebates'
 		];
 		$childLabels = [
 			$lastYear,
@@ -6152,7 +6214,11 @@ class Sites_admin extends Base_Admin_Controller
 
 			'Recyclables per guest (kg) '.$lastYear,
 			'Recyclables per guest (kg) '.$currentYear,
-			'Recyclables per guest (kg) % Variance'
+			'Recyclables per guest (kg) % Variance',
+
+			'Rebates '.$lastYear,
+			'Rebates '.$currentYear,
+			'Rebates % Variance',
 		];
 		require_once APPPATH . 'libraries/PHPExcel/PHPExcel.php';
 		$this->lang->load('sites/sites', 'english'); 
@@ -6224,15 +6290,29 @@ class Sites_admin extends Base_Admin_Controller
 				$dataWaste = $this->site_waste_model->getWasteReportData($site_id, $dataCal['waste'], $currentYear, $currMonth);
 			
 				$wasteReportMap = [];
-				foreach ($dataWaste['wasteReport'] as $row) {
-					$wasteReportMap[$row['metric']] = $row;
+
+				if (!empty($dataWaste['wasteReport']) && is_array($dataWaste['wasteReport'])) {
+					foreach ($dataWaste['wasteReport'] as $row) {
+						if (isset($row['metric'])) {
+							$wasteReportMap[$row['metric']] = $row;
+						}
+					}
 				}
 
 				$wastePerGuestMap = [];
-				foreach ($dataWaste['wastePerGuest'] as $row) {
-					$wastePerGuestMap[$row['metric']] = $row;
+
+				if (!empty($dataWaste['wastePerGuest']) && is_array($dataWaste['wastePerGuest'])) {
+					foreach ($dataWaste['wastePerGuest'] as $row) {
+						if (isset($row['metric'])) {
+							$wastePerGuestMap[$row['metric']] = $row;
+						}
+					}
 				}
-				
+				$rebates = [];
+				if (!empty($dataWaste['rebates']) && is_array($dataWaste['rebates'])) {
+					$rebates[$dataWaste['rebates']['metric']] = $dataWaste['rebates'];
+				}
+
 				foreach ($columns as $column) {
 
 					/* ================= HOTEL NAME ================= */
@@ -6277,6 +6357,10 @@ class Sites_admin extends Base_Admin_Controller
 							$metric = 'Recyclables (kg/Guest Night)';
 							break;
 
+						case strpos($column, 'Rebates') !== false :
+							$metric = 'Rebates';
+							break;
+
 						default:
 							$rowsWasteData[$site_id][$column] = '';
 							continue 2;
@@ -6303,6 +6387,15 @@ class Sites_admin extends Base_Admin_Controller
 									: $source['current']);
 					} else {
 						$rowsWasteData[$site_id][$column] = '';
+					}
+					if (isset($rebates[$metric])) {
+						$source = $rebates[$metric];
+						$rowsWasteData[$site_id][$column] =
+							(strpos($column, '% Variance') != false)
+								? $source['value']
+								: ((strpos(trim($column), trim((string)$lastYear)) != false)
+									? $source['previous']
+									: $source['current']);
 					}
 				}
 
@@ -6337,8 +6430,101 @@ class Sites_admin extends Base_Admin_Controller
 		// If you're serving to IE over SSL, then the following may be needed
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 		$objWriter->save('php://output');
+		exit;
+	}
+
+	/**
+	 * Download the Utilities Management Dashboard PDF(s) for last month
+	 * (files written this month by the corporate report cron).
+	 */
+	public function download_corporate_utilities_dashboard()
+	{
+		$role_id = isset($this->session->userdata[$this->section_name]['role_id'])
+			? (int) $this->session->userdata[$this->section_name]['role_id']
+			: 0;
+		$username = isset($this->session->userdata[$this->section_name]['username'])
+			? strtolower($this->session->userdata[$this->section_name]['username'])
+			: '';
+
+		if (!in_array($role_id, array(1, 6), true) || $username === '') {
+			$this->theme->set_message(lang('permission-not-allowed'), 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+
+		$cronDir = BASE_PATH_CUSTOM . '/assets/uploads/cron/';
+		if (!is_dir($cronDir)) {
+			$this->theme->set_message('No corporate dashboard reports are available yet.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+
+		$pattern = $cronDir . $username . '*upper_management_report*.pdf';
+		$files = glob($pattern);
+		if (empty($files)) {
+			// Fallback: any upper management PDF for this user prefix
+			$files = glob($cronDir . $username . '*.pdf');
+		}
+
+		if (empty($files)) {
+			$this->theme->set_message('No Utilities Management Dashboard PDF found for your account. It will appear here after the next corporate report cron run.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+
+		// Cron writes last-month data during the current month. Ignore older
+		// runs (e.g. July files that still show June) so this download matches last month.
+		$startOfThisMonth = strtotime(date('Y-m-01 00:00:00'));
+		$currentMonthFiles = array_values(array_filter($files, function ($file) use ($startOfThisMonth) {
+			return filemtime($file) >= $startOfThisMonth;
+		}));
+		if (empty($currentMonthFiles)) {
+			$lastMonthLabel = date('F Y', strtotime('first day of last month'));
+			$this->theme->set_message('The Utilities Management Dashboard for ' . $lastMonthLabel . ' is not available yet. It is created when the corporate report cron runs this month.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+		$files = $currentMonthFiles;
+
+		usort($files, function ($a, $b) {
+			return filemtime($b) - filemtime($a);
+		});
+
+		// Prefer today's regional dashboards; otherwise newest file
+		$latestMtime = filemtime($files[0]);
+		$latestFiles = array_values(array_filter($files, function ($file) use ($latestMtime) {
+			return filemtime($file) >= ($latestMtime - 60);
+		}));
+
+		if (count($latestFiles) === 1) {
+			$file = $latestFiles[0];
+			header('Content-Type: application/pdf');
+			header('Content-Disposition: attachment; filename="' . basename($file) . '"');
+			header('Content-Length: ' . filesize($file));
+			readfile($file);
+			exit;
+		}
+
+		$zipPath = $cronDir . 'corporate_utilities_dashboard_' . $username . '_' . date('YmdHis') . '.zip';
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+			$this->theme->set_message('Unable to prepare corporate dashboard download.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+		foreach ($latestFiles as $file) {
+			$zip->addFile($file, basename($file));
+		}
+		$zip->close();
+
+		header('Content-Type: application/zip');
+		header('Content-Disposition: attachment; filename="' . basename($zipPath) . '"');
+		header('Content-Length: ' . filesize($zipPath));
+		readfile($zipPath);
+		@unlink($zipPath);
 		exit;
 	}
 }
