@@ -109,6 +109,26 @@ class Utilities_model extends Base_Model
         //echo $this->db->last_query();
         return $result->row_array();
     }
+    public function getUtilityDailyReport()
+    {
+        $query = "SELECT * FROM utilities_cost_daily
+
+		    WHERE month_id = '" . $this->utilities_month . "'
+
+		    AND year_id = '" . $this->utilities_year . "'
+
+		    AND date_id <= '" . $this->utilities_date . "'
+
+		    AND site_id = '" . $this->site_id . "'
+
+		    order by date_id";
+
+
+
+        $result = $this->db->query($query);
+
+        return $result->result_array();
+    }
 
     public function saveUtilityDaily($postdata = array())
     {
@@ -423,6 +443,45 @@ class Utilities_model extends Base_Model
         return $result->result_array();
     }
 
+    public function getSiteUtilityRolling12Months($year, $month, $site_id = null)
+    {
+        if (empty($site_id)) {
+            $site_id = $this->site_id;
+        }
+
+        // Find the starting month
+        // Example: September 2026
+        // Starting month will be October 2025
+
+        $start_month = $month - 11;
+        $start_year = $year;
+
+        if ($start_month <= 0) {
+            $start_month = $start_month + 12;
+            $start_year = $year - 1;
+        }
+
+        $this->db->select('*');
+        $this->db->from($this->_tbl_utilities);
+        $this->db->where('site_id', $site_id);
+
+        // Previous year: starting month to December
+        $this->db->where("
+            (
+                (year_id = $start_year AND month_id >= $start_month)
+                OR
+                (year_id = $year AND month_id <= $month)
+            )
+        ");
+
+        $this->db->order_by('year_id', 'asc');
+        $this->db->order_by('month_id', 'asc');
+
+        $result = $this->db->get();
+
+        return $result->result_array();
+    }
+
     public function saveUtility($postdata = array())
     {
         $data           = array();
@@ -477,6 +536,7 @@ class Utilities_model extends Base_Model
         $data['forex']                                      = isset($postdata['forex']) ? $postdata['forex'] : 1;
 		$data['vehicle_petrol']                             = isset($postdata['vehicle_petrol']) ? $postdata['vehicle_petrol'] : 1;
 		$data['fleet_petrol']                             = isset($postdata['fleet_petrol']) ? $postdata['fleet_petrol'] : 1;
+        $data['total_fleet_petrol_cost']                    = isset($postdata['total_fleet_petrol_cost']) ? $postdata['total_fleet_petrol_cost'] : 1;
         $data['total_f_b_sales']                            = isset($postdata['total_f_b_sales']) ? $postdata['total_f_b_sales'] : '';
 
         // New Fields

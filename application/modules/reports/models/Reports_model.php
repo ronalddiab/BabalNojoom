@@ -1642,6 +1642,8 @@ class Reports_model extends Base_Model
 			COALESCE(u.district_cooling_total_budget, 0) as district_cooling_budget,
 
 			COALESCE(u.district_cooling_cost, 0) as district_cooling_cost_actual,
+			
+			COALESCE(u.district_cooling_fixed_cost, 0) as district_cooling_fixed_cost,
 
 			COALESCE(u.district_cooling_total_budget_cost, 0) as district_cooling_cost_budget,
 
@@ -1650,6 +1652,8 @@ class Reports_model extends Base_Model
 			COALESCE(u.district_heating_total_budget, 0) as district_heating_budget,
 
 			COALESCE(u.district_heating_cost, 0) as district_heating_cost_actual,
+
+			COALESCE(u.district_heating_fixed_cost, 0) as district_heating_fixed_cost,
 
 			COALESCE(u.district_heating_total_budget_cost, 0) as district_heating_cost_budget,
 
@@ -2825,9 +2829,9 @@ class Reports_model extends Base_Model
      * @param int $baseline_year The baseline/regression year for the site
      * @return array ['current' => [...], 'baseline' => [...]]
      */
-    function getProgressOnTargetWithBaseline($baseline_year, $groupBy = '')
+    function getProgressOnTargetWithBaseline($baseline_year, $groupBy = '', $selectedMonth = null, $selectedYear = null)
     {
-        $dateParams = getProgressWidgetDateParams();
+        $dateParams = getProgressWidgetDateParams($selectedMonth, $selectedYear);
         $current_year = $dateParams['year'];
         $previous_year = $dateParams['previous_year'];
         $current_month = $dateParams['month'];
@@ -3102,6 +3106,7 @@ class Reports_model extends Base_Model
 		$performanceReportData['ScopeEmission'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['ScopeEmissionPerSquareFootage'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['CarbonFootprint'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
+		$performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['RenewableEnergyGenerated'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['RenewableEnergyGeneratedIntensity'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy);
 		$performanceReportData['UtilityConsumption'][$result['month_id']][$result['year_id'] . '_occupancy'] = round($Occupancy) ?? 0;
@@ -3128,6 +3133,7 @@ class Reports_model extends Base_Model
 		    unset($performanceReportData['ScopeEmission'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['ScopeEmissionPerSquareFootage'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['CarbonFootprint'][$result['month_id']][$TwoYearBack]);
+		    unset($performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['RenewableEnergyGenerated'][$result['month_id']][$TwoYearBack]);
 		    unset($performanceReportData['RenewableEnergyGeneratedIntensity'][$result['month_id']][$TwoYearBack]);
 		    unset($utitlityRoomNight[$result['month_id']][$TwoYearBack]);
@@ -3146,6 +3152,7 @@ class Reports_model extends Base_Model
 		    unset($performanceReportData['ScopeEmission'][$result['month_id']][($TwoYearBack) . '_occupancy']);
 		    unset($performanceReportData['ScopeEmissionPerSquareFootage'][$result['month_id']][($TwoYearBack) . '_occupancy']);
 		    unset($performanceReportData['CarbonFootprint'][$result['month_id']][($TwoYearBack) . '_occupancy']);
+		    unset($performanceReportData['CarbonFootprintGuestNight'][$result['month_id']][($TwoYearBack) . '_occupancy']);
 		}
 	    }
 	    }
@@ -3157,21 +3164,21 @@ class Reports_model extends Base_Model
 	switch ($filters['performance_chart_type']) {
 	    case 'utility_consumption':
 		$data['performanceReportArray'] = $performanceReportData['UtilityConsumption'];
-		$data['y_axis'] = 'Kwh';
+		$data['y_axis'] = 'kWh';
 		$data['report_title'] = 'Total Energy Consumption';
-		$data['unit'] = 'Kwh';
+		$data['unit'] = 'kWh';
 		break;
 
 	    case 'utility_consumption_intesity_per_square_footage':
 		$data['performanceReportArray'] = $performanceReportData['UtilityConsumptionIntensity'];
-		$data['y_axis'] = 'Kwh'. '/' .  getLocalUnitText($site_detail['id']);
+		$data['y_axis'] = 'kWh'. '/' .  getLocalUnitText($site_detail['id']);
 		$data['report_title'] = 'Total Energy Consumption Intensity (per square '. getLocalUnitFullText($site_detail['id']).')';
 		$data['unit'] = $site_detail['local_currency'] . '/' .  getLocalUnitText($site_detail['id']);
 		break;
 
 	    case 'utility_consumption_intensity_per_room_night':
 		$data['performanceReportArray'] = $performanceReportData['UtilityConsumptionRoomNight'];
-		$data['y_axis'] = 'Kwh/RN';
+		$data['y_axis'] = 'kWh/RN';
 		$data['report_title'] = 'Total Energy Consumption Intensity (per room-night)';
 		$data['unit'] = $site_detail['local_currency'] . '/room-night)';
 		break;
@@ -3334,6 +3341,12 @@ class Reports_model extends Base_Model
 		$data['performanceReportArray'] = $performanceReportData['CarbonFootprint'];
 		$data['y_axis'] = $data['unit'] = 'kgCO2';
 		$data['report_title'] = 'Carbon Emissions (Scope 1 and 2)';
+		break;
+
+	    case 'carbon_emissions_kgco2_gn':
+		$data['performanceReportArray'] = $performanceReportData['CarbonFootprintGuestNight'];
+		$data['y_axis'] = $data['unit'] = 'kgCO2/GN';
+		$data['report_title'] = 'Carbon Emissions kgCO2/GN';
 		break;
 
 	    case 'tonnes_of_carbon_offsets_purchased':

@@ -1421,6 +1421,52 @@ class Sites_model extends Base_Model
 		return $result->result_array();
 	}
 
+	public function update_measure_reading($site_id = 0, $postdata=null)
+	{
+		if (!$site_id || empty($postdata)) {
+			return;
+		}
+
+		$columns = [
+			'low',
+			'lower_quartile',
+			'mean',
+			'median',
+			'upper_quartile',
+			'high',
+			'sd'
+		];
+
+		$measure_readings = $this->get_measure_readings($site_id);
+
+		foreach ($measure_readings as $measure) {
+
+			$measure_id = (int) $measure['measure_id'];
+
+			$data = [];
+
+			foreach ($columns as $column) {
+
+				$key = $column . $measure_id;
+
+				if (isset($postdata[$key]) && $postdata[$key] !== '') {
+					$data[$column] = (float) $postdata[$key];
+				}
+			}
+
+			if (!empty($data)) {
+
+				$this->db
+					->where('site_id', $site_id)
+					->where('measure_id', $measure_id)
+					->update(
+						$this->_tbl_site_measures_reading,
+						$data
+					);
+			}
+		}
+	}
+
 	// get_all_hourly_reading_settings
 	public function get_all_hourly_reading_settings()
 	{
@@ -2205,7 +2251,7 @@ class Sites_model extends Base_Model
 		}
 		$this->sites_model->year = $this->utilities_model->utilities_year;
 		$this->utilities_model->site_id = $site_id;
-		$utilitiesSameMonthPreviousYear = $this->utilities_model->getUtility();
+		$utilitiesSameMonthPreviousYear = array_map('floatval', $this->utilities_model->getUtility());
 
 		$utilitiesSameMonthPreviousYear['total_electricity_kwh'] = ($utilitiesSameMonthPreviousYear['total_electricity_kwh'] != '') ? $utilitiesSameMonthPreviousYear['total_electricity_kwh'] : 0;
 		$utilitiesSameMonthPreviousYear['total_lpg'] = ($utilitiesSameMonthPreviousYear['total_lpg'] != '') ? $utilitiesSameMonthPreviousYear['total_lpg'] : 0;
@@ -2343,7 +2389,7 @@ class Sites_model extends Base_Model
 			$this->utilities_model->utilities_month = $i;
 			$this->utilities_model->utilities_year = date("Y") - 1;
 			$this->sites_model->year = $this->utilities_model->utilities_year;
-			$YtdUtilitiesPreviousYear = $this->utilities_model->getUtility();
+			$YtdUtilitiesPreviousYear = array_map('floatval',$this->utilities_model->getUtility());
 
 			$YtdUtilitiesPreviousYear['total_electricity_kwh'] = ($YtdUtilitiesPreviousYear['total_electricity_kwh'] != '') ? $YtdUtilitiesPreviousYear['total_electricity_kwh'] : 0;
 			$YtdUtilitiesPreviousYear['total_lpg'] = ($YtdUtilitiesPreviousYear['total_lpg'] != '') ? $YtdUtilitiesPreviousYear['total_lpg'] : 0;
@@ -2536,7 +2582,20 @@ class Sites_model extends Base_Model
 		$getUtilities_sameMonth_lastYear['natural_gas_fixed_cost'] = ($getUtilities_sameMonth_lastYear['natural_gas_fixed_cost'] != '') ? $getUtilities_sameMonth_lastYear['natural_gas_fixed_cost'] : 0;
 		$getUtilities_sameMonth_lastYear['water_fixed_cost'] = ($getUtilities_sameMonth_lastYear['water_fixed_cost'] != '') ? $getUtilities_sameMonth_lastYear['water_fixed_cost'] : 0;
 		$getUtilities_sameMonth_lastYear['total_fleet_petrol_cost'] = ($getUtilities_sameMonth_lastYear['total_fleet_petrol_cost'] != '') ? $getUtilities_sameMonth_lastYear['total_fleet_petrol_cost'] : 0;
-		$dataCarbon['total_utility_cost_sameMonth_lastYear'] = $getUtilities_sameMonth_lastYear['total_electricity_cost'] + $getUtilities_sameMonth_lastYear['total_fuel_oil_cost'] + $getUtilities_sameMonth_lastYear['total_lpg_cost'] + $getUtilities_sameMonth_lastYear['total_natural_gas_cost'] + $getUtilities_sameMonth_lastYear['district_heating_cost'] + $getUtilities_sameMonth_lastYear['district_cooling_cost'] + $getUtilities_sameMonth_lastYear['water_total_consumption_cost'] + $getUtilities_sameMonth_lastYear['district_heating_fixed_cost'] + $getUtilities_sameMonth_lastYear['district_cooling_fixed_cost'] + $getUtilities_sameMonth_lastYear['lpg_fixed_cost'] + $getUtilities_sameMonth_lastYear['natural_gas_fixed_cost'] + $getUtilities_sameMonth_lastYear['water_fixed_cost'] + $getUtilities_sameMonth_lastYear['total_fleet_petrol_cost'];
+		$dataCarbon['total_utility_cost_sameMonth_lastYear'] =
+			(float)$getUtilities_sameMonth_lastYear['total_electricity_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['total_fuel_oil_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['total_lpg_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['total_natural_gas_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['district_heating_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['district_cooling_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['water_total_consumption_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['district_heating_fixed_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['district_cooling_fixed_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['lpg_fixed_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['natural_gas_fixed_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['water_fixed_cost']
+			+ (float)$getUtilities_sameMonth_lastYear['total_fleet_petrol_cost'];
 		$dataCarbon['variation_ytd'] = $variation_ytd;
 		$dataCarbon['variationPercentage_ytd'] = $total_utility_costs_variation != '' ? ($variation_ytd * 100) / $total_utility_costs_variation : 0;
 		$sameMonth_lastYear_cost_roomNight = ($dataCarbon['total_utility_cost_sameMonth_lastYear'] != '' && $getUtilities_sameMonth_lastYear['total_room_night']) ? $dataCarbon['total_utility_cost_sameMonth_lastYear'] / $getUtilities_sameMonth_lastYear['total_room_night'] : 0;
@@ -2720,7 +2779,7 @@ class Sites_model extends Base_Model
         ];
 	}
 
-	public function getMySitesWidgetData($site_details) {
+	public function getMySitesWidgetData($site_details,$isAnnual=null) {
 		$this->load->model('sites/site_emission_model');
 		$this->load->model('utilities/utilities_model');
 		$baseline_year = $site_details['baseline_regression_year']; 
@@ -2909,9 +2968,17 @@ class Sites_model extends Base_Model
 		$query = $this->db->get();
 		$rawResult = $query->result_array();
 		$this->load->model('utilities/utilities_model');
-		$currentYearFromDate   = (int) $prev1->format('Y');   // YTD year = previous month year
-		$lastYearFromDate      = $currentYearFromDate - 1;
-		$currentMonthFromDate  = (int) $prev1->format('n');   // YTD up to previous month
+		if($isAnnual){
+			$currentYearFromDate   = (int) $prev1->format('Y')-1;   // YTD year = previous month year
+			$lastYearFromDate      = $currentYearFromDate - 2;
+			$currentMonthFromDate  = 12;//(int) $prev1->format('n');   // YTD up to previous month
+		}
+		else
+		{
+			$currentYearFromDate   = (int) $prev1->format('Y');   // YTD year = previous month year
+			$lastYearFromDate      = $currentYearFromDate - 1;
+			$currentMonthFromDate  = (int) $prev1->format('n');   // YTD up to previous month
+		}
 
 		$dataNewYtd = $this->getYtdCarbonFootprints(
 			$site_details['id'],
@@ -2987,16 +3054,18 @@ class Sites_model extends Base_Model
 			'reports/reports_model',
 			'sites/site_waste_model'
 		]);
-
-		$siteCronSettings = $this->sites_model->getSiteCronSettings();
-		$monthlyTickedSites = array();
-		foreach ($siteCronSettings as $cronSettings) {
-			if ($cronSettings['site_cron_settings']['cron_type'] == 'MONTHLY') {
-				array_push($monthlyTickedSites, $cronSettings['site_cron_settings']['site_id']);
+		if($isAttachment == 1){
+			
+			$siteCronSettings = $this->sites_model->getSiteCronSettings();
+			$monthlyTickedSites = array();
+			foreach ($siteCronSettings as $cronSettings) {
+				if ($cronSettings['site_cron_settings']['cron_type'] == 'MONTHLY') {
+					array_push($monthlyTickedSites, $cronSettings['site_cron_settings']['site_id']);
+				}
 			}
-		}
-		if (empty($monthlyTickedSites)) {
-			return false;
+			if (empty($monthlyTickedSites)) {
+				return false;
+			}
 		}
 
         $parentHeading = [
@@ -3132,8 +3201,10 @@ class Sites_model extends Base_Model
 	    if (!empty($sites)) {
 			foreach ($sites as $key => $site_detail) {
 				$site_id = $site_detail['id'];
-				if(!in_array($site_id, $monthlyTickedSites)) {
-					continue;
+				if($isAttachment == 1){
+					if(!in_array($site_id, $monthlyTickedSites)) {
+						continue;
+					}
 				}
 				$progressOnTarget = [];
 				$progressOnTargetWasteYtd = [];
@@ -3158,7 +3229,7 @@ class Sites_model extends Base_Model
 				$data['sites'][$site_id]['dataUtilityCurrent']['total_natural_gas'] = (float) ($getUtilities['total_natural_gas'] * $dataFactor['natural_gas'] ?? 0);
 				$data['sites'][$site_id]['dataUtilityCurrent']['district_heating'] = (float) ($getUtilities['district_heating'] * $dataFactor['district_heating'] ?? 0);
 				$data['sites'][$site_id]['dataUtilityCurrent']['district_cooling'] = (float) ($getUtilities['district_cooling'] * $dataFactor['district_cooling'] ?? 0);
-			        $data['sites'][$site_id]['dataUtilityCurrent']['water_total_consumption'] = (float) ($getUtilities['water_total_consumption'] * $dataFactor['water'] ?? 0);
+				$data['sites'][$site_id]['dataUtilityCurrent']['water_total_consumption'] = (float) ($getUtilities['water_total_consumption'] * $dataFactor['water'] ?? 0);
 
 				$data['sites'][$site_id]['dataUtilityCurrentYTD']['total_electricity_kwh'] = (float) ($getUtilitiesYTD['total_electricity_kwh'] * $dataFactor['electricity'] ?? 0);
 				$data['sites'][$site_id]['dataUtilityCurrentYTD']['total_lpg'] = (float) ($getUtilitiesYTD['total_lpg'] * $dataFactor['lpg'] ?? 0);
@@ -3194,11 +3265,14 @@ class Sites_model extends Base_Model
 				$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear);
 				$landfillData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, 'landfill', $currentYear, $currMonth);
 				$totalWasteData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, '', $currentYear, $currMonth);
+				$wasteDiversionNumeratorData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, 'recycling_wte', $currentYear, $currMonth);
 
 				$progressOnTarget[$baselineYear]['landfill_waste_target'] = isset($landfillData['YTDTotal'][$baselineYear]) ? $landfillData['YTDTotal'][$baselineYear] : 0;
 				$progressOnTarget[$baselineYear]['total_waste_target'] = isset($totalWasteData['YTDTotal'][$baselineYear]) ? $totalWasteData['YTDTotal'][$baselineYear] : 0;
+				$progressOnTarget[$baselineYear]['waste_diversion_numerator'] = isset($wasteDiversionNumeratorData['YTDTotal'][$baselineYear]) ? $wasteDiversionNumeratorData['YTDTotal'][$baselineYear] : 0;
 				$progressOnTarget[$running_year]['landfill_waste_target'] = isset($landfillData['YTDTotal'][$running_year]) ? $landfillData['YTDTotal'][$running_year] : 0;
 				$progressOnTarget[$running_year]['total_waste_target'] = isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0;
+				$progressOnTarget[$running_year]['waste_diversion_numerator'] = isset($wasteDiversionNumeratorData['YTDTotal'][$running_year]) ? $wasteDiversionNumeratorData['YTDTotal'][$running_year] : 0;
 
 				$progressValueWasteYTD = [
 					'total_waste_baseline_target' => isset($totalWasteData['YTDTotal'][$baselineYear]) ? $totalWasteData['YTDTotal'][$baselineYear] : 0,

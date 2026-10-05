@@ -793,6 +793,11 @@ class Reportscron_admin extends Base_Admin_Controller
 
 		$filters_comparision_chart['end_year'] = (isset($enddateexplode[1])) ? $enddateexplode[1] : '';
 
+		if ($monthly && !empty($filters_comparision_chart['start_month']) && !empty($filters_comparision_chart['start_year'])) {
+			$filters['previous_month'] = (int) $filters_comparision_chart['start_month'];
+			$filters['previous_year'] = $filters_comparision_chart['start_year'];
+		}
+
 		if ($isLocal) {
 
 			$utility_cost_chart_results = $this->reportscron_model->utilityCostBarChart($filters_comparision_chart);
@@ -2657,11 +2662,12 @@ class Reportscron_admin extends Base_Admin_Controller
 				$progressOnTarget = array();
 				$dateParams = getProgressWidgetDateParams();
 				$current_month = $dateParams['month'];
+				$annualMonthWindow = 12;
 				$current_year = $dateParams['year'];
 				$running_year = $dateParams['running_year'];
 				$baselineYear = $site_detail['baseline_regression_year'];
 				$progressOnTargetMonthly = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear, 'month');
-				$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear);
+				$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear,'',$annualMonthWindow,$current_year);
 				$wasteDiversionNumeratorData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, 'recycling_wte', $current_year, $current_month);
 				$totalWasteData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, '', $current_year, $current_month);
 
@@ -2675,7 +2681,7 @@ class Reportscron_admin extends Base_Admin_Controller
 					'total_waste_target' => isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0
 				];
 				$dataNew = $currentMonth = $lastMonth = $sameMonthLastYear = [];
-				$dataNew = $this->sites_model->getMySitesWidgetData($site_detail);
+				$dataNew = $this->sites_model->getMySitesWidgetData($site_detail,true);
 				$currentMonth = $dataNew[0] ?? [];
 				$lastMonth = $dataNew[1] ?? [];
 				$sameMonthLastYear = $dataNew[2] ?? [];
@@ -2710,8 +2716,14 @@ class Reportscron_admin extends Base_Admin_Controller
 				// Waste report data
 				$currYear = date('Y') - 1;
 				$currMonth = 12;
-				$data['waste']['total_room_night'] = $data['utility_cost_chart'][$currMonth][$currYear]['room_night'];
-				$data['waste']['total_guests'] = $data['utility_cost_chart'][$currMonth][$currYear]['guest_night'];
+				for ($month = 1; $month <= $currMonth; $month++) {
+					$currentUtility = $data['utility_cost_chart'][$month][$currYear] ?? array();
+					$previousUtility = $data['utility_cost_chart_pre'][$month][$currYear-1] ?? array();
+					$data['waste']['total_room_night'] += (float) ($currentUtility['room_night'] ?? 0);
+					$data['waste']['previous_total_room_night'] += (float) ($previousUtility['room_night'] ?? 0);
+					$data['waste']['total_guests'] += (float) ($currentUtility['guest_night'] ?? 0);
+					$data['waste']['previous_total_guests'] += (float) ($previousUtility['guest_night'] ?? 0);
+				}
 				$data['waste']['WasteReport'] = $this->site_waste_model->getWasteReportData($site_id, $data['waste'], $currYear, $currMonth);
 				if(empty($data['waste']['WasteReport'])) {
 					$content_reports_waste_report_annual = '';
@@ -2774,7 +2786,7 @@ class Reportscron_admin extends Base_Admin_Controller
 				$cooling_district_value = 0;
 
 				foreach ($getUtilityData as $getUtilities) {
-					$this->sites->model->year = date('Y') - 1;
+					$this->sites_model->year = date('Y') - 1;
 					$site_detials = $this->sites_model->get_site_detail_custom($site_id);
 					$carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
 
@@ -2802,7 +2814,7 @@ class Reportscron_admin extends Base_Admin_Controller
 
 
 				foreach ($getUtilityData_prev as $getUtilities) {
-					$this->sites->model->year = date('Y') - 2;
+					$this->sites_model->year = date('Y') - 2;
 					$site_detials = $this->sites_model->get_site_detail_custom($site_id);
 					$carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
 
@@ -2833,20 +2845,91 @@ class Reportscron_admin extends Base_Admin_Controller
 
 
 
-				$data['measures']['HotelCarbonFootprintPerRoom'] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
+				$data['measures']['HotelCarbonFootprintPerRoom'][date("Y")] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
 
-				$data['measures']['HotelCarbonFootprintPerOccupiedRoom'] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
+				$data['measures']['HotelCarbonFootprintPerOccupiedRoom'][date("Y")] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
 
-				$data['measures']['HotelCarbonFootprintPerSquareMeter'] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
+				$data['measures']['HotelCarbonFootprintPerSquareMeter'][date("Y")] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
 
-				$data['measures']['HotelEnergyUsagePerOccupiedRoom'] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
+				$data['measures']['HotelEnergyUsagePerOccupiedRoom'][date("Y")] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
 
-				$data['measures']['HotelEnergyUsagePerSquareMeter'] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
+				$data['measures']['HotelEnergyUsagePerSquareMeter'][date("Y")] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
 
-				$data['measures']['HotelWaterUsagePerOccupiedRoom'] = round($water_total_consumption_measure / $total_room_night_measure, 2);
+				$data['measures']['HotelWaterUsagePerOccupiedRoom'][date("Y")] = round($water_total_consumption_measure / $total_room_night_measure, 2);
 
-				$data['measures']['HotelWaterUsagePerSquareMeter'] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
+				$data['measures']['HotelWaterUsagePerSquareMeter'][date("Y")] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
 
+					$chsb_measures = calculateCHSBMeasures(date('Y')-1, 12, $site_id, $site_detials, $result, $this->utilities_model);
+
+					// SAVE CHSB VALUES
+
+					$data['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_1'];
+
+					$data['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_2'];
+
+					$data['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_3'];
+
+					$data['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_4'];
+
+					$data['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_5'];
+
+					$data['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_6'];
+
+					$data['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+						'chsb_measure_no' => 7,
+						'chsb_value' => $chsb_measures['chsb_measure_7']
+					);
+
+					$data['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_8'];
+
+					$data['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_9'];
+
+					$data['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+						'chsb_measure_no' => 10,
+						'chsb_value' => $chsb_measures['chsb_measure_10']
+					);
+
+					$data['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+						'chsb_measure_no' => 11,
+						'chsb_value' => $chsb_measures['chsb_measure_11']
+					);
+
+					$data['measures']['RenewableEnergyPercentage'] = array(
+						'chsb_measure_no' => 12,
+						'chsb_value' => $chsb_measures['chsb_measure_12']
+					);
+
+					$data['measures']['RenewableElectricityPercentage'] = array(
+						'chsb_measure_no' => 13,
+						'chsb_value' => $chsb_measures['chsb_measure_13']
+					);
+
+					$data['measures']['ElectricityToNonElectricEnergy'] = array(
+						'chsb_measure_no' => 14,
+						'chsb_value' => $chsb_measures['chsb_measure_14']
+					);
+					$data['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_4a'];
+
+					$data['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_6a'];
+
+					$data['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_9a'];
+
+					if ($result['chsb_reporting'] == 1) {
+
+						$chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
+
+					}
 
 
 
@@ -2921,6 +3004,20 @@ class Reportscron_admin extends Base_Admin_Controller
 					$pdf->writeHTML($content_reports_carbon_footprint, true, false, true, false, '');
 				}
 
+				if ($result['chsb_reporting'] == 1) {
+
+                    $pdf->SetFont('helvetica', '', 7);
+
+                    if ($chsb_reporting != '') {
+
+                        $pdf->AddPage();
+
+                        $pdf->writeHTML($chsb_reporting, true, false, true, false, '');
+
+                    }
+
+                }
+
 				if ($content_reports_waste_report_annual != '') {
 					$pdf->AddPage();
 					$pdf->writeHTML($content_reports_waste_report_annual, true, false, true, false, '');
@@ -2956,7 +3053,7 @@ class Reportscron_admin extends Base_Admin_Controller
 			$waste_monthly_piechart_reports = '';
 
 
-
+			$site_details =  $this->sites_model->get_site_detail_custom($site_id);
 			$data['monthly']['currentBudgetActualData'] = $allcurrentBudgetActualData;
 
 			$data['monthly']['pdf_report_title'] = 'Monthly Utilities report - ' . ($fullmontharray[$data['monthly']['filters']["filters_comparision_chart"]['start_month']]) . ' ' . ($data['monthly']['filters']["filters_comparision_chart"]['start_year']);
@@ -3109,6 +3206,198 @@ class Reportscron_admin extends Base_Admin_Controller
 				$content_reports_waste_report = $this->load->view('admin_landing_pdf_reports_waste', $data['monthly']['waste'], true);
 			}
 
+			$this->utilities_model->utilities_month = date("n") - 1;
+
+            $this->utilities_model->utilities_year = date("Y");
+
+
+
+            if ($this->utilities_model->utilities_month == 0) {
+
+                $this->utilities_model->utilities_month = 12;
+
+                $this->utilities_model->utilities_year = date("Y") - 1;
+
+            }
+
+
+
+            $this->utilities_model->site_id = $site_id;
+
+            $getUtilityData = $this->utilities_model->getSiteUtilityCurYear();
+
+
+
+            $this->utilities_model->utilities_month = date("n");
+
+            $this->utilities_model->utilities_year = date("Y") - 1;
+
+            $getUtilityData_prev = $this->utilities_model->getSiteUtilityLastYear();
+
+
+
+            $carbon_footPrint_measure = 0;
+
+            $total_room_night_measure = 0;
+
+            $utility_kwh_total_measure = 0;
+
+            $water_total_consumption_measure = 0;
+
+
+
+            foreach ($getUtilityData as $getUtilities) {
+
+
+
+                $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
+
+
+
+                $total_room_night_measure += $getUtilities['total_room_night'];
+
+                $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+            }
+
+
+
+            foreach ($getUtilityData_prev as $getUtilities) {
+
+
+
+                $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detail['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detail['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detail['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detail['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detail['district_cooling_emission_factor']);
+
+
+
+                $total_room_night_measure += $getUtilities['total_room_night'];
+
+                $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+            }
+
+
+
+            $data['monthly']['measures']['HotelCarbonFootprintPerRoom'][date('Y')] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
+
+            $data['monthly']['measures']['HotelCarbonFootprintPerOccupiedRoom'][date('Y')] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
+
+            $data['monthly']['measures']['HotelCarbonFootprintPerSquareMeter'][date('Y')] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
+
+            $data['monthly']['measures']['HotelEnergyUsagePerOccupiedRoom'][date('Y')] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
+
+            $data['monthly']['measures']['HotelEnergyUsagePerSquareMeter'][date('Y')] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
+
+            $data['monthly']['measures']['HotelWaterUsagePerOccupiedRoom'][date('Y')] = round($water_total_consumption_measure / $total_room_night_measure, 2);
+
+            $data['monthly']['measures']['HotelWaterUsagePerSquareMeter'][date('Y')] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
+			$chsb_measures = calculateCHSBMeasures(date('Y'), date('n'), $site_id, $site_details, $result, $this->utilities_model);
+
+					// SAVE CHSB VALUES
+
+					$data['monthly']['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_1'];
+
+					$data['monthly']['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_2'];
+
+					$data['monthly']['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_3'];
+
+					$data['monthly']['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_4'];
+
+					$data['monthly']['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_5'];
+
+					$data['monthly']['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_6'];
+
+					$data['monthly']['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+						'chsb_measure_no' => 7,
+						'chsb_value' => $chsb_measures['chsb_measure_7']
+					);
+
+					$data['monthly']['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_8'];
+
+					$data['monthly']['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_9'];
+
+					$data['monthly']['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+						'chsb_measure_no' => 10,
+						'chsb_value' => $chsb_measures['chsb_measure_10']
+					);
+
+					$data['monthly']['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+						'chsb_measure_no' => 11,
+						'chsb_value' => $chsb_measures['chsb_measure_11']
+					);
+
+					$data['monthly']['measures']['RenewableEnergyPercentage'] = array(
+						'chsb_measure_no' => 12,
+						'chsb_value' => $chsb_measures['chsb_measure_12']
+					);
+
+					$data['monthly']['measures']['RenewableElectricityPercentage'] = array(
+						'chsb_measure_no' => 13,
+						'chsb_value' => $chsb_measures['chsb_measure_13']
+					);
+
+					$data['monthly']['measures']['ElectricityToNonElectricEnergy'] = array(
+						'chsb_measure_no' => 14,
+						'chsb_value' => $chsb_measures['chsb_measure_14']
+					);
+					$data['monthly']['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_4a'];
+
+					$data['monthly']['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_6a'];
+
+					$data['monthly']['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_9a'];
+
+            if ($result['chsb_reporting'] == 1) {
+
+                $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data['monthly'], true);
+
+            }
 			$content_site_detail = $this->load->view('admin_landing_pdf_site_detail', $data['monthly'], true);
 
 			$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -3176,6 +3465,18 @@ class Reportscron_admin extends Base_Admin_Controller
 
 				$pdf->writeHTML($content_reports_carbon_footprint, true, false, true, false, '');
 			}
+
+			if ($result['chsb_reporting'] == 1) {
+
+                if ($chsb_reporting != '') {
+
+                    $pdf->AddPage();
+
+                    $pdf->writeHTML($chsb_reporting, true, false, true, false, '');
+
+                }
+
+            }
 
 			if ($content_reports_waste_report != '') {
 				$pdf->AddPage();
@@ -3400,7 +3701,198 @@ class Reportscron_admin extends Base_Admin_Controller
 				$content_reports_carbon_footprint = $this->load->view('admin_landing_pdf_reports_carbon_footprint', $data, true);
 
 				$content_site_detail = $this->load->view('admin_landing_pdf_site_detail', $data, true);
+				$this->utilities_model->utilities_month = date("n") - 1;
 
+                $this->utilities_model->utilities_year = date("Y");
+
+
+
+                if ($this->utilities_model->utilities_month == 0) {
+
+                    $this->utilities_model->utilities_month = 12;
+
+                    $this->utilities_model->utilities_year = date("Y") - 1;
+
+                }
+
+                $this->utilities_model->site_id = $site_id;
+
+                $getUtilityData = $this->utilities_model->getSiteUtilityCurYear();
+
+
+
+                $this->utilities_model->utilities_month = date("n");
+
+                $this->utilities_model->utilities_year = date("Y") - 1;
+
+                $getUtilityData_prev = $this->utilities_model->getSiteUtilityLastYear();
+
+
+
+                $carbon_footPrint_measure = 0;
+
+                $total_room_night_measure = 0;
+
+                $utility_kwh_total_measure = 0;
+
+                $water_total_consumption_measure = 0;
+
+
+
+                foreach ($getUtilityData as $getUtilities) {
+
+
+
+                    $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
+
+
+
+                    $total_room_night_measure += $getUtilities['total_room_night'];
+
+                    $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                    $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                    $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                    $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                    $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                    $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                    $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                    $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+                }
+
+
+
+                foreach ($getUtilityData_prev as $getUtilities) {
+
+
+
+                    $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detail['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detail['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detail['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detail['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detail['district_cooling_emission_factor']);
+
+
+
+                    $total_room_night_measure += $getUtilities['total_room_night'];
+
+                    $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                    $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                    $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                    $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                    $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                    $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                    $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                    $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+                }
+
+
+
+                $data['measures']['HotelCarbonFootprintPerRoom'][date('Y')] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
+
+                $data['measures']['HotelCarbonFootprintPerOccupiedRoom'][date('Y')] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
+
+                $data['measures']['HotelCarbonFootprintPerSquareMeter'][date('Y')] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
+
+                $data['measures']['HotelEnergyUsagePerOccupiedRoom'][date('Y')] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
+
+                $data['measures']['HotelEnergyUsagePerSquareMeter'][date('Y')] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
+
+                $data['measures']['HotelWaterUsagePerOccupiedRoom'][date('Y')] = round($water_total_consumption_measure / $total_room_night_measure, 2);
+
+                $data['measures']['HotelWaterUsagePerSquareMeter'][date('Y')] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
+				$chsb_measures = calculateCHSBMeasures(date('Y'), date('n'), $site_id, $site_details, $result, $this->utilities_model);
+
+					// SAVE CHSB VALUES
+
+					$data['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_1'];
+
+					$data['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_2'];
+
+					$data['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_3'];
+
+					$data['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_4'];
+
+					$data['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_5'];
+
+					$data['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_6'];
+
+					$data['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+						'chsb_measure_no' => 7,
+						'chsb_value' => $chsb_measures['chsb_measure_7']
+					);
+
+					$data['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_8'];
+
+					$data['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_9'];
+
+					$data['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+						'chsb_measure_no' => 10,
+						'chsb_value' => $chsb_measures['chsb_measure_10']
+					);
+
+					$data['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+						'chsb_measure_no' => 11,
+						'chsb_value' => $chsb_measures['chsb_measure_11']
+					);
+
+					$data['measures']['RenewableEnergyPercentage'] = array(
+						'chsb_measure_no' => 12,
+						'chsb_value' => $chsb_measures['chsb_measure_12']
+					);
+
+					$data['measures']['RenewableElectricityPercentage'] = array(
+						'chsb_measure_no' => 13,
+						'chsb_value' => $chsb_measures['chsb_measure_13']
+					);
+
+					$data['measures']['ElectricityToNonElectricEnergy'] = array(
+						'chsb_measure_no' => 14,
+						'chsb_value' => $chsb_measures['chsb_measure_14']
+					);
+					$data['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_4a'];
+
+					$data['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_6a'];
+
+					$data['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_9a'];
+
+
+
+                if ($result['chsb_reporting'] == 1) {
+
+                    $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
+
+                }
 
 
 				$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -3472,6 +3964,20 @@ class Reportscron_admin extends Base_Admin_Controller
 
 					$pdf->writeHTML($content_reports_carbon_footprint, true, false, true, false, '');
 				}
+
+				if ($result['chsb_reporting'] == 1) {
+
+
+
+                    if ($chsb_reporting != '') {
+
+                        $pdf->AddPage();
+
+                        $pdf->writeHTML($chsb_reporting, true, false, true, false, '');
+
+                    }
+
+                }
 
 				if ($content_reports_waste_report_ytd != '') {
 					$pdf->AddPage();

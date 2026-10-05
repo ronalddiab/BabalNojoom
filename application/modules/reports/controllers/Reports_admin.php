@@ -35,10 +35,6 @@ class Reports_admin extends Base_Admin_Controller
 	} else {
 	    define('CURRENT_YEAR_MAX_MONTH_ID', date('m') - 1);
 	}
-	if ($this->input->post('currency')) {
-	    $this->mCurrency = $this->input->post('currency');
-	    $this->session->set_custom_userdata($this->section_name, "mCurrency", $this->mCurrency);
-	}
     }
 
     private function access_rules()
@@ -58,9 +54,6 @@ class Reports_admin extends Base_Admin_Controller
     {
 	$data = array();
 	$data['currency'] = "local";
-	if ($this->input->post('currency')) {
-	    $data['currency'] = $this->input->post('currency');
-	}
 	$data['CURRENT_YEAR_MAX_MONTH_ID'] = CURRENT_YEAR_MAX_MONTH_ID;
 	$data['cview'] = $cview;
 	$cview_file = 'admin_index';
@@ -130,6 +123,8 @@ class Reports_admin extends Base_Admin_Controller
 
 	if ($this->input->post('utility_year_selected')) {
 	    $utility_year_selected = $this->input->post('utility_year_selected');
+	} elseif ($this->input->post('yearly_report_year')) {
+	    $utility_year_selected = $this->input->post('yearly_report_year');
 	} else {
 	    $utility_year_selected = $currentYear;
 	}
@@ -167,12 +162,14 @@ class Reports_admin extends Base_Admin_Controller
 	    $totalWater = 0;
 	    $totalHeatingDistrict = 0;
 	    $totalCoolingDistrict = 0;
+	    $totalFleetPetrol = 0;
 	    $totalFuelConsumption = 0;
 	    $totalLpgConsumption = 0;
 	    $totalNaturalGasConsumption = 0;
 	    $totalWaterConsumption = 0;
 	    $totalHeatingDistrictConsumption = 0;
 	    $totalCoolingDistrictConsumption = 0;
+	    $totalFleetPetrolConsumption = 0;
 	    $totalElectricityConsumption = 0;
 	    // $result = array_map('intval', $utility_cost_chart_results);
 	    foreach ($utility_cost_chart_results as $key => $value) {
@@ -181,6 +178,7 @@ class Reports_admin extends Base_Admin_Controller
 		} else {
 		    $value = array_map('intval', $value);
 		    $value['cooling_district'] = $value['cooling_district'] + $value['district_cooling_fixed_cost'];
+		    $value['fleet_petrol'] = $value['fleet_petrol'];
 		    $value['heating_district'] = $value['heating_district'] + $value['district_heating_fixed_cost'];
 		    $value['lpg'] = $value['lpg'] + $value['lpg_fixed_cost'];
 		    $value['water'] = $value['water'] + $value['water_fixed_cost'];
@@ -198,6 +196,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $totalHeatingDistrictConsumption += $value['heating_district_consumption'];
 		    $totalCoolingDistrict += $value['cooling_district'];
 		    $totalCoolingDistrictConsumption += $value['cooling_district_consumption'];
+		    $totalFleetPetrol += $value['fleet_petrol'];
+		    $totalFleetPetrolConsumption += $value['fleet_petrol_consumption'];
 		    $totalElectricityConsumption += $value['total_electricity_kwh'];
 		    switch ($cview) {
 			case 'carbon_footprint':
@@ -378,6 +378,8 @@ class Reports_admin extends Base_Admin_Controller
 			    $data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_room_night_budget'] = $value['total_room_night_budget'];
 			    $data['utility_cost_chart'][$value['month_id']][$value['year_id']]['guest_night'] = $value['total_guests'];
 			    $data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_guests_budget'] = $value['total_guests_budget'];
+			    $data['utility_cost_chart'][$value['month_id']][$value['year_id']]['fleet_petrol'] = $value['fleet_petrol'];
+			    $data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_fleet_petrol_cost'] = $value['total_fleet_petrol_cost'];
 			    if (!empty($value['total_electricity_kwh'])) {
 				$electricity_tariff_cost_per_kwh = $value['electricity'] / $value['total_electricity_kwh'];
 			    } else {
@@ -403,6 +405,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $data['totalWater'] = $totalWater;
 	    $data['totalHeatingDistrict'] = $totalHeatingDistrict;
 	    $data['totalCoolingDistrict'] = $totalCoolingDistrict;
+	    $data['totalFleetPetrol'] = $totalFleetPetrol;
 	    $data['utility_year_selected'] = $utility_year_selected;
 	    $data['totalElectricityConsumption'] = $totalElectricityConsumption;
 	    $data['totalFuelConsumption'] = $totalFuelConsumption;
@@ -411,6 +414,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $data['totalWaterConsumption'] = $totalWaterConsumption;
 	    $data['totalHeatingDistrictConsumption'] = $totalHeatingDistrictConsumption;
 	    $data['totalCoolingDistrictConsumption'] = $totalCoolingDistrictConsumption;
+	    $data['totalFleetPetrolConsumption'] = $totalFleetPetrolConsumption;
 	} else {
 	    $data['utility_cost_chart'] = array();
 	}
@@ -436,7 +440,10 @@ class Reports_admin extends Base_Admin_Controller
 	$filters_comparision_chart_pre = array();
 	$startdate_pre = '1/' . date("Y", strtotime(date('Y') . " -1 years"));
 	$enddate_pre = '12/' . date("Y", strtotime(date('Y') . " -1 years"));
-	if ($this->input->post('yearly_report_year')) {
+	if ($this->input->post('utility_year_selected')) {
+	    $startdate_pre = '1/' . $this->input->post('utility_year_selected');
+	    $enddate_pre = '12/' . $this->input->post('utility_year_selected');
+	} elseif ($this->input->post('yearly_report_year')) {
 	    $startdate_pre = '1/' . $this->input->post('yearly_report_year', date('Y'));
 	    $enddate_pre = '12/' . $this->input->post('yearly_report_year', date('Y'));
 	}
@@ -474,6 +481,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $totalWater_utility_cost_pre = 0;
 	    $totalHeatingDistrict_utility_cost_pre = 0;
 	    $totalCoolingDistrict_utility_cost_pre = 0;
+	    $totalFleetPetrol_utility_cost_pre = 0;
 	    foreach ($utility_cost_chart_results_pre as $key => $value) {
 		if (isset($data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]) && !empty($data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']])) {
 		    continue;
@@ -491,6 +499,7 @@ class Reports_admin extends Base_Admin_Controller
 		    $totalWater_utility_cost_pre += $value['water'];
 		    $totalHeatingDistrict_utility_cost_pre += $value['heating_district'];
 		    $totalCoolingDistrict_utility_cost_pre += $value['cooling_district'];
+		    $totalFleetPetrol_utility_cost_pre += $value['fleet_petrol'];
 		    $data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['electricity'] = (!empty($value['electricity'])) ? $value['electricity'] : 0;
 		    $data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['electricity_consumption'] = (!empty($value['electricity_consumption'])) ? $value['electricity_consumption'] : 0;
 		    $data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['fuel'] = (!empty($value['fuel'])) ? $value['fuel'] : 0;
@@ -518,6 +527,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['renewable_energy'] = (!empty($value['renewable_energy'])) ? $value['renewable_energy'] : 0;
 		    $data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['onsite_generator_fuel_oil'] = (!empty($value['onsite_generator_fuel_oil'])) ? $value['onsite_generator_fuel_oil'] : 0;
 		    $data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['onsite_generator_natural_gas'] = (!empty($value['onsite_generator_natural_gas'])) ? $value['onsite_generator_natural_gas'] : 0;
+			$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['fleet_petrol'] = $value['fleet_petrol'];
+			$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_fleet_petrol_cost'] = $value['total_fleet_petrol_cost'];
 		    if (!empty($value['total_electricity_kwh'])) {
 			$electricity_tariff_cost_per_kwh = $value['electricity'] / $value['total_electricity_kwh'];
 		    } else {
@@ -536,6 +547,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $data['totalWater_utility_cost_pre'] = $totalWater_utility_cost_pre;
 	    $data['totalHeatingDistrict_utility_cost_pre'] = $totalHeatingDistrict_utility_cost_pre;
 	    $data['totalCoolingDistrict_utility_cost_pre'] = $totalCoolingDistrict_utility_cost_pre;
+	    $data['totalFleetPetrol_utility_cost_pre'] = $totalFleetPetrol_utility_cost_pre;
 	} else {
 	    $data['utility_cost_chart_pre'] = array();
 	}
@@ -576,15 +588,15 @@ class Reports_admin extends Base_Admin_Controller
 	    $kwh_report_results_pre = $this->reports_model->costBasedReportForCurrentYear($filters_pre);
 	}
 	if (!empty($kwh_report_results_pre)) {
-	    // $kwh_report_results_pre['cooling_district'] = $kwh_report_results_pre['cooling_district'] + $kwh_report_results_pre['district_cooling_fixed_cost'];
-	    // $kwh_report_results_pre['heating_district'] = $kwh_report_results_pre['heating_district'] + $kwh_report_results_pre['district_heating_fixed_cost'];
-	    $kwh_report_results_pre['cooling_district'] = $kwh_report_results_pre['cooling_district'];
-	    $kwh_report_results_pre['heating_district'] = $kwh_report_results_pre['heating_district'];
+	    $kwh_report_results_pre['cooling_district'] = $kwh_report_results_pre['cooling_district'] + $kwh_report_results_pre['district_cooling_fixed_cost'];
+	    $kwh_report_results_pre['heating_district'] = $kwh_report_results_pre['heating_district'] + $kwh_report_results_pre['district_heating_fixed_cost'];
+	    // $kwh_report_results_pre['cooling_district'] = $kwh_report_results_pre['cooling_district'];
+	    // $kwh_report_results_pre['heating_district'] = $kwh_report_results_pre['heating_district'];
 		if($site_details['show_utility_electricity']) {
 	    $data['cost_pie_chart_pre']['electricity'] = (!empty($kwh_report_results_pre['electricity'])) ? $kwh_report_results_pre['electricity'] : 0;
 		}
 		if($site_details['show_utility_fuel_oil']) {
-		    $data['cost_pie_chart_pre']['fuel'] = (!empty($kwh_report_results_pre['fuel'])) ? $kwh_report_results_pre['fuel_oil'] : 0;
+		    $data['cost_pie_chart_pre']['fuel'] = (!empty($kwh_report_results_pre['fuel'])) ? $kwh_report_results_pre['fuel'] : 0;
 		}
 		if($site_details['show_utility_lpg']) {
 		    $data['cost_pie_chart_pre']['lpg'] = (!empty($kwh_report_results_pre['lpg'])) ? $kwh_report_results_pre['lpg'] : 0;
@@ -700,7 +712,7 @@ class Reports_admin extends Base_Admin_Controller
 	}
 	/*         * *********************************************************************** */
 	// KWH Pie chart for current year
-	$filters['report_year'] = date('Y');
+	$filters['report_year'] = $utility_year_selected?:date('Y');
 	$filters['report_month'] = date('m');
 	if ($this->input->post('submit') == 'download_monthly_hidden') {
 	    $filters['report_year_piechart'] = $this->input->post('monthly_report_year');
@@ -779,65 +791,83 @@ class Reports_admin extends Base_Admin_Controller
 	} else {
 	    $data['cost_pie_chart'] = array();
 	}
-	// kWh pie chart for last 12 months
-	$kwh_report_results = $this->reports_model->kwhUnitBasedReportForPreviousMonth($filters);
+	// KWh pie chart for last 12 months
+	$data['kwh_pie_chart_previousmonth'] = array();
+	$data['cost_pie_chart_previousmonth'] = array();
+	$monthly_pie_filters = $filters;
+	$monthly_pie_filters['current_year'] = $utility_year_selected?:$filters['end_year'];
+	$monthly_pie_month = (int) $filters['max_month_id'];
+	$kwh_report_results = null;
+	for ($tryMonth = $monthly_pie_month; $tryMonth >= 1; $tryMonth--) {
+	    $monthly_pie_filters['previous_month'] = $tryMonth;
+	    $candidate = $this->reports_model->kwhUnitBasedReportForPreviousMonth($monthly_pie_filters);
+	    if (!empty($candidate)) {
+		$candidate = array_map('floatval', $candidate);
+		$kwhMonthTotal = $candidate['electricity'] + $candidate['fuel'] + $candidate['lpg'] + $candidate['natural_gas'] + $candidate['heating_district'] + $candidate['cooling_district'];
+		if ($kwhMonthTotal != 0) {
+		    $kwh_report_results = $candidate;
+		    $monthly_pie_month = $tryMonth;
+		    break;
+		}
+	    }
+	}
+	$filters['monthly_pie_month'] = $monthly_pie_month;
+	$filters['monthly_pie_year'] = $monthly_pie_filters['current_year'];
 	if (!empty($kwh_report_results)) {
 		if($site_details['show_utility_electricity']) {
-	    $data['kwh_pie_chart_previousmonth']['electricity'] = (!empty($kwh_report_results['electricity'])) ? ($kwh_report_results['electricity'] * $dataFactor['electricity']) : 0;
+	    $data['kwh_pie_chart_previousmonth']['electricity'] = ((float) $kwh_report_results['electricity'] != 0) ? ($kwh_report_results['electricity'] * $dataFactor['electricity']) : 0;
 		}
 		if($site_details['show_utility_fuel_oil']) {
-	    $data['kwh_pie_chart_previousmonth']['fuel'] = (!empty($kwh_report_results['fuel'])) ? ($kwh_report_results['fuel'] * $dataFactor['fuel_oil']) : 0;
+	    $data['kwh_pie_chart_previousmonth']['fuel'] = ((float) $kwh_report_results['fuel'] != 0) ? ($kwh_report_results['fuel'] * $dataFactor['fuel_oil']) : 0;
 		}
 		if($site_details['show_utility_lpg']) {
-	    $data['kwh_pie_chart_previousmonth']['lpg'] = (!empty($kwh_report_results['lpg'])) ? ($kwh_report_results['lpg'] * $dataFactor['lpg']) : 0;
+	    $data['kwh_pie_chart_previousmonth']['lpg'] = ((float) $kwh_report_results['lpg'] != 0) ? ($kwh_report_results['lpg'] * $dataFactor['lpg']) : 0;
 		}
 		if($site_details['show_utility_natural_gas']) {
-	    $data['kwh_pie_chart_previousmonth']['natural_gas'] = (!empty($kwh_report_results['natural_gas'])) ? ($kwh_report_results['natural_gas'] * $dataFactor['natural_gas']) : 0;
+	    $data['kwh_pie_chart_previousmonth']['natural_gas'] = ((float) $kwh_report_results['natural_gas'] != 0) ? ($kwh_report_results['natural_gas'] * $dataFactor['natural_gas']) : 0;
 		}
 		if($site_details['show_utility_district_heating']) {
-	    $data['kwh_pie_chart_previousmonth']['heating_district'] = (!empty($kwh_report_results['heating_district'])) ? ($kwh_report_results['heating_district'] * $dataFactor['district_heating']) : 0;
+	    $data['kwh_pie_chart_previousmonth']['heating_district'] = ((float) $kwh_report_results['heating_district'] != 0) ? ($kwh_report_results['heating_district'] * $dataFactor['district_heating']) : 0;
 		}
 		if($site_details['show_utility_district_cooling']) {
-	    $data['kwh_pie_chart_previousmonth']['cooling_district'] = (!empty($kwh_report_results['cooling_district'])) ? ($kwh_report_results['cooling_district'] * $dataFactor['district_cooling']) : 0;
+	    $data['kwh_pie_chart_previousmonth']['cooling_district'] = ((float) $kwh_report_results['cooling_district'] != 0) ? ($kwh_report_results['cooling_district'] * $dataFactor['district_cooling']) : 0;
 		}
-	} else {
-	    $data['kwh_pie_chart_previousmonth'] = array();
 	}
 	// Cost pie chart for last 12 months
+	$monthly_pie_filters['previous_month'] = $monthly_pie_month;
 	if ($data['currency'] == "base") {
-	    $kwh_report_results = $this->reports_forex_model->costBasedReportForPreviousMonth($filters);
+	    $kwh_report_results = $this->reports_forex_model->costBasedReportForPreviousMonth($monthly_pie_filters);
 	} else {
-	    $kwh_report_results = $this->reports_model->costBasedReportForPreviousMonth($filters);
+	    $kwh_report_results = $this->reports_model->costBasedReportForPreviousMonth($monthly_pie_filters);
 	}
 	if (!empty($kwh_report_results)) {
+	    $kwh_report_results = array_map('floatval', $kwh_report_results);
 	    $kwh_report_results['cooling_district'] = $kwh_report_results['cooling_district'] + $kwh_report_results['district_cooling_fixed_cost'];
 	    $kwh_report_results['heating_district'] = $kwh_report_results['heating_district'] + $kwh_report_results['district_heating_fixed_cost'];
 	    $kwh_report_results['lpg'] = $kwh_report_results['lpg'] + $kwh_report_results['lpg_fixed_cost'];
 	    $kwh_report_results['natural_gas'] = $kwh_report_results['natural_gas'] + $kwh_report_results['natural_gas_fixed_cost'];
 	    $kwh_report_results['water'] = $kwh_report_results['water'] + $kwh_report_results['water_fixed_cost'];
 		if($site_details['show_utility_electricity']) {
-	    $data['cost_pie_chart_previousmonth']['electricity'] = (!empty($kwh_report_results['electricity'])) ? $kwh_report_results['electricity'] : 0;
+	    $data['cost_pie_chart_previousmonth']['electricity'] = ((float) $kwh_report_results['electricity'] != 0) ? $kwh_report_results['electricity'] : 0;
 		}
 		if($site_details['show_utility_fuel_oil']) {
-	    $data['cost_pie_chart_previousmonth']['fuel'] = (!empty($kwh_report_results['fuel'])) ? $kwh_report_results['fuel'] : 0;
+	    $data['cost_pie_chart_previousmonth']['fuel'] = ((float) $kwh_report_results['fuel'] != 0) ? $kwh_report_results['fuel'] : 0;
 		}
 		if($site_details['show_utility_lpg']) {
-	    $data['cost_pie_chart_previousmonth']['lpg'] = (!empty($kwh_report_results['lpg'])) ? $kwh_report_results['lpg'] : 0;
+	    $data['cost_pie_chart_previousmonth']['lpg'] = ((float) $kwh_report_results['lpg'] != 0) ? $kwh_report_results['lpg'] : 0;
 		}
 		if($site_details['show_utility_natural_gas']) {
-	    $data['cost_pie_chart_previousmonth']['natural_gas'] = (!empty($kwh_report_results['natural_gas'])) ? $kwh_report_results['natural_gas'] : 0;
+	    $data['cost_pie_chart_previousmonth']['natural_gas'] = ((float) $kwh_report_results['natural_gas'] != 0) ? $kwh_report_results['natural_gas'] : 0;
 		}
 		if($site_details['show_utility_district_heating']) {
-	    $data['cost_pie_chart_previousmonth']['heating_district'] = (!empty($kwh_report_results['heating_district'])) ? $kwh_report_results['heating_district'] : 0;
+	    $data['cost_pie_chart_previousmonth']['heating_district'] = ((float) $kwh_report_results['heating_district'] != 0) ? $kwh_report_results['heating_district'] : 0;
 		}
 		if($site_details['show_utility_district_cooling']) {
-	    $data['cost_pie_chart_previousmonth']['cooling_district'] = (!empty($kwh_report_results['cooling_district'])) ? $kwh_report_results['cooling_district'] : 0;
+	    $data['cost_pie_chart_previousmonth']['cooling_district'] = ((float) $kwh_report_results['cooling_district'] != 0) ? $kwh_report_results['cooling_district'] : 0;
 		}
 		if($site_details['show_utility_water']) {
-		$data['cost_pie_chart_previousmonth']['water'] = (!empty($kwh_report_results['water'])) ? $kwh_report_results['water'] : 0;
+		$data['cost_pie_chart_previousmonth']['water'] = ((float) $kwh_report_results['water'] != 0) ? $kwh_report_results['water'] : 0;
 		}
-	} else {
-	    $data['cost_pie_chart_previousmonth'] = array();
 	}
 	// Budget vs Actual data of Current Month, YTD and Annual
 	$start_year = date('Y');
@@ -878,10 +908,12 @@ class Reports_admin extends Base_Admin_Controller
 	    $current_budget_actual_data["district_cooling_actual"] += $value["district_cooling_actual"];
 	    $current_budget_actual_data["district_cooling_budget"] += $value["district_cooling_budget"];
 	    $current_budget_actual_data["district_cooling_cost_actual"] += $value["district_cooling_cost_actual"];
+		$current_budget_actual_data["district_cooling_fixed_cost"] += $value["district_cooling_fixed_cost"];
 	    $current_budget_actual_data["district_cooling_cost_budget"] += $value["district_cooling_cost_budget"];
 	    $current_budget_actual_data["district_heating_actual"] += $value["district_heating_actual"];
 	    $current_budget_actual_data["district_heating_budget"] += $value["district_heating_budget"];
 	    $current_budget_actual_data["district_heating_cost_actual"] += $value["district_heating_cost_actual"];
+		$current_budget_actual_data["district_heating_fixed_cost"] += $value["district_heating_fixed_cost"];
 	    $current_budget_actual_data["district_heating_cost_budget"] += $value["district_heating_cost_budget"];
 	    $current_budget_actual_data["total_electricity_kwh_actual"] += $value["total_electricity_kwh_actual"];
 	    $current_budget_actual_data["total_electricity_kwh_budget"] += $value["total_electricity_kwh_budget"];
@@ -996,6 +1028,7 @@ class Reports_admin extends Base_Admin_Controller
 			"natural_gas",
 			"heating_district",
 			"cooling_district",
+			"fleet_petrol",
 		);
 		$electricityTitle = lang("electricity");
 		$fuelTitle = lang("fuel");
@@ -1005,6 +1038,7 @@ class Reports_admin extends Base_Admin_Controller
 		$heatingTitle = lang("heating-district");
 		$coolingTitle = lang("cooling-district");
 		$occupancyTitle = lang("occupancy");
+		$fleetPetrolTitle = lang("fleet_petrol");
 		$chart_data_title = array(
 			'Month',
 			$electricityTitle,
@@ -1025,6 +1059,7 @@ class Reports_admin extends Base_Admin_Controller
 			$heatingTitle,
 			$coolingTitle,
 			$occupancyTitle,
+			$fleetPetrolTitle,
 		);
 		$chart_data[0] = $chart_data_title;
 		$carbon_footprint[0] = $carbon_footprint_title;
@@ -1112,6 +1147,8 @@ class Reports_admin extends Base_Admin_Controller
 			    	$utility_cost_chart[$value['month_id']][$value['year_id']]['total_room_night_budget'] = $value['total_room_night_budget'];
 					$utility_cost_chart[$value['month_id']][$value['year_id']]['guest_night'] = $value['total_guests'];
 					$utility_cost_chart[$value['month_id']][$value['year_id']]['total_guests_budget'] = $value['total_guests_budget'];
+					$utility_cost_chart[$value['month_id']][$value['year_id']]['fleet_petrol'] = $value['fleet_petrol'];
+					$utility_cost_chart[$value['month_id']][$value['year_id']]['total_fleet_petrol_cost'] = $value['total_fleet_petrol_cost'];
 					$days_of_month = cal_days_in_month(CAL_GREGORIAN, $value['month_id'], $value['year_id']);
 					$utility_cost_chart[$value['month_id']][$value['year_id']]['occupancy'] = (($value['total_room_night'] / ($value['rooms_keys'] * $days_of_month)) * 100);
 				}
@@ -1138,6 +1175,7 @@ class Reports_admin extends Base_Admin_Controller
 					$pre_data_hdd = (!empty($utility_cost_chart[$month][$year - 1]['hdd'])) ? $utility_cost_chart[$month][$year - 1]['hdd'] : 0;
 					$pre_data_occupancy = (!empty($utility_cost_chart[$month][$year - 1]['occupancy'])) ? $utility_cost_chart[$month][$year - 1]['occupancy'] : 0;
 					$pre_data_budget = (!empty($utility_cost_chart[$month][$year - 1]['budget'])) ? $utility_cost_chart[$month][$year - 1]['budget'] : 0;
+					$pre_data_fleet_petrol = (!empty($utility_cost_chart[$month][$year - 1]['fleet_petrol'])) ? $utility_cost_chart[$month][$year - 1]['fleet_petrol'] : 0;
 					// Current year data
 					$monthdata = $montharray[$month] . ' ' . $year;
 					$data_electricity = (!empty($utility_cost_chart[$month][$year]['electricity'])) ? $utility_cost_chart[$month][$year]['electricity'] : 0;
@@ -1157,6 +1195,7 @@ class Reports_admin extends Base_Admin_Controller
 					$data_hdd = (!empty($utility_cost_chart[$month][$year]['hdd'])) ? $utility_cost_chart[$month][$year]['hdd'] : 0;
 					$data_occupancy = (!empty($utility_cost_chart[$month][$year]['occupancy'])) ? $utility_cost_chart[$month][$year]['occupancy'] : 0;
 					$data_budget = (!empty($utility_cost_chart[$month][$year]['budget'])) ? $utility_cost_chart[$month][$year]['budget'] : 0;
+					$data_fleet_petrol = (!empty($utility_cost_chart[$month][$year]['fleet_petrol'])) ? $utility_cost_chart[$month][$year]['fleet_petrol'] : 0;
 					// Round values
 					$pre_data_occupancy = round($pre_data_occupancy, 2);
 					$data_occupancy = round($data_occupancy, 2);
@@ -1224,6 +1263,15 @@ class Reports_admin extends Base_Admin_Controller
 						$carbon_footprint[1][] = round($pre_data_cooling_district_consumption * $site_details['district_cooling_emission_factor'], $decimal_places);
 						$carbon_footprint[2][] = round($data_cooling_district_consumption * $site_details['district_cooling_emission_factor'], $decimal_places);
 						$chart_index[] = $chart_index_carbon[] = "cooling_district";
+					}
+					if (isset($site_details['show_utility_fleet']) && $pre_data_fleet_petrol != 0 || $data_fleet_petrol != 0) {
+						$chart_data[0][] = $fleetPetrolTitle;
+						$chart_data[1][] = $pre_data_fleet_petrol;
+						$chart_data[2][] = $data_fleet_petrol;
+						$carbon_footprint[0][] = $fleetPetrolTitle;
+						$carbon_footprint[1][] = round($pre_data_fleet_petrol * 2.3, $decimal_places);
+						$carbon_footprint[2][] = round($data_fleet_petrol * 2.3, $decimal_places);
+						$chart_index[] = $chart_index_carbon[] = "fleet_petrol";
 					}
 					$chart_data[0][] = $carbon_footprint[0][] = $occupancyTitle;
 					$chart_data[1][] = $carbon_footprint[1][] = $pre_data_occupancy;
@@ -2226,7 +2274,7 @@ class Reports_admin extends Base_Admin_Controller
 		$last_year_deference  = 0;
 		$last_year_percantage = 0;
 		$last_year_deference  = $data['current_year']['total_' . $utility['db_key']] - $data['previous_year']['total_' . $utility['db_key']];
-		$last_year_percantage = (($last_year_deference * 100) / $data['current_year']['total_' . $utility['db_key']]);
+		$last_year_percantage = (($last_year_deference * 100) / $data['previous_year']['total_' . $utility['db_key']]);
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, $utility['title'] . ' Consumption ' . '(' . $utility['unit'] . ')');
 		$active_column++;
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, number_format($data['current_year']['total_' . $utility['db_key']]));
@@ -2249,7 +2297,7 @@ class Reports_admin extends Base_Admin_Controller
 		    $budget_deference  = 0;
 		    $budget_percantage = 0;
 		    $budget_deference  = $data['current_year']['total_' . $utility['db_key']] - $data['current_year'][$utility['budget_key']];
-		    $budget_percantage = (($budget_deference * 100) / $data['current_year']['total_' . $utility['db_key']]);
+		    $budget_percantage = ($data['current_year'][$utility['budget_key']] != 0) ? (($budget_deference * 100) / $data['current_year'][$utility['budget_key']]) : 0;
 		    $objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, number_format($budget_deference));
 		    $active_column++;
 		    $objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, number_format($budget_percantage));
@@ -2264,7 +2312,7 @@ class Reports_admin extends Base_Admin_Controller
 			$last_year_deference  = 0;
 			$last_year_percantage = 0;
 			$last_year_deference  = $data['current_year']['total_' . 'landscape_water_consumption'] - $data['previous_year']['total_' . 'landscape_water_consumption'];
-			$last_year_percantage = (($last_year_deference * 100) / $data['current_year']['total_' . 'landscape_water_consumption']);
+			$last_year_percantage = (($last_year_deference * 100) / $data['previous_year']['total_' . 'landscape_water_consumption']);
 			$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, 'Irrigation Water Consumption ' . '(' . $utility['unit'] . ')');
 			$active_column++;
 			$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, number_format($data['current_year']['total_' . 'landscape_water_consumption']));
@@ -2291,7 +2339,7 @@ class Reports_admin extends Base_Admin_Controller
 			$last_year_deference  = 0;
 			$last_year_percantage = 0;
 			$last_year_deference  = $data['current_year']['total_' . 'waste_water_consumption'] - $data['previous_year']['total_' . 'waste_water_consumption'];
-			$last_year_percantage = (($last_year_deference * 100) / $data['current_year']['total_' . 'waste_water_consumption']);
+			$last_year_percantage = (($last_year_deference * 100) / $data['previous_year']['total_' . 'waste_water_consumption']);
 			$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, 'Waste Water Consumption ' . '(' . $utility['unit'] . ')');
 			$active_column++;
 			$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, number_format($data['current_year']['total_' . 'waste_water_consumption']));
@@ -2318,7 +2366,7 @@ class Reports_admin extends Base_Admin_Controller
 		$last_year_deference  = 0;
 		$last_year_percantage = 0;
 		$last_year_deference  = $data['current_year']['total_' . $utility['db_key'] . '_cost'] - $data['previous_year']['total_' . $utility['db_key'] . '_cost'];
-		$last_year_percantage = (($last_year_deference * 100) / $data['current_year']['total_' . $utility['db_key'] . '_cost']);
+		$last_year_percantage = (($last_year_deference * 100) / $data['previous_year']['total_' . $utility['db_key'] . '_cost']);
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, "Total {$utility['title']} Cost");
 		$active_column++;
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, report_value_format($data['current_year']['total_' . $utility['db_key'] . '_cost'], $optioncurrencyvalue));
@@ -2335,7 +2383,7 @@ class Reports_admin extends Base_Admin_Controller
 		    $budget_deference  = 0;
 		    $budget_percantage = 0;
 		    $budget_deference  = $data['current_year']['total_' . $utility['db_key'] . '_cost'] - $data['current_year'][$utility['budget_key'] . '_cost'];
-		    $budget_percantage = (($budget_deference * 100) / $data['current_year']['total_' . $utility['db_key'] . '_cost']);
+		    $budget_percantage = ($data['current_year'][$utility['budget_key'] . '_cost'] != 0) ? (($budget_deference * 100) / $data['current_year'][$utility['budget_key'] . '_cost']) : 0;
 		    $objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, report_value_format($budget_deference, $optioncurrencyvalue));
 		    $active_column++;
 		    $objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, number_format($budget_percantage));
@@ -2352,7 +2400,7 @@ class Reports_admin extends Base_Admin_Controller
 		$current_per_room_night  = ($data['current_year']['total_room_night'] != '' && $data['current_year']['total_room_night'] != 0) ? $data['current_year']['total_' . $utility['db_key']] / $data['current_year']['total_room_night'] : 0;
 		$previous_per_room_night = ($data['previous_year']['total_room_night'] != '' && $data['previous_year']['total_room_night'] != 0) ? $data['previous_year']['total_' . $utility['db_key']] / $data['previous_year']['total_room_night'] : 0;
 		$last_year_deference  = $current_per_room_night - $previous_per_room_night;
-		$last_year_percantage = ($current_per_room_night != 0) ? (($last_year_deference * 100) / $current_per_room_night) : 0;
+		$last_year_percantage = ($previous_per_room_night != 0) ? (($last_year_deference * 100) / $previous_per_room_night) : 0;
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, "{$utility['title']}/room night");
 		$active_column++;
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, number_format(($current_per_room_night)));
@@ -2385,7 +2433,7 @@ class Reports_admin extends Base_Admin_Controller
 		$current_per_room_night  = ($data['current_year']['total_room_night'] != 0 && $data['current_year']['total_room_night'] != '') ?  $data['current_year']['total_' . $utility['db_key'] . '_cost'] / $data['current_year']['total_room_night'] : 0;
 		$previous_per_room_night = ($data['previous_year']['total_room_night'] != 0 && $data['previous_year']['total_room_night'] != '') ? $data['previous_year']['total_' . $utility['db_key'] . '_cost'] / $data['previous_year']['total_room_night'] : '';
 		$last_year_deference  = $current_per_room_night - $previous_per_room_night;
-		$last_year_percantage = ($current_per_room_night != 0) ? (($last_year_deference * 100) / $current_per_room_night) : 0;
+		$last_year_percantage = ($previous_per_room_night != 0) ? ((number_format($last_year_deference) * 100) / number_format($previous_per_room_night)) : 0;
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, "{$utility['title']} cost/room night");
 		$active_column++;
 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, report_value_format($current_per_room_night, $optioncurrencyvalue));
@@ -2404,11 +2452,11 @@ class Reports_admin extends Base_Admin_Controller
 	    $last_year_deference  = 0;
 	    $last_year_percantage = 0;
 	    $last_year_deference  = $data['current_year']['total_utility_cost'] - $data['previous_year']['total_utility_cost'];
-	    $last_year_percantage = ($data['current_year']['total_utility_cost'] != '' && $data['current_year']['total_utility_cost'] != '') ? (($last_year_deference * 100) / $data['current_year']['total_utility_cost']) : 0;
+	    $last_year_percantage = ($data['previous_year']['total_utility_cost'] != '' && $data['previous_year']['total_utility_cost'] != '') ? (($last_year_deference * 100) / $data['previous_year']['total_utility_cost']) : 0;
 	    $budget_deference  = 0;
 	    $budget_percantage = 0;
 	    $budget_deference  = $data['current_year']['total_utility_cost'] - $data['current_year']['total_budget_cost'];
-	    $budget_percantage = ($data['current_year']['total_utility_cost'] != 0 && $data['current_year']['total_utility_cost'] != '') ? (($budget_deference * 100) / $data['current_year']['total_utility_cost']) : 0;
+	    $budget_percantage = ($data['current_year']['total_budget_cost'] != 0 && $data['current_year']['total_budget_cost'] != '') ? (($budget_deference * 100) / $data['current_year']['total_budget_cost']) : 0;
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('A' . $active_row, 'TOTAL')
 		->setCellValue('B' . $active_row, report_value_format($data['current_year']['total_utility_cost'], $optioncurrencyvalue))
@@ -2424,7 +2472,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $last_year_deference  = 0;
 	    $last_year_percantage = 0;
 	    $last_year_deference  = ($data['current_year']['total_utility_cost_per_roomnight'] != '' && $data['previous_year']['total_utility_cost_per_roomnight'] != '') ? $data['current_year']['total_utility_cost_per_roomnight'] - $data['previous_year']['total_utility_cost_per_roomnight'] : 0;
-	    $last_year_percantage = ($data['current_year']['total_utility_cost_per_roomnight'] != '' && $data['current_year']['total_utility_cost_per_roomnight'] != 0) ? (($last_year_deference * 100) / $data['current_year']['total_utility_cost_per_roomnight']) : 0;
+	    $last_year_percantage = ($data['previous_year']['total_utility_cost_per_roomnight'] != '' && $data['previous_year']['total_utility_cost_per_roomnight'] != 0) ? (($last_year_deference * 100) / $data['previous_year']['total_utility_cost_per_roomnight']) : 0;
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('A' . $active_row, 'Total Cost Per room night')
 		->setCellValue('B' . $active_row, report_value_format($data['current_year']['total_utility_cost_per_roomnight'], $optioncurrencyvalue))
@@ -2551,6 +2599,7 @@ class Reports_admin extends Base_Admin_Controller
 	    // If you're serving to IE over SSL, then the following may be needed
 	    header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	    header('Pragma: public'); // HTTP/1.0
+	    sanitize_report_spreadsheet($objPHPExcel);
 	    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	    $objWriter->save('php://output');
 	    exit;
@@ -2843,6 +2892,7 @@ class Reports_admin extends Base_Admin_Controller
 	    // If you're serving to IE over SSL, then the following may be needed
 	    header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	    header('Pragma: public'); // HTTP/1.0
+	    sanitize_report_spreadsheet($objPHPExcel);
 	    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	    $objWriter->save('php://output');
 	    exit;
@@ -2920,7 +2970,7 @@ class Reports_admin extends Base_Admin_Controller
 		foreach ($results as $key => $value) {
 		    $results[$key]['district_cooling'] = $value['district_cooling'] + $value['district_cooling_fixed_cost'];
 		    $results[$key]['district_heating'] = $value['district_heating'] + $value['district_heating_fixed_cost'];
-		    $results[$key]['lpg'] = $value['lpg'] + $value['lpg_fixed_cost'];
+		    $results[$key]['lpg'] = (float)$value['lpg'] + (float)$value['lpg_fixed_cost'];
 		    $results[$key]['natural_gas'] = $value['natural_gas'] + $value['natural_gas_fixed_cost'];
 		    $results[$key]['water'] = $value['water'] + $value['water_fixed_cost'];
 		}
@@ -3044,7 +3094,7 @@ class Reports_admin extends Base_Admin_Controller
 			    $calculated_result['cooling_district'] = ($result['cooling_district'] / $result['cooled_builtup_area']);
 			    $calculated_result['water'] = ($result['water'] / $result['cooled_builtup_area']);
 			    $calculated_result['electricity_budget'] = ($result['electricity_budget'] / $result['cooled_builtup_area']);
-			    $calculated_result['fuel_budget'] = ($result['fuel_budget'] / $result['cooled_builtup_area']);
+			    $calculated_result['fuel_budget'] = ((float)$result['fuel_budget'] / (float)$result['cooled_builtup_area']);
 			    $calculated_result['lpg_budget'] = ($result['lpg_budget'] / $result['cooled_builtup_area']);
 			    $calculated_result['natural_gas_budget'] = ($result['natural_gas_budget'] / $result['cooled_builtup_area']);
 			    $calculated_result['heating_district_budget'] = ($result['heating_district_budget'] / $result['cooled_builtup_area']);
@@ -3206,8 +3256,8 @@ class Reports_admin extends Base_Admin_Controller
 		$report_tmpl = 'admin_advance_budget_forcasted';
 		$view_title = lang($report_title);
 		$x_axis_title_value = lang($x_axis_title);
-		$excel_title_1 = lang('electricity') . " " . $filters["end_year"] . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
-		$excel_title_2 = lang('electricity') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
+		$excel_title_1 = lang('electricity') . " " . $filters["end_year"] . " (" . CURRENCY_SYMBOL . ")";
+		$excel_title_2 = lang('electricity') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY_SYMBOL . ")";
 		break;
 	    case 'lpg_m3_per_room_night':
 		$x_axis_title = 'report-axis-kg-per-room-night';
@@ -3266,8 +3316,8 @@ class Reports_admin extends Base_Admin_Controller
 		$view_title = lang($report_title);
 		$report_tmpl = 'admin_advance_budget_forcasted';
 		$x_axis_title_value = lang($x_axis_title);
-		$excel_title_1 = lang('lpg') . " " . $filters["end_year"] . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
-		$excel_title_2 = lang('lpg') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
+		$excel_title_1 = lang('lpg') . " " . $filters["end_year"] . " (" . CURRENCY_SYMBOL . ")";
+		$excel_title_2 = lang('lpg') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY_SYMBOL . ")";
 		break;
 		/**/
 	    case 'district_heating_kwh_per_room_night':
@@ -3327,8 +3377,8 @@ class Reports_admin extends Base_Admin_Controller
 		$view_title = lang($report_title);
 		$report_tmpl = 'admin_advance_budget_forcasted';
 		$x_axis_title_value = lang($x_axis_title);
-		$excel_title_1 = lang('heating') . " " . $filters["end_year"] . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
-		$excel_title_2 = lang('heating') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
+		$excel_title_1 = lang('heating') . " " . $filters["end_year"] . " (" . CURRENCY_SYMBOL . ")";
+		$excel_title_2 = lang('heating') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY_SYMBOL . ")";
 		break;
 		/**/
 		/**/
@@ -3389,8 +3439,8 @@ class Reports_admin extends Base_Admin_Controller
 		$view_title = lang($report_title);
 		$report_tmpl = 'admin_advance_budget_forcasted';
 		$x_axis_title_value = lang($x_axis_title);
-		$excel_title_1 = lang('cooling') . " " . $filters["end_year"] . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
-		$excel_title_2 = lang('cooling') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
+		$excel_title_1 = lang('cooling') . " " . $filters["end_year"] . " (" . CURRENCY_SYMBOL . ")";
+		$excel_title_2 = lang('cooling') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY_SYMBOL . ")";
 		break;
 		/**/
 	    case 'natural_gas_m3_per_room_night':
@@ -3450,8 +3500,8 @@ class Reports_admin extends Base_Admin_Controller
 		$view_title = lang($report_title);
 		$report_tmpl = 'admin_advance_budget_forcasted';
 		$x_axis_title_value = lang($x_axis_title);
-		$excel_title_1 = lang('natural_gas') . " " . $filters["end_year"] . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
-		$excel_title_2 = lang('natural_gas') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
+		$excel_title_1 = lang('natural_gas') . " " . $filters["end_year"] . " (" . CURRENCY_SYMBOL . ")";
+		$excel_title_2 = lang('natural_gas') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY_SYMBOL . ")";
 		break;
 	    case 'oil_liters_per_room_night':
 		$x_axis_title = 'report-axis-liters-per-room-night';
@@ -3510,8 +3560,8 @@ class Reports_admin extends Base_Admin_Controller
 		$view_title = lang($report_title);
 		$report_tmpl = 'admin_advance_budget_forcasted';
 		$x_axis_title_value = lang($x_axis_title);
-		$excel_title_1 = lang('fuel') . " " . $filters["end_year"] . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
-		$excel_title_2 = lang('fuel') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
+		$excel_title_1 = lang('fuel') . " " . $filters["end_year"] . " (" . CURRENCY_SYMBOL . ")";
+		$excel_title_2 = lang('fuel') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY_SYMBOL . ")";
 		break;
 	    case 'water_liters_per_room_night':
 		$x_axis_title = 'report-axis-m3-per-room-night';
@@ -3568,8 +3618,8 @@ class Reports_admin extends Base_Admin_Controller
 		$view_title = lang($report_title);
 		$report_tmpl = 'admin_advance_budget_forcasted';
 		$x_axis_title_value = lang($x_axis_title);
-		$excel_title_1 = lang('lpg') . " " . $filters["end_year"] . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
-		$excel_title_2 = lang('lpg') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY . CURRENCY_SYMBOL . ")";
+		$excel_title_1 = lang('lpg') . " " . $filters["end_year"] . " (" . CURRENCY_SYMBOL . ")";
+		$excel_title_2 = lang('lpg') . " " . ($filters["end_year"] - 1) . " (" . CURRENCY_SYMBOL . ")";
 		break;
 		// electricity_kwh
 	    default:
@@ -3627,6 +3677,7 @@ class Reports_admin extends Base_Admin_Controller
 			    ->setCellValue('C1', $excel_title_2)
 			    ->setCellValue('D1', sprintf(lang("excel_budgert_year"), $filters["end_year"]));
 			$j = 1;
+			$sumCur = 0; $cntCur = 0; $sumPre = 0; $cntPre = 0; $sumBud = 0; $cntBud = 0;
 			for ($i = $filters['start_month']; $i <= $filters["end_month"]; $i++) {
 			    $j++;
 			    $previousdata = (!empty($reportData[$i][$filters["end_year"] - 1][$filters['utility_type']])) ? $reportData[$i][$filters["end_year"] - 1][$filters['utility_type']] : 0;
@@ -3637,7 +3688,18 @@ class Reports_admin extends Base_Admin_Controller
 				->setCellValue("B{$j}", round($currentdata, 2))
 				->setCellValue("C{$j}", round($previousdata, 2))
 				->setCellValue("D{$j}", round($budgetdata, 2));
+			    if (!empty($currentdata)) { $sumCur += $currentdata; $cntCur++; }
+			    if (!empty($previousdata)) { $sumPre += $previousdata; $cntPre++; }
+			    if (!empty($budgetdata)) { $sumBud += $budgetdata; $cntBud++; }
 			}
+			// Average row
+			$j++;
+			$objPHPExcel->setActiveSheetIndex(0)
+			    ->setCellValue("A{$j}", lang('average'))
+			    ->setCellValue("B{$j}", round($cntCur > 0 ? $sumCur / $cntCur : 0, 2))
+			    ->setCellValue("C{$j}", round($cntPre > 0 ? $sumPre / $cntPre : 0, 2))
+			    ->setCellValue("D{$j}", round($cntBud > 0 ? $sumBud / $cntBud : 0, 2));
+			$objPHPExcel->getActiveSheet()->getStyle("A{$j}:D{$j}")->getFont()->setBold(true);
 			break;
 		    case 'admin_advance_water_report':
 			// Set header bold
@@ -3653,6 +3715,8 @@ class Reports_admin extends Base_Admin_Controller
 			    ->setCellValue('I1', sprintf(lang("excel_occupancy_current"), $filters["end_year"], '%'))
 			    ->setCellValue('J1', sprintf(lang("excel_occupancy_previous"), $filters["end_year"], '%'));
 			$j = 1;
+			$wSum = array('B' => 0, 'C' => 0, 'D' => 0, 'E' => 0, 'F' => 0, 'G' => 0, 'H' => 0, 'I' => 0, 'J' => 0);
+			$wCnt = array('B' => 0, 'C' => 0, 'D' => 0, 'E' => 0, 'F' => 0, 'G' => 0, 'H' => 0, 'I' => 0, 'J' => 0);
 			for ($i = $filters['start_month']; $i <= $filters["end_month"]; $i++) {
 			    $j++;
 			    $previousutilitydata = (!empty($reportData[$i][$filters["end_year"] - 1]['water_utility'])) ? $reportData[$i][$filters["end_year"] - 1]['water_utility'] : 0;
@@ -3675,7 +3739,18 @@ class Reports_admin extends Base_Admin_Controller
 				->setCellValue("H{$j}", round($budgetdata, 2))
 				->setCellValue("I{$j}", round($occupancydata, 2))
 				->setCellValue("J{$j}", round($previousoccupancydata, 2));
+			    $wRow = array('B' => $currentutilitydata, 'C' => $previousutilitydata, 'D' => $currentcisternsdata, 'E' => $previouscisternsdata, 'F' => $currentrodata, 'G' => $previousrodata, 'H' => $budgetdata, 'I' => $occupancydata, 'J' => $previousoccupancydata);
+			    foreach ($wRow as $wCol => $wVal) {
+				if (!empty($wVal)) { $wSum[$wCol] += $wVal; $wCnt[$wCol]++; }
+			    }
 			}
+			// Average row
+			$j++;
+			$objPHPExcel->setActiveSheetIndex(0)->setCellValue("A{$j}", lang('average'));
+			foreach ($wSum as $wCol => $wTotal) {
+			    $objPHPExcel->setActiveSheetIndex(0)->setCellValue("{$wCol}{$j}", round($wCnt[$wCol] > 0 ? $wTotal / $wCnt[$wCol] : 0, 2));
+			}
+			$objPHPExcel->getActiveSheet()->getStyle("A{$j}:J{$j}")->getFont()->setBold(true);
 			break;
 		    case 'admin_advance_ytd':
 			// Set header bold
@@ -3686,6 +3761,7 @@ class Reports_admin extends Base_Admin_Controller
 			    ->setCellValue('D1', sprintf(lang("excel_occupancy_current"), $filters["end_year"], '%'))
 			    ->setCellValue('E1', sprintf(lang("excel_occupancy_previous"), $filters["end_year"] - 1, '%'));
 			$j = 1;
+			$sumCur = 0; $cntCur = 0; $sumPre = 0; $cntPre = 0; $sumOcc = 0; $cntOcc = 0; $sumPreOcc = 0; $cntPreOcc = 0;
 			for ($i = $filters['start_month']; $i <= $filters["end_month"]; $i++) {
 			    $j++;
 			    $previousdata = (!empty($reportData[$i][$filters["end_year"] - 1][$filters['utility_type']])) ? $reportData[$i][$filters["end_year"] - 1][$filters['utility_type']] : 0;
@@ -3698,7 +3774,20 @@ class Reports_admin extends Base_Admin_Controller
 				->setCellValue("C{$j}", round($previousdata, 2))
 				->setCellValue("D{$j}", round($occupancydata, 2))
 				->setCellValue("E{$j}", round($previousoccupancydata, 2));
+			    if (!empty($currentdata)) { $sumCur += $currentdata; $cntCur++; }
+			    if (!empty($previousdata)) { $sumPre += $previousdata; $cntPre++; }
+			    if (!empty($occupancydata)) { $sumOcc += $occupancydata; $cntOcc++; }
+			    if (!empty($previousoccupancydata)) { $sumPreOcc += $previousoccupancydata; $cntPreOcc++; }
 			}
+			// Average row
+			$j++;
+			$objPHPExcel->setActiveSheetIndex(0)
+			    ->setCellValue("A{$j}", lang('average'))
+			    ->setCellValue("B{$j}", round($cntCur > 0 ? $sumCur / $cntCur : 0, 2))
+			    ->setCellValue("C{$j}", round($cntPre > 0 ? $sumPre / $cntPre : 0, 2))
+			    ->setCellValue("D{$j}", round($cntOcc > 0 ? $sumOcc / $cntOcc : 0, 2))
+			    ->setCellValue("E{$j}", round($cntPreOcc > 0 ? $sumPreOcc / $cntPreOcc : 0, 2));
+			$objPHPExcel->getActiveSheet()->getStyle("A{$j}:E{$j}")->getFont()->setBold(true);
 			break;
 		    default: // Default template : admin_advance
 			break;
@@ -3727,49 +3816,54 @@ class Reports_admin extends Base_Admin_Controller
 		    $dateIteratorArray[$filters["start_year"]] = $startmonthsarray;
 		    $dateIteratorArray[$filters["end_year"]] = $endmonthsarray;
 		}
-		// Set header bold
-		$objPHPExcel->getActiveSheet()->getStyle('A1:I1')->getFont()->setBold(true)->setSize(12);
-		$objPHPExcel->getActiveSheet()->getStyle('B2:I2')->getFont()->setBold(true)->setSize(12);
-		$objPHPExcel->getActiveSheet()->getStyle('B2:I2')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
-		$objPHPExcel->getActiveSheet()->getStyle('B1:I1')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
-		$objPHPExcel->setActiveSheetIndex(0)->setCellValue('A1', 'Month')
-		    ->setCellValue('B1', $excel_title)
-		    ->setCellValue('D1', lang("excel_occupancy"))
-		    ->setCellValue('F1', lang("excel_cdd"))
-		    ->setCellValue('H1', lang("excel_hdd"));
-		$objPHPExcel->getActiveSheet()->mergeCells('B1:C1');
-		$objPHPExcel->getActiveSheet()->mergeCells('D1:E1');
-		$objPHPExcel->getActiveSheet()->mergeCells('F1:G1');
-		$objPHPExcel->getActiveSheet()->mergeCells('H1:I1');
-		// Set month name for column
-		$alphaIncColumn = 1;
-		foreach ($dateIteratorArray as $year => $value) {
-		    $objPHPExcel->setActiveSheetIndex(0)
-			->setCellValue("{$fullAlphaArray[$alphaIncColumn]}2", $year)
-			->setCellValue("{$fullAlphaArray[$alphaIncColumn + 2]}2", $year)
-			->setCellValue("{$fullAlphaArray[$alphaIncColumn + 4]}2", $year)
-			->setCellValue("{$fullAlphaArray[$alphaIncColumn + 6]}2", $year);
-		    $alphaIncColumn++;
+		// Unified compact layout (same style as the YTD export): the year is written
+		// into the header text and columns are contiguous with no blank spacer columns.
+		$years = array_keys($dateIteratorArray);
+		$metricLabels = array($excel_title, lang("excel_occupancy"), lang("excel_cdd"), lang("excel_hdd"));
+		$metricKeys = array($filters['utility_type'], 'occupancy', 'cdd', 'hdd');
+		$columnMap = array();
+		$sumMap = array();
+		$cntMap = array();
+		$colIndex = 1; // 0 => column A (Month)
+		foreach ($metricLabels as $mIdx => $mLabel) {
+		    // foreach ($years as $year) {
+			$colLetter = $fullAlphaArray[$colIndex];
+			$columnMap[$mIdx] = $colLetter;
+			$objPHPExcel->setActiveSheetIndex(0)->setCellValue("{$colLetter}1", $mLabel . ' ');
+			$colIndex++;
+		    // }
 		}
-		$j = 2; // For excel row ittrator for months
-		$k = 0; // For excel row ittrator for years
-		$alphaIncColumn = 1;
+		$lastColLetter = $fullAlphaArray[$colIndex - 1];
+		$objPHPExcel->setActiveSheetIndex(0)->setCellValue('A1', 'Month');
+		$objPHPExcel->getActiveSheet()->getStyle("A1:{$lastColLetter}1")->getFont()->setBold(true)->setSize(12);
+		$objPHPExcel->getActiveSheet()->getStyle("B1:{$lastColLetter}1")->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$j = 1; // Excel row iterator for months
 		foreach ($dateIteratorArray as $year => $value) {
 		    foreach ($value as $key1 => $month) {
 			$j++;
-			$currentdata = (!empty($reportData[$month][$year][$filters['utility_type']])) ? $reportData[$month][$year][$filters['utility_type']] : 0;
-			$occupancydata = (!empty($reportData[$month][$year]['occupancy'])) ? $reportData[$month][$year]['occupancy'] : 0;
-			$cdddata = (!empty($reportData[$month][$year]["cdd"])) ? $reportData[$month][$year]["cdd"] : 0;
-			$hdddata = (!empty($reportData[$month][$year]["hdd"])) ? $reportData[$month][$year]["hdd"] : 0;
-			$objPHPExcel->setActiveSheetIndex(0)
-			    ->setCellValue("A{$j}", $fullmontharray[$month])
-			    ->setCellValue("{$fullAlphaArray[$alphaIncColumn +$k]}{$j}", round($currentdata, 2))
-			    ->setCellValue("{$fullAlphaArray[$alphaIncColumn +$k + 2]}{$j}", round($occupancydata, 2))
-			    ->setCellValue("{$fullAlphaArray[$alphaIncColumn +$k + 4]}{$j}", round($cdddata, 2))
-			    ->setCellValue("{$fullAlphaArray[$alphaIncColumn +$k + 6]}{$j}", round($hdddata, 2));
+			$objPHPExcel->setActiveSheetIndex(0)->setCellValue("A{$j}", $fullmontharray[$month] . ' ' . $year);
+			foreach ($metricKeys as $mIdx => $mKey) {
+			    $cellVal = (!empty($reportData[$month][$year][$mKey])) ? round($reportData[$month][$year][$mKey], 2) : 0;
+			    $colLetter = $columnMap[$mIdx];
+			    $objPHPExcel->setActiveSheetIndex(0)->setCellValue("{$colLetter}{$j}", $cellVal);
+			    if (!empty($cellVal)) {
+				$sumMap[$mIdx] = (isset($sumMap[$mIdx]) ? $sumMap[$mIdx] : 0) + $cellVal;
+				$cntMap[$mIdx] = (isset($cntMap[$mIdx]) ? $cntMap[$mIdx] : 0) + 1;
+			    }
+			}
 		    }
-		    $k++;
 		}
+		// Average row
+		$j++;
+		$objPHPExcel->setActiveSheetIndex(0)->setCellValue("A{$j}", lang('average'));
+		foreach ($metricKeys as $mIdx => $mKey) {
+		    // foreach ($years as $year) {
+			$avg = (isset($cntMap[$mIdx]) && $cntMap[$mIdx] > 0) ? ($sumMap[$mIdx] / $cntMap[$mIdx]) : 0;
+			$colLetter = $columnMap[$mIdx];
+			$objPHPExcel->setActiveSheetIndex(0)->setCellValue("{$colLetter}{$j}", round($avg, 2));
+		    // }
+		}
+		$objPHPExcel->getActiveSheet()->getStyle("A{$j}:{$lastColLetter}{$j}")->getFont()->setBold(true);
 		/* ============================Old code for single year only=================================
 		  $objPHPExcel->getActiveSheet()->getStyle('A1:E1')->getFont()->setBold(true)->setSize(12);
 		  $objPHPExcel->setActiveSheetIndex(0)->setCellValue('A1', 'Month')
@@ -3802,6 +3896,7 @@ class Reports_admin extends Base_Admin_Controller
 	    // If you're serving to IE over SSL, then the following may be needed
 	    header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	    header('Pragma: public'); // HTTP/1.0
+	    sanitize_report_spreadsheet($objPHPExcel);
 	    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	    $objWriter->save('php://output');
 	    exit;
@@ -3809,6 +3904,37 @@ class Reports_admin extends Base_Admin_Controller
 	$this->breadcrumb->add(lang('advance_reports'), base_url() . BASE_ADMIN_URL_CUSTOM . '/reports/advance');
 	$this->theme->set('page_title', lang('advance_reports'));
 	$this->theme->view($data, $report_tmpl);
+    }
+
+    /**
+     * Occupancy % for a group-chart row using that site's own Rooms Keys
+     * and calendar days in the selected period (not the session hotel's keys).
+     */
+    private function calculate_group_chart_occupancy($result, $year, $start_month, $end_month)
+    {
+	$site_type = isset($result['site_type']) ? (int) $result['site_type'] : 0;
+	if ($site_type == 4) {
+	    return 0;
+	}
+	$rooms_keys = isset($result['rooms_keys']) ? (float) $result['rooms_keys'] : 0;
+	$total_room_night = isset($result['total_room_night']) ? (float) $result['total_room_night'] : 0;
+	if ($rooms_keys <= 0 || $total_room_night <= 0) {
+	    return 0;
+	}
+	$year = (int) $year;
+	$start_month = max(1, (int) $start_month);
+	$end_month = min(12, (int) $end_month);
+	if ($year <= 0 || $end_month < $start_month) {
+	    return 0;
+	}
+	$total_days = 0;
+	for ($month = $start_month; $month <= $end_month; $month++) {
+	    $total_days += cal_days_in_month(CAL_GREGORIAN, $month, $year);
+	}
+	if ($total_days <= 0) {
+	    return 0;
+	}
+	return ($total_room_night / ($rooms_keys * $total_days)) * 100;
     }
 
     public function sites()
@@ -3864,12 +3990,13 @@ class Reports_admin extends Base_Admin_Controller
 			$filters['month'] = (isset($startdateexplode[0])) ? (int) $startdateexplode[0] : '';
 			$filters['year'] = (isset($startdateexplode[1])) ? $startdateexplode[1] : '';
 			if ($report_type == "total_utilities_by_room_night_and_build_area" || $report_type == "utilities_cost_consumption_site_efficiency_benchmark" || $report_type == "average_kwh_tariff" || $report_type == "electricity_cost_consumption_site_efficiency_benchmark") {
-			    $results = $this->reports_forex_model->allsitesUtilityBasedReportByMonth($filters); // Utility Result
+			    $results = $this->reports_model->allsitesUtilityBasedReportByMonth($filters); // Utility Result
 			} else if ($report_type == 'sites_annual_group_energy_report') {
 			    $chartArray = array(
 				'startdate' => $startdate,
 				'enddate' => CURRENT_YEAR_MAX_MONTH_ID . '/Y',
 				'selected_region' => $selected_region,
+				'site_ids' => $filter_site_ids,
 			    );
 			    $results = $this->get_all_sites_electricity_consumption($chartArray, 'month', $selectedYear);
 			} else {
@@ -3886,7 +4013,7 @@ class Reports_admin extends Base_Admin_Controller
 				    $results[$key]['lpg'] = $result['lpg'] + $result['lpg_fixed_cost'];
 				    $results[$key]['natural_gas'] = $result['natural_gas'] + $result['natural_gas_fixed_cost'];
 				    $results[$key]['water'] = $result['water'] + $result['water_fixed_cost'];
-				    $result['occupancy'] = ($result['site_type'] != 4 && $result['site_type'] != 5) ? (($result['total_room_night'] / ($result['rooms_keys'] * $days_of_month)) * 100) : 0;
+				    $result['occupancy'] = $this->calculate_group_chart_occupancy($result, $filters['year'], $filters['month'], $filters['month']);
 				    if ($report_type == 'water_liters_per_room_night') {
 					$result['water'] = $result['water'] > 0 && $result['total_room_night'] > 0 ? $result['water'] / $result['total_room_night'] : 0;
 				    } else if ($report_type == 'electricity_kwh_per_room_night') {
@@ -3918,6 +4045,7 @@ class Reports_admin extends Base_Admin_Controller
 				'startdate' => $startdate,
 				'enddate' => CURRENT_YEAR_MAX_MONTH_ID . '/Y',
 				'selected_region' => $selected_region,
+				'site_ids' => $filter_site_ids,
 			    );
 			    $results = $this->get_all_sites_electricity_consumption($chartArray, 'ytd', $selectedYear);
 			} else {
@@ -3951,7 +4079,7 @@ class Reports_admin extends Base_Admin_Controller
 				    $results[$key]['lpg'] = $result['lpg'] + $result['lpg_fixed_cost'];
 				    $results[$key]['natural_gas'] = $result['natural_gas'] + $result['natural_gas_fixed_cost'];
 				    $results[$key]['water'] = $result['water'] + $result['water_fixed_cost'];
-				    $result['occupancy'] = ($result['site_type'] != 4 && $result['site_type'] != 5) ? (($result['occupancy'] * 100) / $a_months) : 0;
+				    $result['occupancy'] = $this->calculate_group_chart_occupancy($result, $filters['year'], 1, $a_months);
 				    if ($report_type == 'water_liters_per_room_night') {
 					$result['water'] = $result['water'] > 0 && $result['total_room_night'] > 0 ? $result['water_liters'] / $result['total_room_night'] : 0;
 				    } else if ($report_type == 'electricity_kwh_per_room_night') {
@@ -3995,6 +4123,7 @@ class Reports_admin extends Base_Admin_Controller
 				'startdate' => $startdate,
 				'enddate' => CURRENT_YEAR_MAX_MONTH_ID . '/' . $selectedYear,
 				'selected_region' => $selected_region,
+				'site_ids' => $filter_site_ids,
 			    );
 			    $results = $this->get_all_sites_electricity_consumption($chartArray, '', $selectedYear);
 			} else {
@@ -4028,7 +4157,7 @@ class Reports_admin extends Base_Admin_Controller
 				    $results[$key]['lpg'] = $result['lpg'] + $result['lpg_fixed_cost'];
 				    $results[$key]['natural_gas'] = $result['natural_gas'] + $result['natural_gas_fixed_cost'];
 				    $results[$key]['water'] = $result['water'] + $result['water_fixed_cost'];
-				    $result['occupancy'] = ($result['site_type'] != 4 && $result['site_type'] != 5) ? (($result['occupancy'] * 100) / $a_months) : 0;
+				    $result['occupancy'] = $this->calculate_group_chart_occupancy($result, $filters['year'], 1, $a_months);
 				    if ($report_type == 'water_liters_per_room_night') {
 					$result['water'] = $result['water'] > 0 && $result['total_room_night'] > 0 ? $result['water'] / $result['total_room_night'] : 0;
 				    } else if ($report_type == 'electricity_kwh_per_room_night') {
@@ -4139,7 +4268,7 @@ class Reports_admin extends Base_Admin_Controller
 			}
 			$report_title = 'sites_total_utilities_by_room_night_and_build_area_report_title';
 			$view_title = lang('sites_total_utilities_by_room_night_and_build_area_report_title');
-			$x_axis_title = 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')';
+			$x_axis_title = 'Cost (' . BASE_CURRENCY . ')';
 			$filters['utility_type'] = '';
 			$report_tmpl = 'admin_sites_all_utilities'; // Change report template for different type of report
 			break;
@@ -4299,25 +4428,25 @@ class Reports_admin extends Base_Admin_Controller
 			$objPHPExcel->setActiveSheetIndex(0)->setCellValue('W2', lang('excel_occupancy_label'));
 			//$objPHPExcel->getActiveSheet()->mergeCells('W2:Y2');
 			$objPHPExcel->setActiveSheetIndex(0)->setCellValue('A3', lang('site'))
-			    ->setCellValue('B3', 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')')
+			    ->setCellValue('B3', 'Cost (' . BASE_CURRENCY . ')')
 			    ->setCellValue('C3', lang('excel_room_night'))
 			    ->setCellValue('D3', lang('excel_built_area'))
-			    ->setCellValue('E3', 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')')
+			    ->setCellValue('E3', 'Cost (' . BASE_CURRENCY . ')')
 			    ->setCellValue('F3', lang('excel_room_night'))
 			    ->setCellValue('G3', lang('excel_built_area'))
-			    ->setCellValue('H3', 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')')
+			    ->setCellValue('H3', 'Cost (' . BASE_CURRENCY . ')')
 			    ->setCellValue('I3', lang('excel_room_night'))
 			    ->setCellValue('J3', lang('excel_built_area'))
-			    ->setCellValue('K3', 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')')
+			    ->setCellValue('K3', 'Cost (' . BASE_CURRENCY . ')')
 			    ->setCellValue('L3', lang('excel_room_night'))
 			    ->setCellValue('M3', lang('excel_built_area'))
-			    ->setCellValue('N3', 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')')
+			    ->setCellValue('N3', 'Cost (' . BASE_CURRENCY . ')')
 			    ->setCellValue('O3', lang('excel_room_night'))
 			    ->setCellValue('P3', lang('excel_built_area'))
-			    ->setCellValue('Q3', 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')')
+			    ->setCellValue('Q3', 'Cost (' . BASE_CURRENCY . ')')
 			    ->setCellValue('R3', lang('excel_room_night'))
 			    ->setCellValue('S3', lang('excel_built_area'))
-			    ->setCellValue('T3', 'Cost (' . BASE_CURRENCY . '' . BASE_CURRENCY_SYMBOL . ')')
+			    ->setCellValue('T3', 'Cost (' . BASE_CURRENCY . ')')
 			    ->setCellValue('U3', lang('excel_room_night'))
 			    ->setCellValue('V3', lang('excel_built_area'));
 			//->setCellValue('W3', lang('excel_cost'))
@@ -4449,7 +4578,7 @@ class Reports_admin extends Base_Admin_Controller
 			}
 			break;
 		    case 'sites_annual_group_energy_report':
-			$this->annual_excel_report($reportType, $selected_region, $selectedYear);
+			$this->annual_excel_report($reportType, $selected_region, $selectedYear, $filter_site_ids);
 			break;
 		    default:
 			# code...
@@ -4464,12 +4593,17 @@ class Reports_admin extends Base_Admin_Controller
 		// If you're serving to IE over SSL, then the following may be needed
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 		$objWriter->save('php://output');
 		exit;
 	    }
 	}
-	$sites_list = $this->reports_model->getSites($site_filters);
+	$picker_filters = array();
+	if (!empty($selected_region)) {
+	    $picker_filters['region_id'] = $selected_region;
+	}
+	$sites_list = $this->reports_model->getSites($picker_filters);
 	$filters['site_custom_filter'] = $site_custom_filter;
 	$filters['startdate'] = (isset($startdate)) ? $startdate : '';
 	$data['sites'] = $sites;
@@ -4572,6 +4706,15 @@ class Reports_admin extends Base_Admin_Controller
 	$this->reports_model->site_id = $site_id;
 	$selected_month_year_data = $this->reports_model->get_daily_reading_data($site_id, $month, $year, $to_date);
 	$last_month_year_data = $this->reports_model->get_daily_reading_data($site_id, $last_year_month, $last_year, $to_date_last_year);
+	$this->utilities_model->site_id = $site_id;
+	$this->utilities_model->utilities_year =  $year;
+	$this->utilities_model->utilities_month = $month;
+	$this->utilities_model->utilities_date = $to_date;
+	$selected_month_year_static_data_results_utility = $this->utilities_model->getUtilityDailyReport();
+	$this->utilities_model->utilities_year =  $last_year;
+	$this->utilities_model->utilities_month = $last_year_month;
+	$this->utilities_model->utilities_date = $to_date_last_year;
+	$last_month_year_static_data_results_utility = $this->utilities_model->getUtilityDailyReport();
 	$selected_month_year_static_data_results = $this->reports_model->get_daily_reading_static_data($site_id, $month, $year, $to_date);
 	$last_month_year_static_data_results = $this->reports_model->get_daily_reading_static_data($site_id, $last_year_month, $last_year, $to_date_last_year);
 	// Prepare Data
@@ -4600,6 +4743,7 @@ class Reports_admin extends Base_Admin_Controller
 	$last_month_year_static_data['total_room_night'] = 0;
 	$last_month_year_static_data['total_guests'] = 0;
 	foreach ($selected_month_year_static_data_results as $key => $value) {
+		$value = array_map('floatval', $value);
 	    $selected_month_year_static_data['electricity_cost'] += $value['electricity_cost'];
 	    $selected_month_year_static_data['lpg_cost'] += $value['lpg_cost'];
 	    $selected_month_year_static_data['water_cost'] += $value['water_cost'];
@@ -4607,10 +4751,10 @@ class Reports_admin extends Base_Admin_Controller
 	    $selected_month_year_static_data['natural_gas_cost'] += $value['natural_gas_cost'];
 	    $selected_month_year_static_data['district_cooling_cost'] += $value['district_cooling_cost'];
 	    $selected_month_year_static_data['district_heating_cost'] += $value['district_heating_cost'];
-	    $selected_month_year_static_data['cdd'] += $value['cdd'];
-	    $selected_month_year_static_data['hdd'] += $value['hdd'];
-	    $selected_month_year_static_data['total_room_night'] += $value['total_room_night'];
-	    $selected_month_year_static_data['total_guests'] += $value['total_guests'];
+	    // $selected_month_year_static_data['cdd'] += $value['cdd'];
+	    // $selected_month_year_static_data['hdd'] += $value['hdd'];
+	    // $selected_month_year_static_data['total_room_night'] += $value['total_room_night'];
+	    // $selected_month_year_static_data['total_guests'] += $value['total_guests'];
 	}
 	foreach ($last_month_year_static_data_results as $key => $value) {
 	    $value = array_map('floatval', $value);
@@ -4621,6 +4765,20 @@ class Reports_admin extends Base_Admin_Controller
 	    $last_month_year_static_data['natural_gas_cost'] += $value['natural_gas_cost'];
 	    $last_month_year_static_data['district_cooling_cost'] += $value['district_cooling_cost'];
 	    $last_month_year_static_data['district_heating_cost'] += $value['district_heating_cost'];
+	    // $last_month_year_static_data['cdd'] += $value['cdd'];
+	    // $last_month_year_static_data['hdd'] += $value['hdd'];
+	    // $last_month_year_static_data['total_room_night'] += $value['total_room_night'];
+	    // $last_month_year_static_data['total_guests'] += $value['total_guests'];
+	}
+	foreach ($selected_month_year_static_data_results_utility as $key => $value) {
+		$value = array_map('floatval', $value);
+	    $selected_month_year_static_data['cdd'] += $value['cdd'];
+	    $selected_month_year_static_data['hdd'] += $value['hdd'];
+	    $selected_month_year_static_data['total_room_night'] += $value['total_room_night'];
+	    $selected_month_year_static_data['total_guests'] += $value['total_guests'];
+	}
+	foreach ($last_month_year_static_data_results_utility as $key => $value) {
+	    $value = array_map('floatval', $value);
 	    $last_month_year_static_data['cdd'] += $value['cdd'];
 	    $last_month_year_static_data['hdd'] += $value['hdd'];
 	    $last_month_year_static_data['total_room_night'] += $value['total_room_night'];
@@ -4943,7 +5101,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $last_year_guest_deference = 0;
 	    $last_year_guest_percantage = 0;
 	    $last_year_guest_deference = $data['current_year_static_data']['total_guests'] - $data['last_year_static_data']['total_guests'];
-	    $last_year_guest_percantage = (($data['current_year_static_data']['total_guests'] != '') && ($data['current_year_static_data']['total_guests'] != 0)) ? (($last_year_guest_deference * 100) / $data['current_year_static_data']['total_guests']) : 0;
+	    $last_year_guest_percantage = (($data['current_year_static_data']['total_guests'] != '') && ($data['last_year_static_data']['total_guests'] != 0)) ? (($last_year_guest_deference * 100) / $data['last_year_static_data']['total_guests']) : 0;
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('A6', "Guest Nights")
 		->setCellValue('B6', number_format($data['current_year_static_data']['total_guests']))
@@ -4955,7 +5113,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $last_year_deference = 0;
 	    $last_year_percantage = 0;
 	    $last_year_deference = $data['current_year_static_data']['total_room_night'] - $data['last_year_static_data']['total_room_night'];
-	    $last_year_percantage = (($data['current_year_static_data']['total_room_night'] != '') && ($data['current_year_static_data']['total_room_night'] != 0)) ? (($last_year_deference * 100) / $data['current_year_static_data']['total_room_night']) : 0;
+	    $last_year_percantage = (($data['current_year_static_data']['total_room_night'] != '') && ($data['last_year_static_data']['total_room_night'] != 0)) ? (($last_year_deference * 100) / $data['last_year_static_data']['total_room_night']) : 0;
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('A7', "Room Nights")
 		->setCellValue('B7', number_format($data['current_year_static_data']['total_room_night']))
@@ -4966,7 +5124,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $last_year_cdd_deference = 0;
 	    $last_year_cdd_percantage = 0;
 	    $last_year_cdd_deference = $data['current_year_static_data']['cdd'] - $data['last_year_static_data']['cdd'];
-	    $last_year_cdd_percantage = (($data['current_year_static_data']['cdd'] != '') && ($data['current_year_static_data']['cdd'] != 0)) ? (($last_year_cdd_deference * 100) / $data['current_year_static_data']['cdd']) : 0;
+	    $last_year_cdd_percantage = (($data['current_year_static_data']['cdd'] != '') && ($data['last_year_static_data']['cdd'] != 0)) ? (($last_year_cdd_deference * 100) / $data['last_year_static_data']['cdd']) : 0;
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('A8', "CDD")
 		->setCellValue('B8', number_format($data['current_year_static_data']['cdd']))
@@ -4977,7 +5135,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $last_year_hdd_deference = 0;
 	    $last_year_hdd_percantage = 0;
 	    $last_year_hdd_deference = $data['current_year_static_data']['hdd'] - $data['last_year_static_data']['hdd'];
-	    $last_year_hdd_percantage = (($data['current_year_static_data']['hdd'] != '') && ($data['current_year_static_data']['hdd'] != 0)) ? (($last_year_hdd_deference * 100) / $data['current_year_static_data']['hdd']) : 0;
+	    $last_year_hdd_percantage = (($data['current_year_static_data']['hdd'] != '') && ($data['last_year_static_data']['hdd'] != 0)) ? (($last_year_hdd_deference * 100) / $data['last_year_static_data']['hdd']) : 0;
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('A9', "HDD")
 		->setCellValue('B9', number_format($data['current_year_static_data']['hdd']))
@@ -5004,7 +5162,7 @@ class Reports_admin extends Base_Admin_Controller
 		    $last_year_deference = 0;
 		    $last_year_percantage = 0;
 		    $last_year_deference = $submission['current_year_total'] - $submission['last_year_total'];
-		    $last_year_percantage = (($submission['current_year_total'] != '') || ($submission['current_year_total'] != 0)) ? (($last_year_deference * 100) / $submission['current_year_total']) : 0;
+		    $last_year_percantage = (($submission['last_year_total'] != '') || ($submission['last_year_total'] != 0)) ? (($last_year_deference * 100) / $submission['last_year_total']) : 0;
 		    $current_year_total += $submission['current_year_total'];
 		    $last_year_total += $submission['last_year_total'];
 		    $objPHPExcel->setActiveSheetIndex(0)
@@ -5114,6 +5272,7 @@ class Reports_admin extends Base_Admin_Controller
 	    // If you're serving to IE over SSL, then the following may be needed
 	    header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	    header('Pragma: public'); // HTTP/1.0
+	    sanitize_report_spreadsheet($objPHPExcel);
 	    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	    $objWriter->save('php://output');
 	    exit;
@@ -5295,6 +5454,12 @@ class Reports_admin extends Base_Admin_Controller
 	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 3), 'Average CDD');
 	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 4), 'Average HDD');
 	$active_column++;
+	$rooms_keys = (float) $site_detail['rooms_keys'];
+	$sold_roomnight_total = array('LLY' => 0, 'LY' => 0, 'CY' => 0);
+	$sellable_roomnight_total = array('LLY' => 0, 'LY' => 0, 'CY' => 0);
+	$occupancy_percentage = function ($sold, $sellable) {
+	    return ($sellable > 0) ? round(((float) $sold / $sellable) * 100, 2) : 0;
+	};
 	foreach ($montharray as $month_id => $month_name) {
 	    if ($month_id < $current_month) {
 		// $average_roomnight_value = ($report_data['data']['full_year']['roomnight'][$month_id] / $total_years);
@@ -5313,12 +5478,29 @@ class Reports_admin extends Base_Admin_Controller
 	    }
 	    $average_cdd_total += number_format(($average_cdd_value),0);
 	    $average_hdd_total += number_format(($average_hdd_value),0);
-	    $average_roomnight_value_LLY = number_format(($average_roomnight_value_LLY) / $site_detail['rooms_keys']);
-	    $average_roomnight_value_LY = number_format(($average_roomnight_value_LY) / $site_detail['rooms_keys']);
-	    $average_roomnight_value = number_format(($average_roomnight_value) / $site_detail['rooms_keys']);
-	    $average_roomnight_total_LLY += number_format(($average_roomnight_value_LLY),0);
-	    $average_roomnight_total_LY += number_format(($average_roomnight_value_LY),0);
-	    $average_roomnight_total += number_format(($average_roomnight_value),0);
+	    // Occupancy is sold room nights over sellable room nights, so the divisor is
+	    // keys x days in the month and has to follow each year's own calendar.
+	    $sellable_roomnights = array(
+		'LLY' => $rooms_keys * cal_days_in_month(CAL_GREGORIAN, $month_id, $year - 2),
+		'LY' => $rooms_keys * cal_days_in_month(CAL_GREGORIAN, $month_id, $year - 1),
+		'CY' => $rooms_keys * cal_days_in_month(CAL_GREGORIAN, $month_id, $year),
+	    );
+	    $sold_roomnights = array(
+		'LLY' => (float) $average_roomnight_value_LLY,
+		'LY' => (float) $average_roomnight_value_LY,
+		'CY' => (float) $average_roomnight_value,
+	    );
+	    // Months with nothing recorded stay out of the annual figure so that
+	    // unreported months do not dilute it.
+	    foreach ($sold_roomnights as $period => $sold) {
+		if ($sold > 0) {
+		    $sold_roomnight_total[$period] += $sold;
+		    $sellable_roomnight_total[$period] += $sellable_roomnights[$period];
+		}
+	    }
+	    $average_roomnight_value_LLY = $occupancy_percentage($sold_roomnights['LLY'], $sellable_roomnights['LLY']);
+	    $average_roomnight_value_LY = $occupancy_percentage($sold_roomnights['LY'], $sellable_roomnights['LY']);
+	    $average_roomnight_value = $occupancy_percentage($sold_roomnights['CY'], $sellable_roomnights['CY']);
 	    $average_cdd_value = number_format(($average_cdd_value));
 	    $average_hdd_value = number_format(($average_hdd_value));
 	    $objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, $average_roomnight_value_LLY);
@@ -5328,9 +5510,11 @@ class Reports_admin extends Base_Admin_Controller
 	    $objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 4), $average_hdd_value);
 	    $active_column++;
 	}
-	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, ($average_roomnight_total_LLY));
-	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 1), ($average_roomnight_total_LY));
-	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 2), ($average_roomnight_total));
+	// Percentages cannot be summed, so the trailing column carries occupancy across
+	// every reported month of the year.
+	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . $active_row, $occupancy_percentage($sold_roomnight_total['LLY'], $sellable_roomnight_total['LLY']));
+	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 1), $occupancy_percentage($sold_roomnight_total['LY'], $sellable_roomnight_total['LY']));
+	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 2), $occupancy_percentage($sold_roomnight_total['CY'], $sellable_roomnight_total['CY']));
 	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 3), $average_cdd_total);
 	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($alphas[$active_column] . ($active_row + 4), $average_hdd_total);
 	// Reset
@@ -5661,6 +5845,7 @@ class Reports_admin extends Base_Admin_Controller
 	// If you're serving to IE over SSL, then the following may be needed
 	header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	header('Pragma: public'); // HTTP/1.0
+	sanitize_report_spreadsheet($objPHPExcel);
 	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	$objWriter->save('php://output');
 	exit;
@@ -5913,7 +6098,7 @@ class Reports_admin extends Base_Admin_Controller
 	$hotel_detail = $this->hotels_model->get_hotel_detail(1);
 	// Site detail
 	$this->load->model('sites/sites_model');
-	$result = $this->sites_model->get_site_detail_custom($site_id);
+	$result = $site_detail_result = $this->sites_model->get_site_detail_custom($site_id);
 	$region_list = $this->sites_model->region_list();
 	$country_list = $this->sites_model->country_list();
 	$hotel_list = $this->sites_model->hotel_list();
@@ -5935,6 +6120,7 @@ class Reports_admin extends Base_Admin_Controller
 	$show_piechart = false;
 	$show_actionplans = false;
 	$show_site_details = false;
+	$content_reports_waste_report = '';
 	if (!empty($this->input->post())) {
 	    $postdata = [];
 	    $postdata = $this->input->post();
@@ -5987,27 +6173,45 @@ class Reports_admin extends Base_Admin_Controller
 		$this->load->model('sites/site_waste_model');
 		$baselineYear = $site_detials['baseline_regression_year'];
 		
-		$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear);
+		$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear,'',$current_month,$current_year);
 
 		$wasteDiversionNumeratorData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detials, 'recycling_wte', $current_year, $current_month);
 		$totalWasteData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detials, '', $current_year, $current_month);
 
-		foreach ($progressOnTarget as $monthId => &$yearData) {
-			foreach ($yearData as $yearId => &$progressValue) {
-				$progressValue['waste_diversion_numerator_baseline_target'] = isset($wasteDiversionNumeratorData['YTDTotal'][$baselineYear]) ? $wasteDiversionNumeratorData['YTDTotal'][$baselineYear] : 0;
-				$progressValue['total_waste_baseline_target'] = isset($totalWasteData['YTDTotal'][$baselineYear]) ? $totalWasteData['YTDTotal'][$baselineYear] : 0;
-				$progressValue['waste_diversion_numerator_target'] = isset($wasteDiversionNumeratorData['YTDTotal'][$running_year]) ? $wasteDiversionNumeratorData['YTDTotal'][$running_year] : 0;
-				$progressValue['total_waste_target'] = isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0;
+	
+		foreach ($progressOnTarget as $yearId => &$yearData) {
+			if (!is_array($yearData)) {
+				$yearData = array();
 			}
-		}
-		unset($yearData, $progressValue);
 
+			$yearData['waste_diversion_numerator_baseline_target'] =
+				isset($wasteDiversionNumeratorData['YTDTotal'][$baselineYear])
+					? $wasteDiversionNumeratorData['YTDTotal'][$baselineYear]
+					: 0;
+
+			$yearData['total_waste_baseline_target'] =
+				isset($totalWasteData['YTDTotal'][$baselineYear])
+					? $totalWasteData['YTDTotal'][$baselineYear]
+					: 0;
+
+			$yearData['waste_diversion_numerator'] =
+				isset($wasteDiversionNumeratorData['YTDTotal'][$yearId])
+					? $wasteDiversionNumeratorData['YTDTotal'][$yearId]
+					: 0;
+
+			$yearData['total_waste_target'] =
+				isset($totalWasteData['YTDTotal'][$yearId])
+					? $totalWasteData['YTDTotal'][$yearId]
+					: 0;
+		}
+		unset($yearData);
+	
 		$progressValueWasteYTD = [
 			'total_waste_baseline_target' => isset($totalWasteData['YTDTotal'][$baselineYear]) ? $totalWasteData['YTDTotal'][$baselineYear] : 0,
 			'total_waste_target' => isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0
 		];
 
-		$widgetData = $this->sites_model->getMySitesWidgetData($site_detials);
+		$widgetData = $this->sites_model->getMySitesWidgetData($site_detials,true);
 		$currentMonthData = $widgetData[0] ?? [];
 		$sameMonthLastYearData = $widgetData[2] ?? [];
 
@@ -6042,9 +6246,15 @@ class Reports_admin extends Base_Admin_Controller
 		$data['waste_diversion_numerator_YTD'] = $progressOnTargetResult['waste_diversion_numerator_YTD'];
 		$data['waste_diversion_numerator_Baseline_YTD'] = $progressOnTargetResult['waste_diversion_numerator_Baseline_YTD'];
 
-		$data['waste']['total_room_night'] = $data['utility_cost_chart'][$currMonthWid][$currYearWid]['room_night'];
-		$data['waste']['total_guests'] = $data['utility_cost_chart'][$currMonthWid][$currYearWid]['guest_night'];
-		$data['WasteReport'] = $this->site_waste_model->getWasteReportData($site_id, $data['waste'], $currYearWid, $currMonthWid);
+		for ($month = 1; $month <= $currMonthWid; $month++) {
+		    $currentUtility = $data['utility_cost_chart'][$month][$currYearWid] ?? array();
+		    $previousUtility = $data['utility_cost_chart_pre'][$month][$currYearWid-1] ?? array();
+		    $data['waste']['total_room_night'] += (float) ($currentUtility['room_night'] ?? 0);
+		    $data['waste']['previous_total_room_night'] += (float) ($previousUtility['room_night'] ?? 0);
+		    $data['waste']['total_guests'] += (float) ($currentUtility['guest_night'] ?? 0);
+		    $data['waste']['previous_total_guests'] += (float) ($previousUtility['guest_night'] ?? 0);
+		}
+		$data['WasteReport'] = $this->site_waste_model->getWasteReportData($site_id, $data['waste'], $currYearWid, $currMonthWid,false,true);
 		if(empty($data['WasteReport'])) {
 			$content_reports_waste_report = '';
 		} else {
@@ -6068,7 +6278,8 @@ class Reports_admin extends Base_Admin_Controller
 		$utility_kwh_total = 0;
 		$currYear = $this->input->post('yearly_report_year') ? $this->input->post('yearly_report_year') : date('Y');
 		$currMonth = 0;
-		$data = $this->CalculateMeasures($data, $site_detail_result, $currYear, $currMonth);
+		$currAnnualReportMonth = 12;
+		$data = $this->CalculateMeasures($data, $site_detail_result, $currYear, $currAnnualReportMonth);
 		if ($result['chsb_reporting'] == 1) {
 		    $postChartData = $this->input->post();
 		    $data['chsb_report_chart_1'] = $postChartData['chsb_report_chart_1'];
@@ -6079,8 +6290,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $data['chsb_report_chart_6'] = $postChartData['chsb_report_chart_6'];
 		    $data['chsb_report_chart_7'] = $postChartData['chsb_report_chart_7'];
 		    $data['chsb_report_chart_8'] = $postChartData['chsb_report_chart_8'];
-		    // $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
-		    $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports_chart_view', $data, true);
+		    $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
+		    // $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports_chart_view', $data, true);
 		}
 	    } else if ($postdata['submit'] == 'download_5years_hidden') {
 		$data['pdf_report_title'] = '5 Years Total Utilities Report with Efficiency Actions';
@@ -6219,8 +6430,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $data['chsb_report_chart_6'] = $postChartData['chsb_report_chart_6'];
 		    $data['chsb_report_chart_7'] = $postChartData['chsb_report_chart_7'];
 		    $data['chsb_report_chart_8'] = $postChartData['chsb_report_chart_8'];
-		    // $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
-		    $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports_chart_view', $data, true);
+		    $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
+		    // $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports_chart_view', $data, true);
 		}
 	    } else {
 		$carbon_footPrint = 0;
@@ -6268,6 +6479,37 @@ class Reports_admin extends Base_Admin_Controller
 		$content_reports_piecharts = $this->load->view('admin_landing_pdf_reports_piecharts', $data, true);
 		$data['columnChartCarbonFootprintImg'] = $postdata['columnChartCarbonFootprintImg'];
 		$content_reports_carbon_footprint = $this->load->view('admin_landing_pdf_reports_carbon_footprint', $data, true);
+
+		// Waste page uses cumulative January-to-last-reported-month values for YTD.
+		$currYear = (int) $filters['current_year'];
+		$currMonth = (int) $filters['max_month_id'];
+		$previousYear = $currYear - 1;
+		$wasteTotals = array(
+		    'total_room_night' => 0,
+		    'previous_total_room_night' => 0,
+		    'total_guests' => 0,
+		    'previous_total_guests' => 0,
+		);
+		for ($month = 1; $month <= $currMonth; $month++) {
+		    $currentUtility = $data['utility_cost_chart'][$month][$currYear] ?? array();
+		    $previousUtility = $data['utility_cost_chart'][$month][$previousYear] ?? array();
+		    $wasteTotals['total_room_night'] += (float) ($currentUtility['room_night'] ?? 0);
+		    $wasteTotals['previous_total_room_night'] += (float) ($previousUtility['room_night'] ?? 0);
+		    $wasteTotals['total_guests'] += (float) ($currentUtility['guest_night'] ?? 0);
+		    $wasteTotals['previous_total_guests'] += (float) ($previousUtility['guest_night'] ?? 0);
+		}
+		$data['waste'] = $wasteTotals;
+		$data['WasteReport'] = $this->site_waste_model->getWasteReportData(
+		    $site_id,
+		    $data['waste'],
+		    $currYear,
+		    $currMonth,
+		    true
+		);
+		if (!empty($data['WasteReport'])) {
+		    $content_reports_waste_report = $this->load->view('admin_landing_pdf_reports_waste', $data, true);
+		}
+
 		// Calculation For CHSB report
 		$this->load->model('sites/sites_model');
 		$site_id = isset($this->session->userdata[$this->section_name]['site_id']) ? $this->session->userdata[$this->section_name]['site_id'] : 0;
@@ -6317,13 +6559,80 @@ class Reports_admin extends Base_Admin_Controller
 		    $cooling_district_value = (int) $getUtilities['district_cooling'] * 1;
 		    $utility_kwh_total += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
 		}
-		$data['measures']['HotelCarbonFootprintPerRoom'] = round($carbon_footPrint / $result['rooms_keys'], 2);
-		$data['measures']['HotelCarbonFootprintPerOccupiedRoom'] = round($carbon_footPrint / $total_room_night, 2);
-		$data['measures']['HotelCarbonFootprintPerSquareMeter'] = round($carbon_footPrint / $result['site_builtup_area'], 2);
-		$data['measures']['HotelEnergyUsagePerOccupiedRoom'] = round($utility_kwh_total / $total_room_night, 2);
-		$data['measures']['HotelEnergyUsagePerSquareMeter'] = round($utility_kwh_total / $result['site_builtup_area'], 2);
-		$data['measures']['HotelWaterUsagePerOccupiedRoom'] = round($water_total_consumption / $total_room_night, 2);
-		$data['measures']['HotelWaterUsagePerSquareMeter'] = round($water_total_consumption / $result['site_builtup_area'], 2);
+		$data['measures']['HotelCarbonFootprintPerRoom'][date("Y")] = round($carbon_footPrint / $result['rooms_keys'], 2);
+		$data['measures']['HotelCarbonFootprintPerOccupiedRoom'][date("Y")] = round($carbon_footPrint / $total_room_night, 2);
+		$data['measures']['HotelCarbonFootprintPerSquareMeter'][date("Y")] = round($carbon_footPrint / $result['site_builtup_area'], 2);
+		$data['measures']['HotelEnergyUsagePerOccupiedRoom'][date("Y")] = round($utility_kwh_total / $total_room_night, 2);
+		$data['measures']['HotelEnergyUsagePerSquareMeter'][date("Y")] = round($utility_kwh_total / $result['site_builtup_area'], 2);
+		$data['measures']['HotelWaterUsagePerOccupiedRoom'][date("Y")] = round($water_total_consumption / $total_room_night, 2);
+		$data['measures']['HotelWaterUsagePerSquareMeter'][date("Y")] = round($water_total_consumption / $result['site_builtup_area'], 2);
+		
+		$chsb_measures = calculateCHSBMeasures($currYear, $currMonth, $site_id, $site_detials, $result, $this->utilities_model);
+
+		// SAVE CHSB VALUES
+
+		$data['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+			$chsb_measures['chsb_measure_1'];
+
+		$data['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+			$chsb_measures['chsb_measure_2'];
+
+		$data['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+			$chsb_measures['chsb_measure_3'];
+
+		$data['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+			$chsb_measures['chsb_measure_4'];
+
+		$data['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+			$chsb_measures['chsb_measure_5'];
+
+		$data['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+			$chsb_measures['chsb_measure_6'];
+
+		$data['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+			'chsb_measure_no' => 7,
+			'chsb_value' => $chsb_measures['chsb_measure_7']
+		);
+
+		$data['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+			$chsb_measures['chsb_measure_8'];
+
+		$data['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+			$chsb_measures['chsb_measure_9'];
+
+		$data['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+			'chsb_measure_no' => 10,
+			'chsb_value' => $chsb_measures['chsb_measure_10']
+		);
+
+		$data['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+			'chsb_measure_no' => 11,
+			'chsb_value' => $chsb_measures['chsb_measure_11']
+		);
+
+		$data['measures']['RenewableEnergyPercentage'] = array(
+			'chsb_measure_no' => 12,
+			'chsb_value' => $chsb_measures['chsb_measure_12']
+		);
+
+		$data['measures']['RenewableElectricityPercentage'] = array(
+			'chsb_measure_no' => 13,
+			'chsb_value' => $chsb_measures['chsb_measure_13']
+		);
+
+		$data['measures']['ElectricityToNonElectricEnergy'] = array(
+			'chsb_measure_no' => 14,
+			'chsb_value' => $chsb_measures['chsb_measure_14']
+		);
+		$data['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+			$chsb_measures['chsb_measure_4a'];
+
+		$data['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+			$chsb_measures['chsb_measure_6a'];
+
+		$data['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+			$chsb_measures['chsb_measure_9a'];
+
 		if ($result['chsb_reporting'] == 1) {
 		    $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
 		}
@@ -6771,6 +7080,7 @@ class Reports_admin extends Base_Admin_Controller
 	// If you're serving to IE over SSL, then the following may be needed
 	header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	header('Pragma: public'); // HTTP/1.0
+	sanitize_report_spreadsheet($objPHPExcel);
 	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	$objWriter->save('php://output');
 	exit;
@@ -6887,6 +7197,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $pre_data_occupancy = (!empty($utility_cost_chart[$month][$year - 1]['occupancy'])) ? $utility_cost_chart[$month][$year - 1]['occupancy'] : 0;
 		    $pre_data_room_night = (!empty($utility_cost_chart[$month][$year - 1]['room_night'])) ? $utility_cost_chart[$month][$year - 1]['room_night'] : 0;
 		    $pre_data_total_room_night_budget = (!empty($utility_cost_chart[$month][$year - 1]['total_room_night_budget'])) ? $utility_cost_chart[$month][$year - 1]['total_room_night_budget'] : 0;
+			$pre_data_fleet_petrol = (!empty($utility_cost_chart[$month][$year - 1]['fleet_petrol'])) ? $utility_cost_chart[$month][$year - 1]['fleet_petrol'] : 0;
+		    $pre_data_total_fleet_petrol_cost = (!empty($utility_cost_chart[$month][$year - 1]['total_fleet_petrol_cost'])) ? $utility_cost_chart[$month][$year - 1]['total_fleet_petrol_cost'] : 0;
 		    $pre_data_electricity_tariff = (!empty($utility_cost_chart[$month][$year - 1]['electricity_tariff'])) ? $utility_cost_chart[$month][$year - 1]['electricity_tariff'] : 0;
 		    $pre_data_electricity_kwh = (!empty($utility_cost_chart[$month][$year - 1]['total_electricity_kwh'])) ? $utility_cost_chart[$month][$year - 1]['total_electricity_kwh'] : 0;
 		    // Current year data
@@ -6911,6 +7223,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $data_total_room_night_budget = (!empty($utility_cost_chart[$month][$year]['total_room_night_budget'])) ? $utility_cost_chart[$month][$year]['total_room_night_budget'] : 0;
 		    $data_electricity_tariff = (!empty($utility_cost_chart[$month][$year]['electricity_tariff'])) ? $utility_cost_chart[$month][$year]['electricity_tariff'] : 0;
 		    $data_electricity_kwh = (!empty($utility_cost_chart[$month][$year]['total_electricity_kwh'])) ? $utility_cost_chart[$month][$year]['total_electricity_kwh'] : 0;
+			$data_fleet_petrol = (!empty($utility_cost_chart[$month][$year]['fleet_petrol'])) ? $utility_cost_chart[$month][$year]['fleet_petrol'] : 0;
+		    $data_total_fleet_petrol_cost = (!empty($utility_cost_chart[$month][$year]['total_fleet_petrol_cost'])) ? $utility_cost_chart[$month][$year]['total_fleet_petrol_cost'] : 0;
 		    // Round values
 		    $pre_data_occupancy = round($pre_data_occupancy, 2);
 		    $data_occupancy = round($data_occupancy, 2);
@@ -6933,6 +7247,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $return["total_sum_pre_data_occupancy"] += $pre_data_occupancy;
 		    $return["total_sum_pre_data_room_night"] += $pre_data_room_night;
 		    $return["total_sum_pre_data_total_room_night_budget"] += $pre_data_total_room_night_budget;
+			$return["total_sum_pre_data_fleet_petrol"] += $pre_data_fleet_petrol;
+		    $return["total_sum_pre_data_fleet_petrol_cose"] += $pre_data_total_fleet_petrol_cost;
 		    //$return["total_sum_pre_data_electricity_tariff"] += $pre_data_electricity_tariff;
 		    $return["total_sum_pre_data_electricity_kwh"] += $pre_data_electricity_kwh;
 		    // Total sum Current year data
@@ -6956,6 +7272,8 @@ class Reports_admin extends Base_Admin_Controller
 		    $return["total_sum_data_total_room_night_budget"] += $data_total_room_night_budget;
 		    //$return["total_sum_data_electricity_tariff"] += $data_electricity_tariff;
 		    $return["total_sum_data_electricity_kwh"] += $data_electricity_kwh;
+			$return["total_sum_data_fleet_petrol"] += $data_fleet_petrol;
+		    $return["total_sum_data_fleet_petrol_cost"] += $data_total_fleet_petrol_cost;
 		    $total_months++;
 		}
 	    }
@@ -7121,6 +7439,8 @@ class Reports_admin extends Base_Admin_Controller
 	    $return["heating_district_consumption_difference"] = $return["total_sum_data_heating_district_consumption"] - $return["total_sum_pre_data_heating_district_consumption"];
 	    $return["cooling_district_consumption_difference"] = $return["total_sum_data_cooling_district_consumption"] - $return["total_sum_pre_data_cooling_district_consumption"];
 	    $return["water_consumption_difference"] = $return["total_sum_data_water_consumption"] - $return["total_sum_pre_data_water_consumption"];
+		$return["fleet_petrol_difference"] = $return["total_sum_data_fleet_petrol"] - $return["total_sum_pre_data_fleet_petrol"];
+		$return["fleet_petrol_cost_difference"] = $return["total_sum_data_fleet_petrol_cost"] - $return["total_sum_pre_data_fleet_petrol_cost"];
 	    if (!empty($return["total_sum_pre_data_electricity_kwh"])) {
 		$return["electricity_consumption_variation"] = round($return["electricity_consumption_difference"] * 100 / $return["total_sum_pre_data_electricity_kwh"], $percentage_decimal);
 	    } else {
@@ -7155,6 +7475,16 @@ class Reports_admin extends Base_Admin_Controller
 		$return["water_consumption_variation"] = round($return["water_consumption_difference"] * 100 / $return["total_sum_pre_data_water_consumption"], $percentage_decimal);
 	    } else {
 		$return["water_consumption_variation"] = 0;
+	    }
+		if (!empty($return["total_sum_pre_data_fleet_petrol"])) {
+		$return["fleet_petrol_variation"] = round($return["fleet_petrol_difference"] * 100 / $return["total_sum_pre_data_fleet_petrol"], $percentage_decimal);
+	    } else {
+		$return["fleet_petrol_variation"] = 0;
+	    }
+		if (!empty($return["total_sum_pre_data_fleet_petrol_cost"])) {
+		$return["fleet_petrol_cost_variation"] = round($return["fleet_petrol_cost_difference"] * 100 / $return["total_sum_pre_data_fleet_petrol_cost"], $percentage_decimal);
+	    } else {
+		$return["fleet_petrol_cost_variation"] = 0;
 	    }
 	    if (!empty($return["total_sum_pre_data_electricity"]) && $return["total_sum_pre_data_electricity"] > 0) {
 		$return["total_sum_data_electricity_variation"] = round(((($return["total_sum_data_electricity"] - $return["total_sum_pre_data_electricity"]) * 100) / $return["total_sum_pre_data_electricity"]), $percentage_decimal);
@@ -7388,7 +7718,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $return["lpg_tariff_budget"] = ($currentBudgetActualData["total_lpg_budget"] != 0) ? round($currentBudgetActualData["total_lpg_cost_budget"] / $currentBudgetActualData["total_lpg_budget"], $value_decimal) : 0;
 	    $return["natural_gas_tariff_budget"] = ($currentBudgetActualData["total_natural_gas_budget"] != 0) ? round($currentBudgetActualData["total_natural_gas_cost_budget"] / $currentBudgetActualData["total_natural_gas_budget"], $value_decimal) : 0;
 	    $return["water_tariff_budget"] = ($currentBudgetActualData["water_total_consumption_budget"] != 0) ? round($currentBudgetActualData["water_total_consumption_cost_budget"] / $currentBudgetActualData["water_total_consumption_budget"], $value_decimal) : 0;
-	    $return["district_cooling_tariff_budget"] = ($currentBudgetActualData["water_total_consumption_budget"] != 0) ? round($currentBudgetActualData["district_cooling_cost_budget"] / $currentBudgetActualData["district_cooling_budget"], $value_decimal) : 0;
+	    $return["district_cooling_tariff_budget"] = ($currentBudgetActualData["district_cooling_budget"] != 0) ? round($currentBudgetActualData["district_cooling_cost_budget"] / $currentBudgetActualData["district_cooling_budget"], $value_decimal) : 0;
 	    $return["district_heating_tariff_budget"] = ($currentBudgetActualData["district_heating_budget"] != 0) ? round($currentBudgetActualData["district_heating_cost_budget"] / $currentBudgetActualData["district_heating_budget"], $value_decimal) : 0;
 	    $return["electricity_tariff_actual"] = ($currentBudgetActualData["total_electricity_kwh_actual"] != 0) ? round($currentBudgetActualData["total_electricity_cost_actual"] / $currentBudgetActualData["total_electricity_kwh_actual"], $value_decimal) : 0;
 	    $return["fuel_oil_tariff_actual"] = ($currentBudgetActualData["total_fuel_oil_actual"] != 0) ? round($currentBudgetActualData["total_fuel_oil_cost_actual"] / $currentBudgetActualData["total_fuel_oil_actual"], $value_decimal) : 0;
@@ -7423,8 +7753,8 @@ class Reports_admin extends Base_Admin_Controller
 	    $return["lpg_cost_variation"] = ($currentBudgetActualData["total_lpg_cost_budget"] != 0) ? round(($currentBudgetActualData["total_lpg_cost_actual"] - $currentBudgetActualData["total_lpg_cost_budget"]) * 100 / $currentBudgetActualData["total_lpg_cost_budget"], $percentage_decimal) : 0;
 	    $return["natural_gas_cost_variation"] = ($currentBudgetActualData["total_natural_gas_cost_budget"] != 0) ? round(($currentBudgetActualData["total_natural_gas_cost_actual"] - $currentBudgetActualData["total_natural_gas_cost_budget"]) * 100 / $currentBudgetActualData["total_natural_gas_cost_budget"], $percentage_decimal) : 0;
 	    $return["water_cost_variation"] = ($currentBudgetActualData["water_total_consumption_cost_budget"] != 0) ? round(($currentBudgetActualData["water_total_consumption_cost_actual"] - $currentBudgetActualData["water_total_consumption_cost_budget"]) * 100 / $currentBudgetActualData["water_total_consumption_cost_budget"], $percentage_decimal) : 0;
-	    $return["district_cooling_cost_variation"] = ($currentBudgetActualData["district_cooling_cost_budget"] != '') ? round(($currentBudgetActualData["district_cooling_cost_actual"] - $currentBudgetActualData["district_cooling_cost_budget"]) * 100 / $currentBudgetActualData["district_cooling_cost_budget"], $percentage_decimal) : 0;
-	    $return["district_heating_cost_variation"] = ($currentBudgetActualData["district_heating_cost_budget"] != 0) ? round(($currentBudgetActualData["district_heating_cost_actual"] - $currentBudgetActualData["district_heating_cost_budget"]) * 100 / $currentBudgetActualData["district_heating_cost_budget"], $percentage_decimal) : 0;
+	    $return["district_cooling_cost_variation"] = ($currentBudgetActualData["district_cooling_cost_budget"] != '') ? round(($currentBudgetActualData["district_cooling_cost_actual"] + $currentBudgetActualData["district_cooling_fixed_cost"] - $currentBudgetActualData["district_cooling_cost_budget"]) * 100 / $currentBudgetActualData["district_cooling_cost_budget"], $percentage_decimal) : 0;
+	    $return["district_heating_cost_variation"] = ($currentBudgetActualData["district_heating_cost_budget"] != 0) ? round(($currentBudgetActualData["district_heating_cost_actual"] + $currentBudgetActualData["district_heating_fixed_cost"] - $currentBudgetActualData["district_heating_cost_budget"]) * 100 / $currentBudgetActualData["district_heating_cost_budget"], $percentage_decimal) : 0;
 	    $return["electricity_per_room_night_variation"] = ($return["electricity_per_room_night_budget"] != 0) ? round(($return["electricity_per_room_night_actual"] - $return["electricity_per_room_night_budget"]) * 100 / $return["electricity_per_room_night_budget"], $percentage_decimal) : 0;
 	    $return["fuel_oil_per_room_night_variation"] = ($return["fuel_oil_per_room_night_budget"] != 0) ? round(($return["fuel_oil_per_room_night_actual"] - $return["fuel_oil_per_room_night_budget"]) * 100 / $return["fuel_oil_per_room_night_budget"], $percentage_decimal) : 0;
 	    $return["lpg_per_room_night_variation"] = ($return["lpg_per_room_night_budget"] != 0) ? round(($return["lpg_per_room_night_actual"] - $return["lpg_per_room_night_budget"]) * 100 / $return["lpg_per_room_night_budget"], $percentage_decimal) : 0;
@@ -7433,7 +7763,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $return["district_cooling_per_room_night_variation"] = ($return["district_cooling_per_room_night_budget"] != 0) ? round(($return["district_cooling_per_room_night_actual"] - $return["district_cooling_per_room_night_budget"]) * 100 / $return["district_cooling_per_room_night_budget"], $percentage_decimal) : 0;
 	    $return["district_heating_per_room_night_variation"] = ($return["district_heating_per_room_night_budget"] != 0) ? round(($return["district_heating_per_room_night_actual"] - $return["district_heating_per_room_night_budget"]) * 100 / $return["district_heating_per_room_night_budget"], $percentage_decimal) : 0;
 	    $return["total_cost_budget"] = $currentBudgetActualData["total_electricity_cost_budget"] + $currentBudgetActualData["total_fuel_oil_cost_budget"] + $currentBudgetActualData["total_lpg_cost_budget"] + $currentBudgetActualData["total_natural_gas_cost_budget"] + $currentBudgetActualData["water_total_consumption_cost_budget"] + $currentBudgetActualData["district_cooling_cost_budget"] + $currentBudgetActualData["district_heating_cost_budget"];
-	    $return["total_cost_actual"] = $currentBudgetActualData["total_electricity_cost_actual"] + $currentBudgetActualData["total_fuel_oil_cost_actual"] + $currentBudgetActualData["total_lpg_cost_actual"] + $currentBudgetActualData["total_natural_gas_cost_actual"] + $currentBudgetActualData["water_total_consumption_cost_actual"] + $currentBudgetActualData["district_cooling_cost_actual"] + $currentBudgetActualData["district_heating_cost_actual"];
+	    $return["total_cost_actual"] = $currentBudgetActualData["total_electricity_cost_actual"] + $currentBudgetActualData["total_fuel_oil_cost_actual"] + $currentBudgetActualData["total_lpg_cost_actual"] + $currentBudgetActualData["total_natural_gas_cost_actual"] + $currentBudgetActualData["water_total_consumption_cost_actual"] + $currentBudgetActualData["district_cooling_cost_actual"] + $currentBudgetActualData['district_cooling_fixed_cost'] + $currentBudgetActualData["district_heating_cost_actual"] + $currentBudgetActualData['district_heating_fixed_cost'];
 	    $return["total_cost_variation"] = $return["total_cost_actual"] - $return["total_cost_budget"];
 	    $return["total_cost_variation_percentage"] = ($return["total_cost_budget"] != 0) ? round($return["total_cost_variation"] * 100 / $return["total_cost_budget"], $percentage_decimal) : 0;
 	    $return["total_cost_actual_per_room_night"] = round($return["total_cost_actual"] / $currentBudgetActualData["total_room_night"], $value_decimal);
@@ -7650,6 +7980,50 @@ class Reports_admin extends Base_Admin_Controller
 	    ->setCellValue('F7', number_format($total_sum_data_cdd_variation, 2) . "%")
 	    ->setCellValue('F8', number_format($total_sum_data_hdd_variation, 2) . "%");
 	$header_row = 9;
+
+	if ($site_detail['show_utility_fleet']) {
+	    $row1 = $header_row + 1;
+	    $row2 = $header_row + 2;
+	    $row3 = $header_row + 3;
+	    $row4 = $header_row + 4;
+	    /*
+	     * ##################################################
+	     *          FLEET FUEL BLOCK STYLES
+	     * ##################################################
+	     */
+	    $objPHPExcel->getActiveSheet()->mergeCells('B' . $header_row . ':I' . $header_row);
+	    $objPHPExcel->getActiveSheet()->getStyle('A' . $header_row . ':I' . $header_row)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('d8e1f2');
+	    $objPHPExcel->getActiveSheet()->getStyle('A' . $header_row . ':I' . $header_row)->applyFromArray($box_display);
+	    $objPHPExcel->getActiveSheet()->getStyle('A' . $row1 . ':I' . $row4)->applyFromArray($box_display);
+	    $objPHPExcel->getActiveSheet()->getStyle('B' . $row1 . ':D' . $row4)->applyFromArray($style_border_right_left);
+	    $objPHPExcel->getActiveSheet()->getStyle('E' . $row1 . ':G' . $row4)->applyFromArray($style_border_right_left);
+	    $objPHPExcel->getActiveSheet()->getStyle('H' . $row1 . ':I' . $row4)->applyFromArray($style_border_right_left);
+	    if ($fleet_petrol_difference > 0) {
+		$objPHPExcel->getActiveSheet()->getStyle('E' . $row1 . ':F' . $row1)->applyFromArray($style_positive_number);
+	    }
+	    if ($fleet_petrol_cost_difference > 0) {
+		$objPHPExcel->getActiveSheet()->getStyle('E' . $row2 . ':F' . $row2)->applyFromArray($style_positive_number);
+	    }
+	    $objPHPExcel->setActiveSheetIndex(0)
+		->setCellValue('A' . $header_row, 'FLEET FUEL')
+		->setCellValue('B' . $header_row, '');
+	    $objPHPExcel->setActiveSheetIndex(0)
+		->setCellValue('A' . $row1, 'Consumption (Litres)')
+		->setCellValue('A' . $row2, 'Total Cost (' . currency_symbol($isLocal) . ')');
+	    $objPHPExcel->setActiveSheetIndex(0)
+		->setCellValue('B' . $row1, number_format($total_sum_data_fleet_petrol))
+		->setCellValue('B' . $row2, num_format($total_sum_data_fleet_petrol_cost, 0, $isLocal));
+	    $objPHPExcel->setActiveSheetIndex(0)
+		->setCellValue('C' . $row1, number_format($total_sum_pre_data_fleet_petrol))
+		->setCellValue('C' . $row2, num_format($total_sum_pre_data_fleet_petrol_cost, 0, $isLocal));
+	    $objPHPExcel->setActiveSheetIndex(0)
+		->setCellValue('E' . $row1, number_format($fleet_petrol_difference))
+		->setCellValue('E' . $row2, num_format($fleet_petrol_cost_difference, 0, $isLocal));
+	    $objPHPExcel->setActiveSheetIndex(0)
+		->setCellValue('F' . $row1, number_format($fleet_petrol_variation, $percentage_decimal) . "%")
+		->setCellValue('F' . $row2, number_format($fleet_petrol_cost_variation, $percentage_decimal) . "%");
+	    $header_row += 3;
+	}
 	//electricity data
 	if ($site_detail['show_utility_electricity']) {
 	    $row1 = $header_row + 1;
@@ -7739,10 +8113,10 @@ class Reports_admin extends Base_Admin_Controller
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('H' . $row1, number_format($electricity_actual_budget_diff))
 		->setCellValue('H' . $row2, num_format($electricity_actual_budget_tariff_diff, $value_decimal, $isLocal))
-		->setCellValue('H' . $row3, num_format($elecricity_act_bud_cost_diff, 0, $isLocal))
+		->setCellValue('H' . $row3, num_format($elecricity_act_bud_cost_diff, $value_decimal, $isLocal))
 		->setCellValue('H' . $row4, number_format($electricity_act_bud_pr_rn_diff, $percentage_decimal));
 	    $objPHPExcel->setActiveSheetIndex(0)
-		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_electricity_kwh_actual"] != 0) ? $electricity_actual_budget_diff * 100 / $currentBudgetActualData["total_electricity_kwh_actual"] : 0, $percentage_decimal) . "%")
+		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_electricity_kwh_budget"] != 0) ? $electricity_actual_budget_diff * 100 / $currentBudgetActualData["total_electricity_kwh_budget"] : 0, $percentage_decimal) . "%")
 		->setCellValue('I' . $row2, number_format($electricity_tariff_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row3, number_format($electricity_cost_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row4, number_format($electricity_per_room_night_variation, $percentage_decimal) . "%");
@@ -7835,10 +8209,10 @@ class Reports_admin extends Base_Admin_Controller
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('H' . $row1, number_format($fuel_act_bud_diff))
 		->setCellValue('H' . $row2, num_format($fuel_act_bud_tariff_diff, $value_decimal, $isLocal))
-		->setCellValue('H' . $row3, num_format($fuel_act_bud_cost_diff, 0, $isLocal))
-		->setCellValue('H' . $row4, num_format($fuel_act_bud_rn_diff, $percentage_decimal, $isLocal));
+		->setCellValue('H' . $row3, num_format($fuel_act_bud_cost_diff, $value_decimal, $isLocal))
+		->setCellValue('H' . $row4, number_format($fuel_act_bud_rn_diff, $percentage_decimal));
 	    $objPHPExcel->setActiveSheetIndex(0)
-		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_fuel_oil_actual"] != 0) ? $fuel_act_bud_diff * 100 / $currentBudgetActualData["total_fuel_oil_actual"] : 0, $percentage_decimal) . "%")
+		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_fuel_oil_budget"] != 0) ? $fuel_act_bud_diff * 100 / $currentBudgetActualData["total_fuel_oil_budget"] : 0, $percentage_decimal) . "%")
 		->setCellValue('I' . $row2, number_format($fuel_oil_tariff_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row3, number_format($fuel_oil_cost_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row4, number_format($fuel_oil_per_room_night_variation, $percentage_decimal) . "%");
@@ -7931,10 +8305,10 @@ class Reports_admin extends Base_Admin_Controller
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('H' . $row1, number_format($lpg_act_bud_diff))
 		->setCellValue('H' . $row2, num_format($lpg_act_bud_tarrif_diff, $value_decimal, $isLocal))
-		->setCellValue('H' . $row3, num_format($lpg_act_bud_cost_diff, 0, $isLocal))
+		->setCellValue('H' . $row3, num_format($lpg_act_bud_cost_diff, $value_decimal, $isLocal))
 		->setCellValue('H' . $row4, number_format($lpg_act_bud_pr_rn_diff, $percentage_decimal));
 	    $objPHPExcel->setActiveSheetIndex(0)
-		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_lpg_actual"] != 0) ? $lpg_act_bud_diff * 100 / $currentBudgetActualData["total_lpg_actual"] : 0, $percentage_decimal) . "%")
+		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_lpg_budget"] != 0) ? $lpg_act_bud_diff * 100 / $currentBudgetActualData["total_lpg_budget"] : 0, $percentage_decimal) . "%")
 		->setCellValue('I' . $row2, number_format($lpg_tariff_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row3, number_format($lpg_cost_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row4, number_format($lpg_per_room_night_variation, $percentage_decimal) . "%");
@@ -8029,7 +8403,7 @@ class Reports_admin extends Base_Admin_Controller
 		->setCellValue('H' . $row3, num_format($natural_gas_act_bud_cost_diff, 0, $isLocal))
 		->setCellValue('H' . $row4, number_format($natural_gas_act_bud_pr_rn_diff, $percentage_decimal));
 	    $objPHPExcel->setActiveSheetIndex(0)
-		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_natural_gas_actual"] != 0) ? $natural_gas_act_bud_diff * 100 / $currentBudgetActualData["total_natural_gas_actual"] : 0, $percentage_decimal) . "%")
+		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["total_natural_gas_budget"] != 0) ? $natural_gas_act_bud_diff * 100 / $currentBudgetActualData["total_natural_gas_budget"] : 0, $percentage_decimal) . "%")
 		->setCellValue('I' . $row2, number_format($natural_gas_tariff_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row3, number_format($natural_gas_cost_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row4, number_format($natural_gas_per_room_night_variation, $percentage_decimal) . "%");
@@ -8124,7 +8498,7 @@ class Reports_admin extends Base_Admin_Controller
 		->setCellValue('H' . $row3, num_format($water_act_bud_cost_diff, 0, $isLocal))
 		->setCellValue('H' . $row4, number_format($water_act_bud_pr_rn_diff, $percentage_decimal));
 	    $objPHPExcel->setActiveSheetIndex(0)
-		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["water_total_consumption_actual"] != 0) ? ($currentBudgetActualData["water_total_consumption_actual"] - $currentBudgetActualData["water_total_consumption_budget"]) * 100 / $currentBudgetActualData["water_total_consumption_actual"] : 0, $percentage_decimal) . "%")
+		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["water_total_consumption_budget"] != 0) ? ($currentBudgetActualData["water_total_consumption_actual"] - $currentBudgetActualData["water_total_consumption_budget"]) * 100 / $currentBudgetActualData["water_total_consumption_budget"] : 0, $percentage_decimal) . "%")
 		->setCellValue('I' . $row2, number_format($water_tariff_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row3, number_format($water_cost_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row4, number_format(floatval((string) $water_per_room_night_variation), $percentage_decimal) . "%");
@@ -8149,7 +8523,7 @@ class Reports_admin extends Base_Admin_Controller
 	    $objPHPExcel->getActiveSheet()->getStyle('H' . $row1 . ':I' . $row4)->applyFromArray($style_border_right_left);
 	    $district_cooling_act_bud_diff = $currentBudgetActualData["district_cooling_actual"] - $currentBudgetActualData["district_cooling_budget"];
 	    $district_cooling_act_bud_tariff_diff = $district_cooling_tariff_actual - $district_cooling_tariff_budget;
-	    $district_cooling_act_bud_cost_diff = $currentBudgetActualData["district_cooling_cost_actual"] - $currentBudgetActualData["district_cooling_cost_budget"];
+	    $district_cooling_act_bud_cost_diff = $total_sum_data_cooling_district - $currentBudgetActualData["district_cooling_cost_budget"];
 	    $district_cooling_act_bud_pr_rn_diff = $district_cooling_per_room_night_actual - $district_cooling_per_room_night_budget;
 	    if ($cooling_district_consumption_difference > 0) {
 		$objPHPExcel->getActiveSheet()->getStyle('E' . $row1 . ':F' . $row1)->applyFromArray($style_positive_number);
@@ -8216,10 +8590,10 @@ class Reports_admin extends Base_Admin_Controller
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('H' . $row1, number_format($district_cooling_act_bud_diff))
 		->setCellValue('H' . $row2, num_format($district_cooling_act_bud_tariff_diff, $value_decimal, $isLocal))
-		->setCellValue('H' . $row3, num_format($district_cooling_act_bud_cost_diff, 0, $isLocal))
+		->setCellValue('H' . $row3, num_format($district_cooling_act_bud_cost_diff, $value_decimal, $isLocal))
 		->setCellValue('H' . $row4, number_format($district_cooling_act_bud_pr_rn_diff, $percentage_decimal));
 	    $objPHPExcel->setActiveSheetIndex(0)
-		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["district_cooling_actual"] != 0) ? ($currentBudgetActualData["district_cooling_actual"] - $currentBudgetActualData["district_cooling_budget"]) * 100 / $currentBudgetActualData["district_cooling_actual"] : 0, $percentage_decimal) . "%")
+		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["district_cooling_budget"] != 0) ? ($currentBudgetActualData["district_cooling_actual"] - $currentBudgetActualData["district_cooling_budget"]) * 100 / $currentBudgetActualData["district_cooling_budget"] : 0, $percentage_decimal) . "%")
 		->setCellValue('I' . $row2, number_format($district_cooling_tariff_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row3, number_format($district_cooling_cost_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row4, number_format($district_cooling_per_room_night_variation, $percentage_decimal) . "%");
@@ -8311,10 +8685,10 @@ class Reports_admin extends Base_Admin_Controller
 	    $objPHPExcel->setActiveSheetIndex(0)
 		->setCellValue('H' . $row1, number_format($district_heating_act_bud_diff))
 		->setCellValue('H' . $row2, num_format($district_heating_act_bud_tariff_diff, $value_decimal, $isLocal))
-		->setCellValue('H' . $row3, num_format($district_heating_act_bud_cost_diff, 0, $isLocal))
+		->setCellValue('H' . $row3, num_format($district_heating_act_bud_cost_diff, $value_decimal, $isLocal))
 		->setCellValue('H' . $row4, number_format($district_heating_act_bud_pr_rn_diff, $percentage_decimal));
 	    $objPHPExcel->setActiveSheetIndex(0)
-		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["district_heating_actual"] != 0) ? ($currentBudgetActualData["district_heating_actual"] - $currentBudgetActualData["district_heating_budget"]) * 100 / $currentBudgetActualData["district_heating_actual"] : 0, $percentage_decimal) . "%")
+		->setCellValue('I' . $row1, number_format(($currentBudgetActualData["district_heating_budget"] != 0) ? ($currentBudgetActualData["district_heating_actual"] - $currentBudgetActualData["district_heating_budget"]) * 100 / $currentBudgetActualData["district_heating_budget"] : 0, $percentage_decimal) . "%")
 		->setCellValue('I' . $row2, number_format($district_heating_tariff_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row3, number_format($district_heating_cost_variation, $percentage_decimal) . "%")
 		->setCellValue('I' . $row4, number_format($district_heating_per_room_night_variation, $percentage_decimal) . "%");
@@ -9049,6 +9423,7 @@ class Reports_admin extends Base_Admin_Controller
 	    // If you're serving to IE over SSL, then the following may be needed
 	    header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	    header('Pragma: public'); // HTTP/1.0
+	    sanitize_report_spreadsheet($objPHPExcel);
 	    $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	    $objWriter->save('php://output');
 	    exit;
@@ -9056,7 +9431,7 @@ class Reports_admin extends Base_Admin_Controller
 	$this->theme->view($data, $template);
     }
 
-    public function annual_excel_report($reportType = '', $selected_region, $selectedYear = '')
+    public function annual_excel_report($reportType = '', $selected_region, $selectedYear = '', $filter_site_ids = array())
     {
 	$site_id = $this->session->userdata[$this->section_name]['site_id'];
 	$role_id = $this->session->userdata[$this->section_name]['role_id'];
@@ -9169,6 +9544,7 @@ class Reports_admin extends Base_Admin_Controller
 	$this->sites_model->year = $selectedYear;
 	// $site_details = $this->sites_model->get_all_site_listing_for_users_orderby($site_id, $role_id, $user_id = 0);
 	$site_details = $this->sites_model->get_all_site_listing_for_users_orderby_with_region($site_id, $role_id, $user_id = 0, $selected_region);
+	$site_details = $this->filter_group_report_sites($site_details, $filter_site_ids);
 
 	$all_site_electricity = 0;
 	$all_site_fuel = 0;
@@ -9794,7 +10170,7 @@ class Reports_admin extends Base_Admin_Controller
 	$objPHPExcel->setActiveSheetIndex(0)
 	    ->setCellValue('B' . $newSortedTableStartRow, "Site")
 	    ->setCellValue('C' . $newSortedTableStartRow, "Consumption (GJ)")
-	    ->setCellValue('D' . $newSortedTableStartRow, "Energy Intensity (KWH/m2)")
+	    ->setCellValue('D' . $newSortedTableStartRow, "Energy Intensity (kWh/m\u{00B2})")
 	    ->setCellValue('E' . $newSortedTableStartRow, "")
 	    ->setCellValue('F' . $newSortedTableStartRow, 'CO2 (Tons CO2e) ')
 	    ->setCellValue('G' . $newSortedTableStartRow, 'Carbon Intensity (kgCO<sub>2</sub>/m2)');
@@ -9960,9 +10336,24 @@ class Reports_admin extends Base_Admin_Controller
 	// If you're serving to IE over SSL, then the following may be needed
 	header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 	header('Pragma: public'); // HTTP/1.0
+	sanitize_report_spreadsheet($objPHPExcel);
 	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 	$objWriter->save('php://output');
 	exit;
+    }
+
+    /**
+     * Restrict group Energy/Carbon rows to the Filter By / Select Sites list.
+     */
+    private function filter_group_report_sites($site_details, $filter_site_ids)
+    {
+	if (empty($site_details) || empty($filter_site_ids) || !is_array($filter_site_ids)) {
+	    return $site_details;
+	}
+	$allowed = array_map('intval', $filter_site_ids);
+	return array_values(array_filter($site_details, function ($site) use ($allowed) {
+	    return in_array((int) $site['id'], $allowed, true);
+	}));
     }
 
     public function get_all_sites_electricity_consumption($details = array(), $reportType = '', $selectedYear = '')
@@ -9975,11 +10366,13 @@ class Reports_admin extends Base_Admin_Controller
 	$this->sites_model->year = $year;
 	$site_detail = $this->sites_model->get_site_detail_custom($site_id);
 	$data = array();
-	$data['currency'] = "local";
+		$data['currency'] = "local";
 
 		$site_id = $this->session->userdata[$this->section_name]['site_id'];
 		$dataFactor = getMmbtuFactorConversionAllUtility($site_id);
 
+	$startdate = isset($details['startdate']) ? $details['startdate'] : '';
+	$enddate = isset($details['enddate']) ? $details['enddate'] : '';
 	$startdateexplode = explode('/', $startdate);
 	$enddateexplode = explode('/', $enddate);
 	$filters = array();
@@ -10043,6 +10436,7 @@ class Reports_admin extends Base_Admin_Controller
 	$this->sites_model->year = $selectedYear;
 	// $site_details = $this->sites_model->get_all_site_listing_for_users_orderby($site_id, $role_id, $user_id = 0);
 	$site_details = $this->sites_model->get_all_site_listing_for_users_orderby_with_region($site_id, $role_id, $user_id = 0, $details['selected_region']);
+	$site_details = $this->filter_group_report_sites($site_details, isset($details['site_ids']) ? $details['site_ids'] : array());
 	// Initialize total
 	$all_site_electricity = 0;
 	$all_site_fuel = 0;
@@ -10484,7 +10878,8 @@ class Reports_admin extends Base_Admin_Controller
 	$this->utilities_model->utilities_year = $currYear - 3;
 	$getUtilityData_minus_three_year = $this->utilities_model->getSiteUtilityLastYear();
 	foreach ($getUtilityData as $getUtilities) {
-	    $totalElectricyKwhValue = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'];
+		$getUtilities = array_map('floatval', $getUtilities);
+	    $totalElectricyKwhValue = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'] - $getUtilities['total_renewable_energy_production'];
 	    $totalFuelOilCostValue = $getUtilities['total_fuel_oil_cost'] - $getUtilities['onsite_generators_fuel_oil_quantity'];
 	    $totalNaturalGasValue = $getUtilities['total_natural_gas_cost'] - $getUtilities['onsite_generators_natural_gas_quantity'];
 	    $carbon_footPrint += ($totalElectricyKwhValue * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($totalFuelOilCostValue * $site_detials['fuel_emission_factor']) + ($totalNaturalGasValue * $site_detials['natural_gas_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
@@ -10499,7 +10894,8 @@ class Reports_admin extends Base_Admin_Controller
 	    $utility_kwh_total += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
 	}
 	foreach ($getUtilityData_prev as $getUtilities) {
-	    $totalElectricyKwhValue_prev = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'];
+		$getUtilities = array_map('floatval', $getUtilities);
+	    $totalElectricyKwhValue_prev = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'] - $getUtilities['total_renewable_energy_production'];
 	    $totalFuelOilCostValue_prev = $getUtilities['total_fuel_oil_cost'] - $getUtilities['onsite_generators_fuel_oil_quantity'];
 	    $totalNaturalGasValue_prev = $getUtilities['total_natural_gas_cost'] - $getUtilities['onsite_generators_natural_gas_quantity'];
 	    $carbon_footPrint_prev += ($totalElectricyKwhValue_prev * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($totalFuelOilCostValue_prev * $site_detials['fuel_emission_factor']) + ($totalNaturalGasValue_prev * $site_detials['natural_gas_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
@@ -10514,7 +10910,8 @@ class Reports_admin extends Base_Admin_Controller
 	    $utility_kwh_total_prev += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
 	}
 	foreach ($getUtilityData_minus_two_year as $getUtilities) {
-	    $totalElectricyKwhValue_minus_two_year = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'];
+		$getUtilities = array_map('floatval', $getUtilities);
+	    $totalElectricyKwhValue_minus_two_year = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'] - $getUtilities['total_renewable_energy_production'];
 	    $totalFuelOilCostValue_minus_two_year = $getUtilities['total_fuel_oil_cost'] - $getUtilities['onsite_generators_fuel_oil_quantity'];
 	    $totalNaturalGasValue_minus_two_year = $getUtilities['total_natural_gas_cost'] - $getUtilities['onsite_generators_natural_gas_quantity'];
 	    $carbon_footPrint_minus_two_year += ($totalElectricyKwhValue_minus_two_year * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($totalFuelOilCostValue_minus_two_year * $site_detials['fuel_emission_factor']) + ($totalNaturalGasValue_minus_two_year * $site_detials['natural_gas_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
@@ -10529,7 +10926,8 @@ class Reports_admin extends Base_Admin_Controller
 	    $utility_kwh_total_minus_two_year += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
 	}
 	foreach ($getUtilityData_minus_three_year as $getUtilities) {
-	    $totalElectricyKwhValue_minus_three_year = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'];
+		$getUtilities = array_map('floatval', $getUtilities);
+	    $totalElectricyKwhValue_minus_three_year = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'] - $getUtilities['total_renewable_energy_production'];
 	    $totalFuelOilCostValue_minus_three_year = $getUtilities['total_fuel_oil_cost'] - $getUtilities['onsite_generators_fuel_oil_quantity'];
 	    $totalNaturalGasValue_minus_three_year = $getUtilities['total_natural_gas_cost'] - $getUtilities['onsite_generators_natural_gas_quantity'];
 	    $carbon_footPrint_minus_three_year += ($totalElectricyKwhValue_minus_three_year * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($totalFuelOilCostValue_minus_three_year * $site_detials['fuel_emission_factor']) + ($totalNaturalGasValue_minus_three_year * $site_detials['natural_gas_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
@@ -10543,47 +10941,132 @@ class Reports_admin extends Base_Admin_Controller
 	    $cooling_district_value = $getUtilities['district_cooling'] * 1;
 	    $utility_kwh_total_minus_three_year += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
 	}
-	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear] = round($carbon_footPrint / $result['rooms_keys'], 2);
-	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear - 1] = round($carbon_footPrint_prev / $result['rooms_keys'], 2);
-	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear - 2] = round($carbon_footPrint_minus_two_year / $result['rooms_keys'], 2);
-	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear - 3] = round($carbon_footPrint_minus_three_year / $result['rooms_keys'], 2);
+	// MEASURE 2: Hotel Carbon Footprint Per Room (kgCO2e)
+	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear] = $result['rooms_keys']?round($carbon_footPrint / $result['rooms_keys'], 2):0;
+	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear - 1] = $result['rooms_keys']?round($carbon_footPrint_prev / $result['rooms_keys'], 2):0;
+	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear - 2] = $result['rooms_keys']?round($carbon_footPrint_minus_two_year / $result['rooms_keys'], 2):0;
+	$data['measures']['HotelCarbonFootprintPerRoom'][$currYear - 3] = $result['rooms_keys']?round($carbon_footPrint_minus_three_year / $result['rooms_keys'], 2):0;
 	$data['measures']['HotelCarbonFootprintPerRoom']['measure_id'] = 2;
+
+	//MEASURE 3: Hotel Carbon Footprint Per Occupied Room (kgCO2e)
 	$data['measures']['HotelCarbonFootprintPerOccupiedRoom'][$currYear] = $total_room_night ? round($carbon_footPrint / $total_room_night, 2) : 0;
 	$data['measures']['HotelCarbonFootprintPerOccupiedRoom'][$currYear - 1] = $total_room_night_prev ? round($carbon_footPrint_prev / $total_room_night_prev, 2) : 0;
 	$data['measures']['HotelCarbonFootprintPerOccupiedRoom'][$currYear - 2] = $total_room_night_minus_two_year ? round($carbon_footPrint_minus_two_year / $total_room_night_minus_two_year, 2) : 0;
 	$data['measures']['HotelCarbonFootprintPerOccupiedRoom'][$currYear - 3] = $total_room_night_minus_three_year ? round($carbon_footPrint_minus_three_year / $total_room_night_minus_three_year, 2) : 0;
 	$data['measures']['HotelCarbonFootprintPerOccupiedRoom']['measure_id'] = 3;
+	// MEASURE 1: HCMI Rooms Footprint Per Occupied Room (kgCO2e)
 	$data['measures']['HCMIRoomsFootprintPerOccupiedRoom'][$currYear] = $total_room_night ? round($carbon_footPrint / $total_room_night, 2) : 0;
 	$data['measures']['HCMIRoomsFootprintPerOccupiedRoom'][$currYear - 1] = $total_room_night_prev ? round($carbon_footPrint_prev / $total_room_night_prev, 2) : 0;
 	$data['measures']['HCMIRoomsFootprintPerOccupiedRoom'][$currYear - 2] = $total_room_night_minus_two_year ? round($carbon_footPrint_minus_two_year / $total_room_night_minus_two_year, 2) : 0;
 	$data['measures']['HCMIRoomsFootprintPerOccupiedRoom'][$currYear - 3] = $total_room_night_minus_three_year ? round($carbon_footPrint_minus_three_year / $total_room_night_minus_three_year, 2) : 0;
 	$data['measures']['HCMIRoomsFootprintPerOccupiedRoom']['measure_id'] = 1;
-	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear] = round($carbon_footPrint / $result['site_builtup_area'], 2);
-	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear - 1] = round($carbon_footPrint_prev / $result['site_builtup_area'], 2);
-	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear - 2] = round($carbon_footPrint_minus_two_year / $result['site_builtup_area'], 2);
-	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear - 3] = round($carbon_footPrint_minus_three_year / $result['site_builtup_area'], 2);
+
+	//MEASURE 4: Hotel Carbon Footprint Per Square Meter (kgCO2e)
+	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear] = $result['site_builtup_area']?round($carbon_footPrint / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear - 1] = $result['site_builtup_area']?round($carbon_footPrint_prev / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear - 2] = $result['site_builtup_area']?round($carbon_footPrint_minus_two_year / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelCarbonFootprintPerSquareMeter'][$currYear - 3] = $result['site_builtup_area']?round($carbon_footPrint_minus_three_year / $result['site_builtup_area'], 2):0;
 	$data['measures']['HotelCarbonFootprintPerSquareMeter']['measure_id'] = 4;
+
+	//MEASURE 5: Hotel Energy Usage Per Occupied Room (kWh)
 	$data['measures']['HotelEnergyUsagePerOccupiedRoom'][$currYear] = $total_room_night ? round($utility_kwh_total / $total_room_night, 2) : 0;
 	$data['measures']['HotelEnergyUsagePerOccupiedRoom'][$currYear - 1] = $total_room_night_prev ? round($utility_kwh_total_prev / $total_room_night_prev, 2) : 0;
 	$data['measures']['HotelEnergyUsagePerOccupiedRoom'][$currYear - 2] = $total_room_night_minus_two_year ? round($utility_kwh_total_minus_two_year / $total_room_night_minus_two_year, 2) : 0;
 	$data['measures']['HotelEnergyUsagePerOccupiedRoom'][$currYear - 3] = $total_room_night_minus_three_year ? round($utility_kwh_total_minus_three_year / $total_room_night_minus_three_year, 2) : 0;
 	$data['measures']['HotelEnergyUsagePerOccupiedRoom']['measure_id'] = 5;
-	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear] = round($utility_kwh_total / $result['site_builtup_area'], 2);
-	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear - 1] = round($utility_kwh_total_prev / $result['site_builtup_area'], 2);
-	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear - 2] = round($utility_kwh_total_minus_two_year / $result['site_builtup_area'], 2);
-	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear - 3] = round($utility_kwh_total_minus_three_year / $result['site_builtup_area'], 2);
+
+	//MEASURE 6: Hotel Energy Usage Per Square Meter (kWh)
+	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear] = $result['site_builtup_area']?round($utility_kwh_total / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear - 1] = $result['site_builtup_area']?round($utility_kwh_total_prev / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear - 2] = $result['site_builtup_area']?round($utility_kwh_total_minus_two_year / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelEnergyUsagePerSquareMeter'][$currYear - 3] = $result['site_builtup_area']?round($utility_kwh_total_minus_three_year / $result['site_builtup_area'], 2):0;
 	$data['measures']['HotelEnergyUsagePerSquareMeter']['measure_id'] = 6;
+
+	//MEASURE 8: Hotel Water Usage Per Occupied Room (L)
 	$data['measures']['HotelWaterUsagePerOccupiedRoom'][$currYear] = $total_room_night ? round($water_total_consumption / $total_room_night, 2) : 0;
 	$data['measures']['HotelWaterUsagePerOccupiedRoom'][$currYear - 1] = $total_room_night_prev ? round($water_total_consumption_prev / $total_room_night_prev, 2) : 0;
 	$data['measures']['HotelWaterUsagePerOccupiedRoom'][$currYear - 2] = $total_room_night_minus_two_year ? round($water_total_consumption_minus_two_year / $total_room_night_minus_two_year, 2) : 0;
 	$data['measures']['HotelWaterUsagePerOccupiedRoom'][$currYear - 3] = $total_room_night_minus_three_year ? round($water_total_consumption_minus_three_year / $total_room_night_minus_three_year, 2) : 0;
 	$data['measures']['HotelWaterUsagePerOccupiedRoom']['measure_id'] = 7;
-	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear] = round($water_total_consumption / $result['site_builtup_area'], 2);
-	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 1] = round($water_total_consumption_prev / $result['site_builtup_area'], 2);
-	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 2] = round($water_total_consumption_minus_two_year / $result['site_builtup_area'], 2);
-	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 3] = round($water_total_consumption_minus_three_year / $result['site_builtup_area'], 2);
+	//MEASURE 9: Hotel Water Usage Per Square Meter (L)
+	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear] = $result['site_builtup_area']?round($water_total_consumption / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 1] = $result['site_builtup_area']?round($water_total_consumption_prev / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 2] = $result['site_builtup_area']?round($water_total_consumption_minus_two_year / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 3] = $result['site_builtup_area']?round($water_total_consumption_minus_three_year / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelWaterUsagePerSquareMeter']['measure_id'] = 8;
+	//MEASURE 9a: Hotel Water Usage Per Square Foot (L)
+	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 1] = $result['site_builtup_area']?round($water_total_consumption_prev / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 2] = $result['site_builtup_area']?round($water_total_consumption_minus_two_year / $result['site_builtup_area'], 2):0;
+	$data['measures']['HotelWaterUsagePerSquareMeter'][$currYear - 3] = $result['site_builtup_area']?round($water_total_consumption_minus_three_year / $result['site_builtup_area'], 2):0;
 	$data['measures']['HotelWaterUsagePerSquareMeter']['measure_id'] = 8;
 	$data['measures']['site_location'] = $site_detials['site_location_name'];
+
+	// CHSB calculation
+	$chsb_measures = calculateCHSBMeasures($currYear, $currMonth, $site_id, $site_detials, $result, $this->utilities_model);
+
+	// SAVE CHSB VALUES
+
+	$data['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+		$chsb_measures['chsb_measure_1'];
+
+	$data['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+		$chsb_measures['chsb_measure_2'];
+
+	$data['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+		$chsb_measures['chsb_measure_3'];
+
+	$data['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+		$chsb_measures['chsb_measure_4'];
+
+	$data['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+		$chsb_measures['chsb_measure_5'];
+
+	$data['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+		$chsb_measures['chsb_measure_6'];
+
+	$data['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+		'chsb_measure_no' => 7,
+		'chsb_value' => $chsb_measures['chsb_measure_7']
+	);
+
+	$data['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+		$chsb_measures['chsb_measure_8'];
+
+	$data['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+		$chsb_measures['chsb_measure_9'];
+
+	$data['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+		'chsb_measure_no' => 10,
+		'chsb_value' => $chsb_measures['chsb_measure_10']
+	);
+
+	$data['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+		'chsb_measure_no' => 11,
+		'chsb_value' => $chsb_measures['chsb_measure_11']
+	);
+
+	$data['measures']['RenewableEnergyPercentage'] = array(
+		'chsb_measure_no' => 12,
+		'chsb_value' => $chsb_measures['chsb_measure_12']
+	);
+
+	$data['measures']['RenewableElectricityPercentage'] = array(
+		'chsb_measure_no' => 13,
+		'chsb_value' => $chsb_measures['chsb_measure_13']
+	);
+
+	$data['measures']['ElectricityToNonElectricEnergy'] = array(
+		'chsb_measure_no' => 14,
+		'chsb_value' => $chsb_measures['chsb_measure_14']
+	);
+	$data['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+		$chsb_measures['chsb_measure_4a'];
+
+	$data['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+		$chsb_measures['chsb_measure_6a'];
+
+	$data['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+		$chsb_measures['chsb_measure_9a'];
 	return $data;
     }
 
@@ -10616,7 +11099,7 @@ class Reports_admin extends Base_Admin_Controller
 		$getUtilities['total_natural_gas_cost'] = ($getUtilities['total_natural_gas_cost'] != '') ? $getUtilities['total_natural_gas_cost'] : 0;
 		$getUtilities['district_heating_cost'] = ($getUtilities['district_heating_cost'] != '') ? $getUtilities['district_heating_cost'] : 0;
 		$getUtilities['district_cooling_cost'] = ($getUtilities['district_cooling_cost'] != '') ? $getUtilities['district_cooling_cost'] : 0;
-		$totalelectricitykwh = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'];
+		$totalelectricitykwh = $getUtilities['total_electricity_kwh'] - $getUtilities['onsite_generators_quantity'] - $getUtilities['total_renewable_energy_production'];
 		$totalfueloil = $getUtilities['total_fuel_oil_cost']; // - $getUtilities['onsite_generators_fuel_oil_quantity'];
 		$totalnaturalgas = $getUtilities['total_natural_gas_cost']; // - $getUtilities['onsite_generators_natural_gas_quantity'];
 
@@ -10650,7 +11133,7 @@ class Reports_admin extends Base_Admin_Controller
 		$utilitiesSameMonthPreviousYear['district_heating'] = ($utilitiesSameMonthPreviousYear['district_heating'] != '') ? $utilitiesSameMonthPreviousYear['district_heating'] : 0;
 		$utilitiesSameMonthPreviousYear['district_cooling'] = ($utilitiesSameMonthPreviousYear['district_cooling'] != '') ? $utilitiesSameMonthPreviousYear['district_cooling'] : 0;
 
-		$totalelectricitykwhprev = $utilitiesSameMonthPreviousYear['total_electricity_kwh'] - $utilitiesSameMonthPreviousYear['onsite_generators_quantity'];
+		$totalelectricitykwhprev = $utilitiesSameMonthPreviousYear['total_electricity_kwh'] - $utilitiesSameMonthPreviousYear['onsite_generators_quantity'] - $utilitiesSameMonthPreviousYear['total_renewable_energy_production'];
 		$totalfueloilprev = $utilitiesSameMonthPreviousYear['total_fuel_oil']; // - $utilitiesSameMonthPreviousYear['onsite_generators_fuel_oil_quantity'];
 		$totalnaturalgasprev = $utilitiesSameMonthPreviousYear['total_natural_gas']; // - $utilitiesSameMonthPreviousYear['onsite_generators_natural_gas_quantity'];
 		$SameMonthPreviousYear_footPrint = ($electricity_mmbtu_rate * $totalelectricitykwhprev * $site_detials['electricity_emission_factor']) + ($lpg_mmbtu_rate * $utilitiesSameMonthPreviousYear['total_lpg'] * $site_detials['lpg_emission_factor']) + ($fuel_mmbtu_rate * $totalfueloilprev * $site_detials['fuel_emission_factor']) + ($natural_gas_mmbtu_rate * $totalnaturalgasprev * $site_detials['natural_gas_emission_factor']) + ($heating_district_mmbtu_rate * $utilitiesSameMonthPreviousYear['district_heating'] * $site_detials['district_heating_emission_factor']) + ($cooling_district_mmbtu_rate * $utilitiesSameMonthPreviousYear['district_cooling'] * $site_detials['district_cooling_emission_factor']);
@@ -11022,6 +11505,20 @@ class Reports_admin extends Base_Admin_Controller
 		$prev_year_id = ($month_id == 1) ? $year_id - 1 : $year_id;
 		$prev_month_name = $month_names[$prev_month_id] . ' ' . $prev_year_id;
 		$last_year_same_month = $current_month_name . ' ' . ($year_id - 1);
+
+		// Action notes window: the discrepancy month itself plus the following month
+		// e.g. April 2026 issues stay visible through the end of May 2026.
+		$now_month = (int) date('n');
+		$now_year = (int) date('Y');
+		$prev_cal_month = ($now_month == 1) ? 12 : $now_month - 1;
+		$prev_cal_year = ($now_month == 1) ? $now_year - 1 : $now_year;
+		$show_action_notes = (
+			($month_id == $now_month && $year_id == $now_year) ||
+			($month_id == $prev_cal_month && $year_id == $prev_cal_year)
+		);
+		$notes_until_month = ($month_id == 12) ? 1 : $month_id + 1;
+		$notes_until_year = ($month_id == 12) ? $year_id + 1 : $year_id;
+		$action_notes_until = $month_names[$notes_until_month] . ' ' . $notes_until_year;
 		
 		// 1. Setup Environment & Increase Limits
 		ini_set('memory_limit', '1024M');
@@ -11067,6 +11564,9 @@ class Reports_admin extends Base_Admin_Controller
 					ly.total_room_night as ly_room_nights,
 					-- Duplicate Detection (0 if no current entry)
 					COALESCE((SELECT COUNT(*) FROM utilities_cost WHERE site_id = s.id AND month_id = ? AND year_id = ?), 0) as entry_count,
+					COALESCE((SELECT COUNT(*) FROM site_waste WHERE site_id = s.id AND month_id = ? AND year_id = ? AND deleted_at IS NULL), 0) as waste_entry_count,
+					COALESCE((SELECT COUNT(*) FROM site_waste WHERE site_id = s.id AND month_id = IF(? = 1, 12, ? - 1) AND year_id = IF(? = 1, ? - 1, ?) AND deleted_at IS NULL), 0) as waste_pm_count,
+					COALESCE((SELECT COUNT(*) FROM site_waste WHERE site_id = s.id AND month_id = ? AND year_id = ? - 1 AND deleted_at IS NULL), 0) as waste_ly_count,
 					-- Flag if current month entry exists
 					IF(curr.id IS NULL, 0, 1) as has_current_entry
 				FROM sites s
@@ -11083,6 +11583,10 @@ class Reports_admin extends Base_Admin_Controller
 		
 		$results = $this->db->query($sql, array(
 			$month_id, $year_id,           // For duplicate detection subquery
+			$month_id, $year_id,           // For waste current-month count
+			$month_id, $month_id,          // For waste previous-month IF
+			$month_id, $year_id, $year_id, // For waste previous-month year IF
+			$month_id, $year_id,           // For waste last-year count
 			$month_id, $year_id,           // For current month join
 			$month_id, $month_id,          // For previous month calculation (IF conditions)
 			$month_id, $year_id, $year_id, // For previous month year calculation
@@ -11093,7 +11597,7 @@ class Reports_admin extends Base_Admin_Controller
 		$sheets = [
 			0 => ['title' => 'Summary', 'color' => 'D8E1F2'],
 			1 => ['title' => 'Negative', 'headers' => ['Site', 'Utility', 'Consumption', 'Cons Flag', 'Cost', 'Cost Flag', 'Per RN', 'PRN Flag'], 'color' => 'C00000'],
-			2 => ['title' => 'Duplicates', 'headers' => ['Site', 'Month', 'Year', 'Entry Count'], 'color' => '7030A0'],
+			2 => ['title' => 'Duplicates', 'headers' => ['Site', 'Source', 'Month', 'Year', 'Entry Count'], 'color' => '7030A0'],
 			3 => ['title' => 'Variance', 'headers' => ['Site', 'Utility', 'Type', 
 				'Cons Bench', 'Cons Actual', 'Cons Var%', 
 				'Cost Bench', 'Cost Actual', 'Cost Var%', 
@@ -11102,7 +11606,8 @@ class Reports_admin extends Base_Admin_Controller
 			4 => ['title' => 'Missing', 'headers' => ['Site', 'Utility', 'Issue', 
 				'Cons PM', 'Cons LY', 
 				'Cost PM', 'Cost LY', 
-				'PRN PM', 'PRN LY'], 'color' => '808080']
+				'PRN PM', 'PRN LY'], 'color' => '808080'],
+			5 => ['title' => 'Action Notes', 'headers' => ['Site', 'Period', 'Utility', 'Note'], 'color' => 'F4B183']
 		];
 
 		// Mapping utility fields with show_utility flags from sites table (enhanced with cost pm/ly)
@@ -11138,9 +11643,14 @@ class Reports_admin extends Base_Admin_Controller
 			$sheet->getTabColor()->setRGB($s['color']);
 			
 			// Row 1: Report Period
-			$sheet->setCellValue('A1', 'Report Period: ' . $report_period);
+			if ($idx == 5) {
+				$sheet->setCellValue('A1', 'Action Notes for ' . $report_period . ' (visible through end of ' . $action_notes_until . '). Recalculated from live data on each download.');
+				$sheet->mergeCells('A1:D1');
+			} else {
+				$sheet->setCellValue('A1', 'Report Period: ' . $report_period);
+				$sheet->mergeCells('A1:D1');
+			}
 			$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(12);
-			$sheet->mergeCells('A1:D1');
 			
 			// Row 2: Headers
 			if ($idx == 0) {
@@ -11158,6 +11668,11 @@ class Reports_admin extends Base_Admin_Controller
 						$col++;
 					}
 				}
+				$sheet->setCellValueByColumnAndRow($col, 2, 'Action Notes');
+				$sheet->getStyleByColumnAndRow($col, 2)->getFont()->setBold(true);
+				$sheet->getStyleByColumnAndRow($col, 2)->getFill()
+					->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+					->getStartColor()->setRGB('F4B183');
 			} else {
 				$headers = $s['headers'];
 				foreach ($headers as $c => $text) {
@@ -11173,13 +11688,14 @@ class Reports_admin extends Base_Admin_Controller
 		$sheet_duplicate = 2;
 		$sheet_variance = 3;
 		$sheet_missing = 4;
+		$sheet_action_notes = 5;
 		
 		// Trackers start at row 3 (after Report Period and Headers)
-		$trackers = [$sheet_negative => 3, $sheet_duplicate => 3, $sheet_variance => 3, $sheet_missing => 3];
+		$trackers = [$sheet_negative => 3, $sheet_duplicate => 3, $sheet_variance => 3, $sheet_missing => 3, $sheet_action_notes => 3];
 		$sum_row = 3;
 		
 		// Track site rows for grouping borders on detail sheets
-		$site_rows = [$sheet_negative => [], $sheet_duplicate => [], $sheet_variance => [], $sheet_missing => []];
+		$site_rows = [$sheet_negative => [], $sheet_duplicate => [], $sheet_variance => [], $sheet_missing => [], $sheet_action_notes => []];
 
 		// 4. Main Processing Loop
 		foreach ($results as $row) {
@@ -11187,6 +11703,7 @@ class Reports_admin extends Base_Admin_Controller
 			$objPHPExcel->getActiveSheet()->setCellValue('A' . $sum_row, $row['site_location_name']);
 			
 			$col = 1;
+			$site_action_notes = [];
 			
 			// Get room nights for per room night calculations
 			$curr_rn = isset($row['curr_room_nights']) && $row['curr_room_nights'] > 0 ? (float)$row['curr_room_nights'] : null;
@@ -11194,15 +11711,26 @@ class Reports_admin extends Base_Admin_Controller
 			$ly_rn = isset($row['ly_room_nights']) && $row['ly_room_nights'] > 0 ? (float)$row['ly_room_nights'] : null;
 			
 			// --- Duplicate Check (site-level, not utility-level) ---
-			// Check if more than 1 entry exists for this site/month/year in utilities_cost table
 			$site_has_duplicate = $row['entry_count'] > 1;
 			if ($site_has_duplicate) {
 				$site_rows[$sheet_duplicate][$row['site_location_name']][] = $trackers[$sheet_duplicate];
 				$this->write_row($objPHPExcel, $sheet_duplicate, $trackers[$sheet_duplicate]++, [
-					$row['site_location_name'], 
+					$row['site_location_name'],
+					'Utilities',
 					$current_month_name, 
 					$year_id, 
 					$row['entry_count']
+				]);
+			}
+			$waste_entry_count = isset($row['waste_entry_count']) ? (int)$row['waste_entry_count'] : 0;
+			if ($waste_entry_count > 1) {
+				$site_rows[$sheet_duplicate][$row['site_location_name']][] = $trackers[$sheet_duplicate];
+				$this->write_row($objPHPExcel, $sheet_duplicate, $trackers[$sheet_duplicate]++, [
+					$row['site_location_name'],
+					'Waste',
+					$current_month_name,
+					$year_id,
+					$waste_entry_count
 				]);
 			}
 			
@@ -11295,7 +11823,32 @@ class Reports_admin extends Base_Admin_Controller
 					]);
 				}
 
-				// --- 4. Variance Check MoM & YoY (+/- 10%, but ignore if variance is >= 100% as it indicates missing data) ---
+				if ($show_action_notes) {
+					$missing_label = ($key === 'fuel') ? 'Fuel' : $f['label'];
+					$is_empty_utility = !$has_current_entry || $cur_raw === null || $cur_raw == 0;
+					if ($is_empty_utility) {
+						$site_action_notes[] = 'Missing ' . $missing_label . ' Data';
+					} else {
+						if ($ly_raw !== null && $ly_raw > 0 && $cur_raw !== null && $cur_raw > 0) {
+							$yoy_cons_pct = ($cur_raw - $ly_raw) / $ly_raw;
+							if (abs($yoy_cons_pct) > 0.20) {
+								$direction = $yoy_cons_pct > 0 ? 'increased' : 'decreased';
+								$site_action_notes[] = $f['label'] . ' consumption ' . $direction . ' by ' . round(abs($yoy_cons_pct) * 100) . '% compared to last year.';
+							}
+						}
+						$cur_tariff = ($cur_raw !== null && $cur_raw > 0 && $cur_cost !== null && $cur_cost > 0) ? ($cur_cost / $cur_raw) : null;
+						$ly_tariff = ($ly_raw !== null && $ly_raw > 0 && $ly_cost !== null && $ly_cost > 0) ? ($ly_cost / $ly_raw) : null;
+						if ($cur_tariff !== null && $ly_tariff !== null && $ly_tariff > 0) {
+							$yoy_tariff_pct = ($cur_tariff - $ly_tariff) / $ly_tariff;
+							if (abs($yoy_tariff_pct) > 0.20) {
+								$direction = $yoy_tariff_pct > 0 ? 'increased' : 'decreased';
+								$site_action_notes[] = $f['label'] . ' tariff ' . $direction . ' by ' . round(abs($yoy_tariff_pct) * 100) . '% compared to last year.';
+							}
+						}
+					}
+				}
+
+				// --- 4. Variance Check MoM & YoY (+/- 10%; no upper cap — 250% still flags) ---
 				if (!$has_missing_issue && $cur_raw !== null && $cur_raw > 0) {
 					$v_flags = [];
 					
@@ -11305,10 +11858,10 @@ class Reports_admin extends Base_Admin_Controller
 						$mom_cost_var = ($pm_cost !== null && $pm_cost > 0 && $cur_cost !== null) ? ($cur_cost - $pm_cost) / $pm_cost : null;
 						$mom_prn_var = ($pm_prn !== null && $pm_prn > 0 && $cur_prn !== null) ? ($cur_prn - $pm_prn) / $pm_prn : null;
 						
-						// Check if any variance exceeds threshold (10%) but less than 100%
-						$cons_exceeds = abs($mom_cons_var) > 0.10 && abs($mom_cons_var) < 1.00;
-						$cost_exceeds = $mom_cost_var !== null && abs($mom_cost_var) > 0.10 && abs($mom_cost_var) < 1.00;
-						$prn_exceeds = $mom_prn_var !== null && abs($mom_prn_var) > 0.10 && abs($mom_prn_var) < 1.00;
+						// Check if any variance exceeds threshold (10%)
+						$cons_exceeds = abs($mom_cons_var) > 0.10;
+						$cost_exceeds = $mom_cost_var !== null && abs($mom_cost_var) > 0.10;
+						$prn_exceeds = $mom_prn_var !== null && abs($mom_prn_var) > 0.10;
 						$has_mom_variance = $cons_exceeds || $cost_exceeds;// || $prn_exceeds
 						
 						if ($has_mom_variance) {
@@ -11350,7 +11903,7 @@ class Reports_admin extends Base_Admin_Controller
 								$varSheet->getStyle('L' . $var_row)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB($color);
 							}
 							// RN Var% highlight (column O)
-							if ($mom_rn_var !== null && abs($mom_rn_var) > 0.10 && abs($mom_rn_var) < 1.00) {
+							if ($mom_rn_var !== null && abs($mom_rn_var) > 0.10) {
 								$color = abs($mom_rn_var) > 0.50 ? 'FF6B6B' : 'FFC000';
 								$varSheet->getStyle('O' . $var_row)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB($color);
 							}
@@ -11363,10 +11916,10 @@ class Reports_admin extends Base_Admin_Controller
 						$yoy_cost_var = ($ly_cost !== null && $ly_cost > 0 && $cur_cost !== null) ? ($cur_cost - $ly_cost) / $ly_cost : null;
 						$yoy_prn_var = ($ly_prn !== null && $ly_prn > 0 && $cur_prn !== null) ? ($cur_prn - $ly_prn) / $ly_prn : null;
 						
-						// Check if any variance exceeds threshold (10%) but less than 100%
-						$cons_exceeds = abs($yoy_cons_var) > 0.10 && abs($yoy_cons_var) < 1.00;
-						$cost_exceeds = $yoy_cost_var !== null && abs($yoy_cost_var) > 0.10 && abs($yoy_cost_var) < 1.00;
-						$prn_exceeds = $yoy_prn_var !== null && abs($yoy_prn_var) > 0.10 && abs($yoy_prn_var) < 1.00;
+						// Check if any variance exceeds threshold (10%)
+						$cons_exceeds = abs($yoy_cons_var) > 0.10;
+						$cost_exceeds = $yoy_cost_var !== null && abs($yoy_cost_var) > 0.10;
+						$prn_exceeds = $yoy_prn_var !== null && abs($yoy_prn_var) > 0.10;
 						$has_yoy_variance = $cons_exceeds || $cost_exceeds;// || $prn_exceeds
 						
 						if ($has_yoy_variance) {
@@ -11408,7 +11961,7 @@ class Reports_admin extends Base_Admin_Controller
 								$varSheet->getStyle('L' . $var_row)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB($color);
 							}
 							// RN Var% highlight (column O)
-							if ($yoy_rn_var !== null && abs($yoy_rn_var) > 0.10 && abs($yoy_rn_var) < 1.00) {
+							if ($yoy_rn_var !== null && abs($yoy_rn_var) > 0.10) {
 								$color = abs($yoy_rn_var) > 0.50 ? 'FF6B6B' : 'FFC000';
 								$varSheet->getStyle('O' . $var_row)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB($color);
 							}
@@ -11431,11 +11984,11 @@ class Reports_admin extends Base_Admin_Controller
 					$flags = [];
 					if ($pm_val !== null && $pm_val > 0) {
 						$v = ($cur - $pm_val) / $pm_val;
-						if (abs($v) > 0.10 && abs($v) < 1.00) $flags[] = 'M';
+						if (abs($v) > 0.10) $flags[] = 'M';
 					}
 					if ($ly_val !== null && $ly_val > 0) {
 						$v = ($cur - $ly_val) / $ly_val;
-						if (abs($v) > 0.10 && abs($v) < 1.00) $flags[] = 'Y';
+						if (abs($v) > 0.10) $flags[] = 'Y';
 					}
 					return !empty($flags) ? implode('/', $flags) : '✅';
 				};
@@ -11470,7 +12023,125 @@ class Reports_admin extends Base_Admin_Controller
 				$summarySheet->setCellValueByColumnAndRow($col++, $sum_row, $prn_summary_flag);
 				$summarySheet->setCellValueByColumnAndRow($col++, $sum_row, $rn_summary_flag);
 			}
+			$currentWasteRows = $this->db
+				->where('site_id', $row['site_id'])
+				->where('year_id', $year_id)
+				->where('month_id', $month_id)
+				->where('deleted_at IS NULL', null, false)
+				->where('deleted_by IS NULL', null, false)
+				->get('site_waste')
+				->result_array();
+			$waste_has_value = false;
+			$waste_has_zero_or_null = false;
+
+			foreach ($currentWasteRows as $wasteRow) {
+				foreach ($wasteRow as $field => $value) {
+					if (strpos($field, 'unit_measure_') !== 0) {
+						continue;
+					}
+					log_message('debug', "site_location_name: {$row['site_location_name']} - Checking waste field $field with value: " . var_export($value, true));
+
+					if ($value == null || $value == '' || (float) $value == 0) {
+						$waste_has_zero_or_null = true;
+					} elseif ((float) $value > 0) {
+						$waste_has_value = true;
+					}
+				}
+			}
+
+			$waste_is_missing = (
+				$waste_entry_count === 0 ||
+				!$waste_has_value
+			);
+			if ($waste_entry_count == 0) {
+				$waste_pm_count = isset($row['waste_pm_count']) ? (int)$row['waste_pm_count'] : 0;
+				$waste_ly_count = isset($row['waste_ly_count']) ? (int)$row['waste_ly_count'] : 0;
+				$waste_missing_issue = 'No waste entry for current month';
+				if ($waste_pm_count > 0 || $waste_ly_count > 0) {
+					$waste_missing_issue = 'No waste entry for current month - historical waste exists';
+				}
+				$site_rows[$sheet_missing][$row['site_location_name']][] = $trackers[$sheet_missing];
+				$this->write_row($objPHPExcel, $sheet_missing, $trackers[$sheet_missing]++, [
+					$row['site_location_name'],
+					'Waste',
+					$waste_missing_issue,
+					$waste_pm_count > 0 ? $waste_pm_count . ' entry(ies)' : 'N/A',
+					$waste_ly_count > 0 ? $waste_ly_count . ' entry(ies)' : 'N/A',
+					'N/A',
+					'N/A',
+					'N/A',
+					'N/A'
+				]);
+				if ($show_action_notes) {
+					$site_action_notes[] = 'Missing Waste Data';
+				}
+			}
+			if ($waste_is_missing && $waste_entry_count !=0) {
+				if ($show_action_notes) {
+					$site_action_notes[] = 'Missing Waste Data';
+				}
+				$site_rows[$sheet_missing][$row['site_location_name']][] = $trackers[$sheet_missing];
+				$this->write_row($objPHPExcel, $sheet_missing, $trackers[$sheet_missing]++, [
+					$row['site_location_name'],
+					'Waste',
+					'Zero/missing - historical data exists',
+					$waste_pm_count > 0 ? $waste_pm_count . ' entry(ies)' : 'N/A',
+					$waste_ly_count > 0 ? $waste_ly_count . ' entry(ies)' : 'N/A',
+					'N/A',
+					'N/A',
+					'N/A',
+					'N/A'
+				]);
+			}
+
+			$action_notes_text = '';
+			if ($show_action_notes && !empty($site_action_notes)) {
+				$action_notes_text = implode("\n", $site_action_notes);
+				foreach ($site_action_notes as $note) {
+					$utility_from_note = 'General';
+					if (preg_match('/^Missing (.+) Data$/', $note, $m)) {
+						$utility_from_note = $m[1];
+					} elseif (preg_match('/^(.+) (consumption|tariff) /', $note, $m)) {
+						$utility_from_note = $m[1];
+					}
+					$site_rows[$sheet_action_notes][$row['site_location_name']][] = $trackers[$sheet_action_notes];
+					$note_row = $trackers[$sheet_action_notes];
+					$this->write_row($objPHPExcel, $sheet_action_notes, $trackers[$sheet_action_notes]++, [
+						$row['site_location_name'],
+						$report_period,
+						$utility_from_note,
+						$note
+					]);
+					$notesSheet = $objPHPExcel->getSheet($sheet_action_notes);
+					$notesSheet->getStyle('A' . $note_row . ':D' . $note_row)->getFill()
+						->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+						->getStartColor()->setRGB('FFF2CC');
+					$notesSheet->getStyle('D' . $note_row)->getAlignment()->setWrapText(true);
+				}
+			}
+			$summarySheet = $objPHPExcel->getSheet(0);
+			$notes_col = count($utils) * 4 + 1;
+			$summarySheet->setCellValueByColumnAndRow($notes_col, $sum_row, $action_notes_text);
+			$notes_col_letter = PHPExcel_Cell::stringFromColumnIndex($notes_col);
+			$summarySheet->getStyle($notes_col_letter . $sum_row)->getAlignment()->setWrapText(true)->setVertical(PHPExcel_Style_Alignment::VERTICAL_TOP);
+			if ($action_notes_text !== '') {
+				$summarySheet->getStyle($notes_col_letter . $sum_row)->getFill()
+					->setFillType(PHPExcel_Style_Fill::FILL_SOLID)
+					->getStartColor()->setRGB('FFF2CC');
+				$summarySheet->getRowDimension($sum_row)->setRowHeight(-1);
+			}
+
 			$sum_row++;
+		}
+
+		if (!$show_action_notes && $trackers[$sheet_action_notes] == 3) {
+			$this->write_row($objPHPExcel, $sheet_action_notes, 3, [
+				'',
+				$report_period,
+				'',
+				'Action notes apply only during ' . $report_period . ' and through the end of ' . $action_notes_until . '. Re-download this report during that window (weekly) so corrected data drops off.'
+			]);
+			$objPHPExcel->getSheet($sheet_action_notes)->getStyle('D3')->getAlignment()->setWrapText(true);
 		}
 
 		// 5. Add Flag Legend to Summary Matrix (Report Period is already at top)
@@ -11490,13 +12161,14 @@ class Reports_admin extends Base_Admin_Controller
 			['✅', 'OK', 'No issues detected'],
 			['-', 'N/A', 'Utility not enabled for this site'],
 			['❌', 'Negative', 'Consumption or cost has negative value'],
-			['D', 'Duplicate', 'Multiple entries for same site/month/year'],
+			['D', 'Duplicate', 'Multiple utilities_cost or site_waste rows for the same site/month/year'],
 			['M', 'MoM Variance', 'Month-over-Month variance > 10% (vs ' . $prev_month_name . ')'],
 			['Y', 'YoY Variance', 'Year-over-Year variance > 10% (vs ' . $last_year_same_month . ')'],
 			['M/Y', 'Both Variances', 'Both MoM and YoY variance > 10%'],
 			['M/Y (PRN)', 'PRN Both Variances', 'Per Room Night MoM and YoY variance > 10%'],
 			['M/Y (RN)',  'RN Both Variances',  'Room Nights MoM and YoY variance > 10%'],
-			['⚠️', 'Missing Data', 'Zero/missing data or no entry for current month']
+			['⚠️', 'Missing Data', 'Zero/missing utility data, no utility entry, or no site_waste row for the current month'],
+			['Action Notes', 'YoY >20% / Missing', 'Consumption or tariff vs same month last year > 20%, or empty enabled utility. Shown for ' . $report_period . ' through end of ' . $action_notes_until . '. Rechecked from live data on each download (re-run weekly to drop corrected items).']
 		];
 		
 		$legend_start_row++;
@@ -11588,7 +12260,8 @@ class Reports_admin extends Base_Admin_Controller
 			$sheet_negative => 8,   // 8 columns: Site, Utility, Consumption, Cons Flag, Cost, Cost Flag, Per RN, PRN Flag
 			$sheet_duplicate => 4,  // 4 columns: Site, Month, Year, Entry Count
 			$sheet_variance => 15,  // 15 columns: Site, Utility, Type, Cons Bench/Actual/Var%, Cost Bench/Actual/Var%, PRN Bench/Actual/Var%, RN Bench/Actual/Var%
-			$sheet_missing => 9     // 9 columns: Site, Utility, Issue, Cons PM/LY, Cost PM/LY, PRN PM/LY
+			$sheet_missing => 9,    // 9 columns: Site, Utility, Issue, Cons PM/LY, Cost PM/LY, PRN PM/LY
+			$sheet_action_notes => 4 // Site, Period, Utility, Note
 		];
 		
 		foreach ($detail_sheets_config as $sheetIdx => $colCount) {
@@ -11632,6 +12305,7 @@ class Reports_admin extends Base_Admin_Controller
 		// Clean buffer to prevent corruption
 		if (ob_get_contents()) ob_end_clean();
 		
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -11648,6 +12322,11 @@ define('K_PATH_IMAGES', BASE_PATH_CUSTOM);
 require_once BASE_PATH_CUSTOM . '/application/libraries/tcpdf/tcpdf.php';
 class MYPDF extends TCPDF
 {
+
+    public function writeHTML($html, $ln = true, $fill = false, $reseth = false, $cell = false, $align = '')
+    {
+	return parent::writeHTML(sanitize_report_output_html($html), $ln, $fill, $reseth, $cell, $align);
+    }
 
     public function Header()
     {
