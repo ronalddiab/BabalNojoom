@@ -2772,9 +2772,17 @@ class Reports_model extends Base_Model
 
         $yearConditions = [
             "(year_id='$start_year' AND (month_id>=1 AND month_id<='$pre_month'))",
-            "(year_id='$twoMonthsAgoYear' AND month_id='$twoMonthsAgoMonth')"
         ];
-        
+
+        // Only the month-grouped trend query wants today-minus-2-months as its own extra data
+        // point - the plain YTD aggregate (used for the progress cards) must stay within the
+        // requested Jan-$pre_month range, or reports for earlier months silently get this fixed
+        // month added on top of their own total (inflating their YTD sum whenever it falls outside
+        // their requested range).
+        if (!empty($filters['group_by']) && $filters['group_by'] == 'month') {
+            $yearConditions[] = "(year_id='$twoMonthsAgoYear' AND month_id='$twoMonthsAgoMonth')";
+        }
+
         if ($pre_start_year !== 'NOTSET') {
             $yearConditions[] = "(year_id='$pre_start_year' AND (month_id>=1 AND month_id<='$pre_month'))";
         }

@@ -86,7 +86,7 @@ if ($filters['filters_comparision_chart']["start_year"] == $filters['filters_com
 
 		    <td width="100%">
 
-			<img src="<?php echo $columnChartCarbonFootprintImg; ?>" />
+			<?php if (!empty($columnChartCarbonFootprintImg)) { ?><img src="<?php echo $columnChartCarbonFootprintImg; ?>" /><?php } ?>
 
 		    </td>
 

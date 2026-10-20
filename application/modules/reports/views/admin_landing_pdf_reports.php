@@ -540,101 +540,37 @@ if (!empty($utility_cost_chart)) {
 
 
 
+    // "% vs last year" for every "Consumption/Room Night" row below must be worked out from the
+    // full-precision consumption/room_night ratio, not from $total_sum_data_X_per_room_night /
+    // $total_sum_pre_data_X_per_room_night above, which are already rounded to $percentage_decimal
+    // places for display - computing the percentage from those pre-rounded values cascades the
+    // rounding error (e.g. Water showed 7.160% instead of the correct 7.12%).
+    $perRoomNightRawPercent = function ($curConsumption, $curRoomNight, $preConsumption, $preRoomNight, $percentage_decimal) {
+        $curRaw = (!empty($curRoomNight)) ? ($curConsumption / $curRoomNight) : 0;
+        $preRaw = (!empty($preRoomNight)) ? ($preConsumption / $preRoomNight) : 0;
+        return (!empty($preRaw)) ? round((($curRaw - $preRaw) * 100) / $preRaw, $percentage_decimal) : 0;
+    };
+
     $fuel_per_room_night_difference_value = $total_sum_data_fuel_per_room_night - $total_sum_pre_data_fuel_per_room_night;
-
-    if (!empty($total_sum_pre_data_fuel_per_room_night)) {
-
-        $fuel_per_room_night_difference_percent = round($fuel_per_room_night_difference_value * 100 / $total_sum_pre_data_fuel_per_room_night, $percentage_decimal);
-
-    } else {
-
-        $fuel_per_room_night_difference_percent = 0;
-
-    }
-
-
+    $fuel_per_room_night_difference_percent = $perRoomNightRawPercent($total_sum_data_fuel_consumption, $total_sum_data_room_night, $total_sum_pre_data_fuel_consumption, $total_sum_pre_data_room_night, $percentage_decimal);
 
     $lpg_per_room_night_difference_value = $total_sum_data_lpg_per_room_night - $total_sum_pre_data_lpg_per_room_night;
-
-    if (!empty($total_sum_pre_data_lpg_per_room_night)) {
-
-        $lpg_per_room_night_difference_percent = round($lpg_per_room_night_difference_value * 100 / $total_sum_pre_data_lpg_per_room_night, $percentage_decimal);
-
-    } else {
-
-        $lpg_per_room_night_difference_percent = 0;
-
-    }
-
-
+    $lpg_per_room_night_difference_percent = $perRoomNightRawPercent($total_sum_data_lpg_consumption, $total_sum_data_room_night, $total_sum_pre_data_lpg_consumption, $total_sum_pre_data_room_night, $percentage_decimal);
 
     $natural_gas_per_room_night_difference_value = $total_sum_data_natural_gas_per_room_night - $total_sum_pre_data_natural_gas_per_room_night;
-
-    if (!empty($total_sum_pre_data_natural_gas_per_room_night)) {
-
-        $natural_gas_per_room_night_difference_percent = round($natural_gas_per_room_night_difference_value * 100 / $total_sum_pre_data_natural_gas_per_room_night, $percentage_decimal);
-
-    } else {
-
-        $natural_gas_per_room_night_difference_percent = 0;
-
-    }
-
-
+    $natural_gas_per_room_night_difference_percent = $perRoomNightRawPercent($total_sum_data_natural_gas_consumption, $total_sum_data_room_night, $total_sum_pre_data_natural_gas_consumption, $total_sum_pre_data_room_night, $percentage_decimal);
 
     $heating_district_per_room_night_difference_value = $total_sum_data_heating_district_per_room_night - $total_sum_pre_data_heating_district_per_room_night;
-
-    if (!empty($total_sum_pre_data_heating_district_per_room_night)) {
-
-        $heating_district_per_room_night_difference_percent = round($heating_district_per_room_night_difference_value * 100 / $total_sum_pre_data_heating_district_per_room_night, $percentage_decimal);
-
-    } else {
-
-        $heating_district_per_room_night_difference_percent = 0;
-
-    }
-
-
+    $heating_district_per_room_night_difference_percent = $perRoomNightRawPercent($total_sum_data_heating_district_consumption, $total_sum_data_room_night, $total_sum_pre_data_heating_district_consumption, $total_sum_pre_data_room_night, $percentage_decimal);
 
     $cooling_district_per_room_night_difference_value = $total_sum_data_cooling_district_per_room_night - $total_sum_pre_data_cooling_district_per_room_night;
-
-    if (!empty($total_sum_pre_data_cooling_district_per_room_night)) {
-
-        $cooling_district_per_room_night_difference_percent = round($cooling_district_per_room_night_difference_value * 100 / $total_sum_pre_data_cooling_district_per_room_night, $percentage_decimal);
-
-    } else {
-
-        $cooling_district_per_room_night_difference_percent = 0;
-
-    }
-
-
+    $cooling_district_per_room_night_difference_percent = $perRoomNightRawPercent($total_sum_data_cooling_district_consumption, $total_sum_data_room_night, $total_sum_pre_data_cooling_district_consumption, $total_sum_pre_data_room_night, $percentage_decimal);
 
     $water_per_room_night_difference_value = $total_sum_data_water_per_room_night - $total_sum_pre_data_water_per_room_night;
-
-    if (!empty($total_sum_pre_data_water_per_room_night)) {
-
-        $water_per_room_night_difference_percent = round($water_per_room_night_difference_value * 100 / $total_sum_pre_data_water_per_room_night, $percentage_decimal);
-
-    } else {
-
-        $water_per_room_night_difference_percent = 0;
-
-    }
-
-
+    $water_per_room_night_difference_percent = $perRoomNightRawPercent($total_sum_data_water_consumption, $total_sum_data_room_night, $total_sum_pre_data_water_consumption, $total_sum_pre_data_room_night, $percentage_decimal);
 
     $electricity_per_room_night_difference_value = $total_sum_data_electricity_per_room_night - $total_sum_pre_data_electricity_per_room_night;
-
-    if (!empty($total_sum_pre_data_electricity_per_room_night)) {
-
-        $electricity_per_room_night_difference_percent = round($electricity_per_room_night_difference_value * 100 / $total_sum_pre_data_electricity_per_room_night, $percentage_decimal);
-
-    } else {
-
-        $electricity_per_room_night_difference_percent = 0;
-
-    }
+    $electricity_per_room_night_difference_percent = $perRoomNightRawPercent($total_sum_data_electricity_kwh, $total_sum_data_room_night, $total_sum_pre_data_electricity_kwh, $total_sum_pre_data_room_night, $percentage_decimal);
 
 
 
@@ -1176,13 +1112,16 @@ if (!empty($utility_cost_chart)) {
 
     $data_utility_cost_per_roomnight_difference = $total_sum_data_utility_cost_per_roomnight - $total_sum_pre_data_utility_cost_per_roomnight;
 
-    $data_utility_cost_per_roomnight_variation = round($data_utility_cost_per_roomnight_difference * 100 / $total_sum_data_utility_cost_per_roomnight, $percentage_decimal);
+    // "% vs last year" must be the difference over the PREVIOUS value, not the current one -
+    // dividing by the current value here produced a visibly wrong percentage (e.g. 22.64%
+    // instead of the correct 29.27% for 23.58/80.567).
+    $data_utility_cost_per_roomnight_variation = round($data_utility_cost_per_roomnight_difference * 100 / $total_sum_pre_data_utility_cost_per_roomnight, $percentage_decimal);
 
 
 
     $data_utility_cost_per_m2_difference = $total_sum_data_utility_cost_per_m2 - $total_sum_pre_data_utility_cost_per_m2;
 
-    $data_utility_cost_per_m2_variation = is_infinite($data_utility_cost_per_m2_difference * 100 / $total_sum_data_utility_cost_per_m2) ? 0 : round($data_utility_cost_per_m2_difference * 100 / $total_sum_data_utility_cost_per_m2, $percentage_decimal);
+    $data_utility_cost_per_m2_variation = is_infinite($data_utility_cost_per_m2_difference * 100 / $total_sum_pre_data_utility_cost_per_m2) ? 0 : round($data_utility_cost_per_m2_difference * 100 / $total_sum_pre_data_utility_cost_per_m2, $percentage_decimal);
 
     $data_utility_cost_per_m2_variation = is_nan($data_utility_cost_per_m2_variation) ? 0 : $data_utility_cost_per_m2_variation;
 
@@ -1348,9 +1287,17 @@ if ($showCostBudgetVariance) {
 
     $water_tariff_actual =  is_infinite($currentBudgetActualData["water_total_consumption_cost_actual"] / $currentBudgetActualData["water_total_consumption_actual"]) ? 0 : round($currentBudgetActualData["water_total_consumption_cost_actual"] / $currentBudgetActualData["water_total_consumption_actual"], $value_decimal);
 
-    $district_cooling_tariff_actual =  is_infinite($currentBudgetActualData["district_cooling_cost_actual"] / $currentBudgetActualData["district_cooling_actual"]) ? 0 : round($currentBudgetActualData["district_cooling_cost_actual"] / $currentBudgetActualData["district_cooling_actual"], $value_decimal);
+    // district_cooling_cost_actual/district_heating_cost_actual deliberately exclude their
+    // _fixed_cost component (other call sites, e.g. $district_cooling_cost_variation below and
+    // its Excel-export equivalent, add it back in separately) - this tariff must include it too,
+    // since the table's own "Average tariff"/"Total Cost" columns above already do (cost incl.
+    // fixed cost / consumption), or this would show a different, lower tariff than the row's own
+    // Current/Previous columns and produce a nonsensical budget-variance figure.
+    $district_cooling_tariff_actual_cost = $currentBudgetActualData["district_cooling_cost_actual"] + $currentBudgetActualData["district_cooling_fixed_cost"];
+    $district_cooling_tariff_actual =  is_infinite($district_cooling_tariff_actual_cost / $currentBudgetActualData["district_cooling_actual"]) ? 0 : round($district_cooling_tariff_actual_cost / $currentBudgetActualData["district_cooling_actual"], $value_decimal);
 
-    $district_heating_tariff_actual =  is_infinite($currentBudgetActualData["district_heating_cost_actual"] / $currentBudgetActualData["district_heating_actual"]) ? 0 : round($currentBudgetActualData["district_heating_cost_actual"] / $currentBudgetActualData["district_heating_actual"], $value_decimal);
+    $district_heating_tariff_actual_cost = $currentBudgetActualData["district_heating_cost_actual"] + $currentBudgetActualData["district_heating_fixed_cost"];
+    $district_heating_tariff_actual =  is_infinite($district_heating_tariff_actual_cost / $currentBudgetActualData["district_heating_actual"]) ? 0 : round($district_heating_tariff_actual_cost / $currentBudgetActualData["district_heating_actual"], $value_decimal);
 
 
 
@@ -1541,5 +1488,9 @@ if ($showCostBudgetVariance) {
 }
 echo '<?php $positive_number_style = "color:red;"; ?>
 <br><br><div style="border:2px solid  #f69546;padding:6px;">';
-include ('admin_landing_pdf_reports_table.php');
+// Progress-on-target cards + mn_pdf_*() native-drawing helpers (shared with the
+// Monthly report's own parent template) must be included before the table below,
+// since the table reuses those same helper functions.
+include ('admin_landing_pdf_reports_progress_table_new_mtd_ui.php');
+include ('admin_landing_pdf_reports_table_new_mtd_ui.php');
 echo '</div>';
