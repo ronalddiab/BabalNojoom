@@ -48,7 +48,7 @@ class Import_admin extends Base_Admin_Controller
     {
 	return array(
 	    array(
-		'actions' => array('index', 'export', 'daily', 'export_monthly_data', 'waste', 'emission','site_data','survey','checkNegative','compareUtility'),
+		'actions' => array('index', 'export', 'daily', 'export_monthly_data', 'waste', 'emission', 'emission_scope2_3', 'site_data', 'survey', 'checkNegative', 'compareUtility'),
 		'users' => array('@'),
 	    ),
 	);
@@ -233,6 +233,7 @@ class Import_admin extends Base_Admin_Controller
 		$colmuns['Revenue'] = "revenue";
 		$colmuns['Vehicle Petrol (Liter)'] = "vehicle_petrol";
 		$colmuns['Other fleets Petrol (Litres)'] = "fleet_petrol";
+		$colmuns['Total Fleet Petrol Cost ($)'] = "total_fleet_petrol_cost";
 		$colmuns['Total F and B Sales'] = "total_f_b_sales";
 		$colmuns['Heating Fixed Cost'] = "district_heating_fixed_cost";
 		$colmuns['Cooling Fixed Cost'] = "district_cooling_fixed_cost";
@@ -305,10 +306,37 @@ class Import_admin extends Base_Admin_Controller
 
 		/*
 		* Walk every header index (0..n). Do NOT shrink by counting only non-empty
-		* headers — empty/hidden/foreign labels in the middle would otherwise
+		* headers â€” empty/hidden/foreign labels in the middle would otherwise
 		* cause trailing mapped columns to be skipped.
 		*/
 		$maxColIndex = max((int) $numberCol, count($titleCells) - 1);
+
+		$identityColumns = array('site_id', 'month_id', 'year_id', 'date_id', 'cdd', 'hdd');
+		for ($scanRow = 1; $scanRow <= $numberRow; $scanRow++) {
+		    if (!isset($dataCells[$scanRow][0]) || $dataCells[$scanRow][0] == '') {
+			continue;
+		    }
+		    for ($scanCol = 0; $scanCol <= $maxColIndex; $scanCol++) {
+			if (!array_key_exists($scanCol, $dataCells[$scanRow])) {
+			    continue;
+			}
+			$rawHeader = isset($dataCells[0][$scanCol]) ? $dataCells[0][$scanCol] : '';
+			$headerKey = trim(iconv("UTF-8", "ISO-8859-1", strtolower($rawHeader)), " \t\n\r\0\x0B\xA0");
+			if ($headerKey === '' || !isset($colmuns[$headerKey])) {
+			    continue;
+			}
+			$dbColumn = $colmuns[$headerKey];
+			if (in_array($dbColumn, $identityColumns, true)) {
+			    continue;
+			}
+			$cellValue = $dataCells[$scanRow][$scanCol];
+			if ($this->is_negative_import_value($cellValue)) {
+			    $this->theme->set_message("File upload has negative values please check and re-upload.", 'error');
+			    redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import');
+			    exit;
+			}
+		    }
+		}
 
 		$siteNames = array();
 		for ($i = 1; $i <= $numberRow; $i++) {
@@ -361,7 +389,7 @@ class Import_admin extends Base_Admin_Controller
 				$rawHeader = isset($dataCells[0][$j]) ? $dataCells[0][$j] : '';
 				$headerKey = trim(iconv("UTF-8", "ISO-8859-1", strtolower($rawHeader)), " \t\n\r\0\x0B\xA0");
 				if ($headerKey === '' || !isset($colmuns[$headerKey])) {
-					// empty / hidden / foreign label — skip this cell, keep scanning
+					// empty / hidden / foreign label â€” skip this cell, keep scanning
 					continue;
 				}
 
@@ -387,12 +415,12 @@ class Import_admin extends Base_Admin_Controller
 					}
 				}
 
+				if ($this->is_negative_import_value($cellValue) && !in_array($dbColumn, array('site_id', 'month_id', 'year_id', 'cdd', 'hdd'), true)) {
+					$this->theme->set_message("File upload has negative values please check and re-upload.", 'error');
+					redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import');
+					exit;
+				}
 				if (!in_array($dbColumn, $keyNotExists, true)) {
-					if (is_numeric($cellValue) && $cellValue < 0) {
-						$this->theme->set_message("File upload has negative values please check and re-upload.", 'error');
-						redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import');
-						exit;
-					}
 					$dataInsert[$dbColumn] = $cellValue;
 				}
 			}
@@ -440,7 +468,7 @@ class Import_admin extends Base_Admin_Controller
 				'lpg_kitchen', 'lpg_kitchen_rate', 'lpg_total_budget', 'lpg_total_budget_cost',
 				'district_heating_total_budget', 'district_heating_total_budget_cost',
 				'water_total_consumption_budget', 'water_total_consumption_budget_cost',
-				'vehicle_petrol',
+				'vehicle_petrol', 'fleet_petrol', 'total_fleet_petrol_cost',
 				'total_maximum_demand', 'total_purchased_electricity', 'total_purchased_electricity_cost',
 				'average_purchased_electricity', 'total_electricity_kwh', 'total_electricity_cost', 'average_cost_per_kwh',
 				'fuel_oil_hot_water_boilers', 'fuel_oil_hot_water_boilers_rate', 'fuel_oil_hot_water_boilers_cost',
@@ -472,7 +500,7 @@ class Import_admin extends Base_Admin_Controller
 				}
 			}
 			$dataInsert['forex'] = (!empty($dataInsert['forex'])) ? $dataInsert['forex'] : 1;
-			// CDD/HDD: do NOT default to empty/0 — leave unset so model keeps existing DB values
+			// CDD/HDD: do NOT default to empty/0 â€” leave unset so model keeps existing DB values
 
 			$v = function ($key) use (&$dataInsert) {
 				return isset($dataInsert[$key]) && $dataInsert[$key] !== '' ? $dataInsert[$key] : 0;
@@ -853,7 +881,13 @@ class Import_admin extends Base_Admin_Controller
 			    }
 			}
 			if (!in_array($colmuns[trim($data->sheets[0]['cells'][1][$j])], $keyNotExists)) {
-			    $dataInsert[$colmuns[trim($data->sheets[0]['cells'][1][$j])]] = $data->sheets[0]['cells'][$i][$j];
+			    $cellValue = $data->sheets[0]['cells'][$i][$j];
+			    if ($this->is_negative_import_value($cellValue)) {
+				$this->theme->set_message("File upload has negative values please check and re-upload.", 'error');
+				redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import');
+				exit;
+			    }
+			    $dataInsert[$colmuns[trim($data->sheets[0]['cells'][1][$j])]] = $cellValue;
 			}
 		    } else {
 			continue;
@@ -1222,6 +1256,11 @@ class Import_admin extends Base_Admin_Controller
 						unset($selectCondition[$sKey]);
 					    }
 					}
+					if ($this->first_negative_import_field($value)) {
+					    $this->theme->set_message("File upload has negative values please check and re-upload.", 'error');
+					    redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/daily');
+					    exit;
+					}
 					// Remove unused utilities from
 					if (!$allSiteids[$value['site_id']]['show_utility_electricity']) {
 					    unset($value["total_electricity_kwh"]);
@@ -1397,6 +1436,11 @@ class Import_admin extends Base_Admin_Controller
 				    foreach ($staticColmuns as $key1 => $value1) {
 					$staticDataInsert[$value1] = is_numeric($value[$key1]) ? $value[$key1] : 0;
 				    }
+				    if ($this->first_negative_import_field($staticDataInsert)) {
+					$this->theme->set_message("File upload has negative values please check and re-upload.", 'error');
+					redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/daily');
+					exit;
+				    }
 				    // Store fixed daily data in database
 				    $insertBulkFixedData[] = $staticDataInsert;
 
@@ -1413,6 +1457,11 @@ class Import_admin extends Base_Admin_Controller
 					    $dynamicDataInsert['year_id'] = $staticDataInsert['year_id'];
 					    $dynamicDataInsert['utility_title_id'] = $value2['id'];
 					    $dynamicDataInsert['value'] = is_numeric($value[$value2['title']]) ? $value[$value2['title']] : 0;
+					    if ($this->is_negative_import_value($dynamicDataInsert['value'])) {
+						$this->theme->set_message("File upload has negative values please check and re-upload.", 'error');
+						redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/daily');
+						exit;
+					    }
 					    $key = $dynamicDataInsert['site_id'] . '_' . $dynamicDataInsert['year_id'] . '_' . $dynamicDataInsert['month_id'] . '_' . $dynamicDataInsert['date_id'] . '_' . $dynamicDataInsert['utility_title_id'];
 					    $bulkInsertData[$key] = $dynamicDataInsert;
 					    unset($dynamicDataInsert);
@@ -1688,7 +1737,6 @@ class Import_admin extends Base_Admin_Controller
 		}
 
 		if ($process) {
-		    // Success
 		    $this->theme->set_message("File imported successfully.", 'success');
 
 		    // Save audit trail
@@ -1935,6 +1983,8 @@ class Import_admin extends Base_Admin_Controller
 	$columns["total_renewable_energy_production_cost"] = 'Total Renewable Energy Cost ($)';
 	$columns["total_electricity_cost"] = 'Total Electricity Cost';
 	$columns["total_electricity_kwh"] = 'Total Electricity '.$electricity_unit.'';
+	$columns["fleet_petrol"] = 'Total Fleet Fuel (Litres)';
+	$columns["total_fleet_petrol_cost"] = 'Fleet Fuel Cost';
 	$columns["fuel_oil_hot_water_boilers"] = 'Fuel Oil Hot-Water Boilers ('.$fuel_oil_unit.') '.$fuel_oil_unit.'';
 	$columns["fuel_oil_hot_water_boilers_rate"] = 'Fuel Oil Hot-Water Boilers ('.$fuel_oil_unit.') $/'.$fuel_oil_unit.'';
 	$columns["fuel_oil_steam_boilers"] = 'Fuel Oil Steam Boilers ('.$fuel_oil_unit.') '.$fuel_oil_unit.'';
@@ -2040,9 +2090,12 @@ class Import_admin extends Base_Admin_Controller
 		    'district_cooling', 'district_cooling_rate', 'district_cooling_total_budget',
 		    'district_cooling_total_budget_cost', 'district_cooling_fixed_cost',
 		),
+		'show_utility_fleet' => array(
+		    'fleet_petrol', 'total_fleet_petrol_cost'
+		),
 	    );
 	    foreach ($export_columns_by_site_utility_flag as $flag => $column_keys) {
-		if (array_key_exists($flag, $site_detail) && (int) $site_detail[$flag] !== 1) {
+		if (!array_key_exists($flag, $site_detail) || (int) $site_detail[$flag] !== 1) {
 		    foreach ($column_keys as $col_key) {
 			unset($columns[$col_key]);
 		    }
@@ -2055,6 +2108,30 @@ class Import_admin extends Base_Admin_Controller
 		    }
 		}
 	    }
+	}
+	foreach ($columns as $col_key => $column_name) {
+
+		// Keep identifying columns
+		if (in_array($col_key, array('site_id', 'month_id', 'year_id'))) {
+			continue;
+		}
+
+		$has_legitimate_value = false;
+
+		foreach ($utility as $utl) {
+			if (isset($utl[$col_key])) {
+				$value = $utl[$col_key];
+
+				if ($value !== null && $value !== '' && (float)$value != 0) {
+					$has_legitimate_value = true;
+					break;
+				}
+			}
+		}
+
+		if (!$has_legitimate_value) {
+			unset($columns[$col_key]);
+		}
 	}
 
 	$cells = array();
@@ -2180,6 +2257,7 @@ class Import_admin extends Base_Admin_Controller
 			    $colmuns['Site Name'] = "site_id";
 			    $colmuns['Month'] = "month_id";
 			    $colmuns['Year'] = "year_id";
+				$colmuns['Rebates'] = 'rebates';
 
 			    $colmuns['Total (per Unit) bottles cans'] = 'unit_measure_bottles_cans';
 
@@ -2454,6 +2532,7 @@ class Import_admin extends Base_Admin_Controller
 					$this->site_waste_model->site_id = (int)$siteId;
 					$this->site_waste_model->month_id = (int)$getMonth;
 					$this->site_waste_model->year_id = (int)$getYear;
+					$this->site_waste_model->rebates = $dataInsert['rebates'];
 					$dataInsert['user_id'] = (int)$this->session->userdata[$this->section_name]['user_id'];
 					$dataInsert['site_id'] = (int)$siteId;
 					$dataInsert['month_id'] = (int)$getMonth;
@@ -2561,6 +2640,14 @@ class Import_admin extends Base_Admin_Controller
 			    $colmuns['District Cooling Emission Factor'] = 'district_cooling_emission_factor';
 			    $colmuns['District Heating Emission Factor'] = 'district_heating_emission_factor';
 			    $colmuns['Green Electricity %'] = 'electricity_emission_factor_percentage';
+				$colmuns['General Waste to Landfill Emission Factor'] = 'waste_general_waste_to_landfill_emission_factor';
+				$colmuns['Recycling Streams Emission Factor'] = 'waste_recycling_streams_emission_factor';
+				$colmuns['Business Travel - Flights Emission Factor'] = 'business_travel_flights_emission_factor';
+				$colmuns['Business Travel - Car/Taxi Emission Factor'] = 'business_travel_car_taxi_emission_factor';
+				$colmuns['Employee Commuting - Car Emission Factor'] = 'employee_commuting_car_emission_factor';
+				$colmuns['Employee Commuting - Bus Emission Factor'] = 'employee_commuting_bus_emission_factor';
+				$colmuns['Outsourced Laundry Emission Factor'] = 'outsourced_laundry_emission_factor';
+				$colmuns['Purchased Goods Emission Factor'] = 'purchased_goods_emission_factor';
 			    $sites_name = array();
 			    $k = 0;
 			    $totalCol = 0;
@@ -2675,6 +2762,406 @@ class Import_admin extends Base_Admin_Controller
 	$this->theme->set('page_title', lang('import-emission'));
 	$this->breadcrumb->add(lang('import-emission'));
 	$this->theme->view($data);
+    }
+
+    public function emission_scope2_3()
+    {
+	$data = array();
+	$year = (int) $this->input->get_post('year');
+	if ($year <= 0) {
+	    $year = (int) date('Y');
+	}
+	$data['year'] = $year;
+	$data['disabled'] = '';
+
+	if ($this->input->get('download_template')) {
+	    $this->download_waste_scope_emission_factor_template($year);
+	    return;
+	}
+
+	if (!empty($this->input->post()) && !empty($_FILES['importfile']['name'])) {
+	    $file_tmp = $_FILES['importfile']['tmp_name'];
+	    $file_name = $_FILES['importfile']['name'];
+	    $fileType = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+	    if ($fileType == '') {
+		$this->theme->set_message('Please upload file type with .xls or .xlsx extension.', 'error');
+		redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/emission_scope2_3?year=' . $year);
+		exit;
+	    }
+	    if ($fileType != 'xls' && $fileType != 'xlsx' && $fileType != 'ods') {
+		$this->theme->set_message('File type with .xls or .xlsx extension is allowed.', 'error');
+		redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/emission_scope2_3?year=' . $year);
+		exit;
+	    }
+
+	    require_once APPPATH . 'libraries/PHPExcel/PHPExcel.php';
+	    $destinationFile = BASE_PATH_CUSTOM . '/assets/uploads/imported_excels/';
+	    if (!is_dir($destinationFile)) {
+		mkdir($destinationFile);
+	    }
+	    $newFile = $destinationFile . uniqid() . '_' . date('Y-n-j') . '_' . time() . '.' . $fileType;
+	    if (!move_uploaded_file($file_tmp, $newFile)) {
+		$this->theme->set_message('Unable to upload the selected file.', 'error');
+		redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/emission_scope2_3?year=' . $year);
+		exit;
+	    }
+
+	    $inputFileType = PHPExcel_IOFactory::identify($newFile);
+	    $objReader = PHPExcel_IOFactory::createReader($inputFileType);
+	    $objReader->setLoadAllSheets();
+	    $objPHPExcel = $objReader->load($newFile);
+	    $worksheetData = $objReader->listWorksheetInfo($newFile);
+	    $numberRow = $worksheetData[0]['totalRows'];
+	    $dataCells = $objPHPExcel->getSheet(0)->toArray(null, true, true, false);
+	    // listWorksheetInfo() counts cells per row, so merged/empty header cells understate the
+	    // width and drop trailing factor groups. Use the widest parsed row instead.
+	    $numberCol = (int) $worksheetData[0]['totalColumns'];
+	    foreach ($dataCells as $dataRow) {
+		$numberCol = max($numberCol, count($dataRow));
+	    }
+	    $headerInfo = $this->find_scope3_emission_factor_header_rows($dataCells, $numberCol);
+	    if (empty($headerInfo)) {
+		$this->theme->set_message('Invalid template. Row labels must include Site Name and Year, then Category | Stream | Destination groups with tCO2e/short ton and kgCO2e/MT column headers.', 'error');
+		redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/emission_scope2_3?year=' . $year);
+		exit;
+	    }
+	    $groupRow = $headerInfo['group_row'];
+	    $unitRow = $headerInfo['unit_row'];
+	    $dataStartIndex = $headerInfo['data_start'];
+
+	    $yearCol = null;
+	    $siteCol = null;
+	    $wasteGroups = array();
+	    $lastGroupHeader = '';
+	    for ($j = 0; $j < $numberCol; $j++) {
+		$groupHeader = isset($groupRow[$j]) ? trim((string) $groupRow[$j]) : '';
+		$unitHeader = isset($unitRow[$j]) ? trim((string) $unitRow[$j]) : '';
+		$groupNorm = strtolower($groupHeader);
+		$unitNorm = strtolower($unitHeader);
+		if ($groupNorm === 'site name' || $unitNorm === 'site name') {
+		    $siteCol = $j;
+		    continue;
+		}
+		if ($groupNorm === 'year' || $unitNorm === 'year') {
+		    $yearCol = $j;
+		    continue;
+		}
+		if ($groupHeader !== '') {
+		    $lastGroupHeader = $groupHeader;
+		} else {
+		    $groupHeader = $lastGroupHeader;
+		}
+		$parsedGroup = null;
+		$groupParts = array_values(array_filter(array_map('trim', explode('|', $groupHeader)), function ($part) {
+		    return $part !== '';
+		}));
+		if (count($groupParts) >= 3) {
+		    $destinationLabel = array_pop($groupParts);
+		    $categoryLabel = array_shift($groupParts);
+		    $parsedGroup = array(
+			'category_label' => $categoryLabel,
+			'stream_label' => implode(' | ', $groupParts),
+			'typical_destination_label' => $destinationLabel,
+		    );
+		}
+		$factorField = null;
+		$unitNorm = strtolower(str_replace(array('Â²', ' '), array('2', ''), $unitHeader));
+		if (strpos($unitNorm, 'tco2e') !== false || strpos($unitNorm, 'shortton') !== false) {
+		    $factorField = 'epa_source_factor';
+		} elseif (strpos($unitNorm, 'kgco2e') !== false) {
+		    $factorField = 'hep_factor';
+		}
+		if ($parsedGroup && $factorField) {
+		    $wasteGroups[$j] = array_merge($parsedGroup, array('factor_field' => $factorField));
+		}
+	    }
+
+	    if (empty($wasteGroups)) {
+		$this->theme->set_message('Invalid template. Use Site Name, Year, then merged groups Category | Stream | Destination with tCO2e/short ton and kgCO2e/MT column headers.', 'error');
+		redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/emission_scope2_3?year=' . $year);
+		exit;
+	    }
+
+	    $this->load->model('sites/site_waste_scope_1_2_emission_factor_model');
+	    $siteNames = array();
+	    for ($i = $dataStartIndex; $i <= $numberRow; $i++) {
+		if (!isset($dataCells[$i]) || $siteCol === null) {
+		    continue;
+		}
+		$siteName = trim((string) $dataCells[$i][$siteCol]);
+		if ($siteName !== '') {
+		    $siteNames[] = $siteName;
+		}
+	    }
+	    $allSiteids = array();
+	    if (!empty($siteNames)) {
+		$allSiteids = $this->import_model->getSiteDetailByName(array_values(array_unique($siteNames)), '');
+	    }
+	    $emissionRowsBySiteYear = array();
+	    $imported = 0;
+	    $skipped = 0;
+	    $sites_name = array();
+
+	    for ($i = $dataStartIndex; $i <= $numberRow; $i++) {
+		if (!isset($dataCells[$i])) {
+		    continue;
+		}
+		$rowYear = ($yearCol !== null && isset($dataCells[$i][$yearCol])) ? (int) trim((string) $dataCells[$i][$yearCol]) : 0;
+		if ($rowYear <= 0) {
+		    continue;
+		}
+		$rowSiteName = ($siteCol !== null && isset($dataCells[$i][$siteCol])) ? trim((string) $dataCells[$i][$siteCol]) : '';
+		if ($rowSiteName === '') {
+		    continue;
+		}
+		$rowSiteId = isset($allSiteids[$rowSiteName]['id']) ? (int) $allSiteids[$rowSiteName]['id'] : 0;
+		if ($rowSiteId <= 0) {
+		    $sites_name[] = $rowSiteName;
+		    continue;
+		}
+		if (!isset($emissionRowsBySiteYear[$rowSiteId][$rowYear])) {
+		    $emissionRowsBySiteYear[$rowSiteId][$rowYear] =
+			$this->site_waste_scope_1_2_emission_factor_model->getRowsWithValues($rowYear, $rowSiteId);
+		}
+		$grouped = array();
+		foreach ($wasteGroups as $colIndex => $parsed) {
+		    $value = isset($dataCells[$i][$colIndex]) ? trim((string) $dataCells[$i][$colIndex]) : '';
+		    if ($value === '' || !is_numeric($value)) {
+			continue;
+		    }
+		    $groupKey = strtolower($parsed['category_label'] . '|' . $parsed['stream_label'] . '|' . $parsed['typical_destination_label']);
+		    if (!isset($grouped[$groupKey])) {
+			$grouped[$groupKey] = $parsed;
+			$grouped[$groupKey]['epa_source_factor'] = null;
+			$grouped[$groupKey]['hep_factor'] = null;
+		    }
+		    $grouped[$groupKey][$parsed['factor_field']] = $value;
+		}
+		foreach ($grouped as $factorRow) {
+		    $matched = null;
+		    foreach ($emissionRowsBySiteYear[$rowSiteId][$rowYear] as $existingRow) {
+			if (strcasecmp(trim((string) $existingRow['category_label']), trim((string) $factorRow['category_label'])) !== 0) {
+			    continue;
+			}
+			if (strcasecmp(trim((string) $existingRow['typical_destination_label']), trim((string) $factorRow['typical_destination_label'])) !== 0) {
+			    continue;
+			}
+			$rowStream = '';
+			if (!empty($existingRow['stream_label'])) {
+			    $rowStream = $existingRow['stream_label'];
+			} elseif (!empty($existingRow['group_label'])) {
+			    $rowStream = $existingRow['group_label'];
+			} elseif (!empty($existingRow['category_label'])) {
+			    $rowStream = $existingRow['category_label'];
+			}
+			if (strcasecmp(trim((string) $rowStream), trim((string) $factorRow['stream_label'])) === 0) {
+			    $matched = $existingRow;
+			    break;
+			}
+		    }
+		    if (empty($matched)) {
+			$skipped++;
+			continue;
+		    }
+		    $epaFactor = $factorRow['epa_source_factor'];
+		    $hepFactor = $factorRow['hep_factor'];
+		    if ($epaFactor !== null && $hepFactor === null) {
+			$hepFactor = convertWasteEmissionFactor($epaFactor, 'tco2e_short_ton');
+		    } elseif ($hepFactor !== null && $epaFactor === null) {
+			$epaFactor = convertWasteEmissionFactor($hepFactor, 'kgco2e_mt');
+		    }
+		    $this->site_waste_scope_1_2_emission_factor_model->upsert(array(
+			'site_id' => $rowSiteId,
+			'year_id' => $rowYear,
+			'column_key' => $matched['column_key'],
+			'node_level' => $matched['node_level'],
+			'category_label' => $matched['category_label'],
+			'group_label' => $matched['group_label'],
+			'stream_label' => $matched['stream_label'],
+			'typical_destination_id' => $matched['typical_destination_id'],
+			'typical_destination_label' => $matched['typical_destination_label'],
+			'epa_source_factor' => $epaFactor,
+			'hep_factor' => $hepFactor,
+			'status' => isset($matched['status']) ? $matched['status'] : 1,
+		    ));
+		    $imported++;
+		}
+	    }
+
+	    $site_id = $this->session->userdata[$this->section_name]['site_id'];
+	    $user_id = $this->session->userdata[$this->section_name]['user_id'];
+	    saveAuditTrail($user_id, $site_id, 'Import Waste Scope Emission Factors', 'Import');
+
+	    if ($imported > 0) {
+		$message = $imported . ' Scope 3 waste emission factor value(s) imported.';
+		if ($skipped > 0) {
+		    $message .= ' ' . $skipped . ' group(s) were skipped because the stream or destination could not be matched.';
+		}
+		if (!empty($sites_name)) {
+		    $message .= ' Sites not found: ' . implode(', ', array_unique($sites_name)) . '.';
+		}
+		$this->theme->set_message($message, 'success');
+	    } else {
+		$errorMessage = 'No valid Scope 3 emission factor values were imported.';
+		if (!empty($sites_name)) {
+		    $errorMessage .= ' Sites not found: ' . implode(', ', array_unique($sites_name)) . '.';
+		}
+		$this->theme->set_message($errorMessage, 'error');
+	    }
+	    redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'import/emission_scope2_3?year=' . $year);
+	    exit;
+	}
+
+	$this->theme->set('page_title', lang('import-emission-scope2-3'));
+	$this->breadcrumb->add(lang('import-emission-scope2-3'));
+	$this->theme->view($data);
+    }
+
+    private function find_scope3_emission_factor_header_rows($dataCells, $numberCol)
+    {
+	$maxScan = min(6, count($dataCells));
+	for ($i = 0; $i < $maxScan; $i++) {
+	    $hasYear = false;
+	    $hasSite = false;
+	    for ($j = 0; $j < $numberCol; $j++) {
+		$value = strtolower(trim((string) (isset($dataCells[$i][$j]) ? $dataCells[$i][$j] : '')));
+		if ($value === 'year') {
+		    $hasYear = true;
+		}
+		if ($value === 'site name') {
+		    $hasSite = true;
+		}
+	    }
+	    if ($hasYear || $hasSite) {
+		$unitRowIndex = $i + 1;
+		$unitRow = isset($dataCells[$unitRowIndex]) ? $dataCells[$unitRowIndex] : array();
+		$hasUnit = false;
+		foreach ($unitRow as $unitHeader) {
+		    $unitNorm = strtolower(str_replace(array('Â²', ' '), array('2', ''), (string) $unitHeader));
+		    if (strpos($unitNorm, 'tco2e') !== false || strpos($unitNorm, 'kgco2e') !== false || strpos($unitNorm, 'shortton') !== false) {
+			$hasUnit = true;
+			break;
+		    }
+		}
+		if (!$hasUnit) {
+		    continue;
+		}
+		return array(
+		    'group_row' => $dataCells[$i],
+		    'unit_row' => $unitRow,
+		    'data_start' => $unitRowIndex + 1,
+		);
+	    }
+	}
+	return null;
+    }
+
+    private function download_waste_scope_emission_factor_template($year)
+    {
+	$siteId = isset($this->session->userdata[$this->section_name]['site_id']) ? $this->session->userdata[$this->section_name]['site_id'] : 0;
+	$this->load->model('sites/site_waste_scope_1_2_emission_factor_model');
+	$existing = $this->site_waste_scope_1_2_emission_factor_model->getRowsWithValues($year, $siteId);
+	$siteName = '';
+	if ($siteId) {
+	    $siteDetail = $this->sites_model->get_site_detail_custom($siteId);
+	    $siteName = isset($siteDetail['site_location_name']) ? $siteDetail['site_location_name'] : '';
+	}
+
+	require_once APPPATH . 'libraries/PHPExcel/PHPExcel.php';
+	$objPHPExcel = new PHPExcel();
+	$sheet = $objPHPExcel->getActiveSheet();
+	$sheet->setTitle('Scope 3 Emission Factors');
+	$style = array('font' => array('bold' => true), 'alignment' => array(
+	    'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+	    'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+	    'wrap' => true,
+	));
+	$sheet->getStyle('1:3')->applyFromArray($style);
+	$sheet->getRowDimension(1)->setRowHeight(24);
+	$sheet->getRowDimension(2)->setRowHeight(36);
+	$sheet->getRowDimension(3)->setRowHeight(28);
+
+	$configSheet = $objPHPExcel->createSheet();
+	$configSheet->setTitle('Config');
+	$configSheet->setCellValue('A1', 'WasteEfConversion');
+	$configSheet->setCellValue('B1', WASTE_EF_TCO2E_SHORT_TON_TO_KGCO2E_MT);
+	$configSheet->setSheetState(PHPExcel_Worksheet::SHEETSTATE_HIDDEN);
+
+	$sheet->setCellValue('A1', 'Scope 3 Waste Emission Factors');
+	$sheet->getColumnDimension('A')->setWidth(28);
+	$sheet->mergeCells('A2:A3');
+	$sheet->setCellValue('A2', 'Site Name');
+	$sheet->mergeCells('B2:B3');
+	$sheet->setCellValue('B2', 'Year');
+	$sheet->getColumnDimension('B')->setWidth(12);
+
+	$dataStartRow = 4;
+	$dataEndRow = 23;
+	$factorPairs = array();
+	$colIndex = 2;
+	foreach ($existing as $row) {
+		$streamLabel = '';
+		if (!empty($row['stream_label'])) {
+		    $streamLabel = $row['stream_label'];
+		} elseif (!empty($row['group_label'])) {
+		    $streamLabel = $row['group_label'];
+		} elseif (!empty($row['category_label'])) {
+		    $streamLabel = $row['category_label'];
+		}
+		$start = PHPExcel_Cell::stringFromColumnIndex($colIndex);
+		$end = PHPExcel_Cell::stringFromColumnIndex($colIndex + 1);
+		$sheet->mergeCells($start . '2:' . $end . '2');
+		$sheet->setCellValue($start . '2', $row['category_label'] . WASTE_EF_IMPORT_GROUP_SEPARATOR . $streamLabel . WASTE_EF_IMPORT_GROUP_SEPARATOR . $row['typical_destination_label']);
+		$sheet->setCellValue($start . '3', WASTE_EF_IMPORT_SUBCOL_TCO2E);
+		$sheet->setCellValue($end . '3', WASTE_EF_IMPORT_SUBCOL_KGCO2E);
+		$sheet->getColumnDimension($start)->setWidth(18);
+		$sheet->getColumnDimension($end)->setWidth(18);
+		$factorPairs[] = array(
+		    'epa_col' => $start,
+		    'hep_col' => $end,
+		    'epa_value' => isset($row['epa_source_factor']) ? $row['epa_source_factor'] : '',
+		    'hep_value' => isset($row['hep_factor']) ? $row['hep_factor'] : '',
+		);
+		$colIndex += 2;
+	}
+	$lastCol = PHPExcel_Cell::stringFromColumnIndex(max(2, $colIndex) - 1);
+	$sheet->mergeCells('A1:' . $lastCol . '1');
+
+	for ($r = $dataStartRow; $r <= $dataEndRow; $r++) {
+	    if ($r === $dataStartRow) {
+		$sheet->setCellValue('A' . $r, $siteName);
+		$sheet->setCellValue('B' . $r, (int) $year);
+	    }
+	    foreach ($factorPairs as $pair) {
+		$epaCol = $pair['epa_col'];
+		$hepCol = $pair['hep_col'];
+		$hasEpa = ($pair['epa_value'] !== '' && $pair['epa_value'] !== null && $r === $dataStartRow);
+		$hasHep = ($pair['hep_value'] !== '' && $pair['hep_value'] !== null && $r === $dataStartRow);
+		if ($hasHep && !$hasEpa) {
+		    $sheet->setCellValue($hepCol . $r, $pair['hep_value']);
+		    $sheet->setCellValue($epaCol . $r, '=IF(ISNUMBER(' . $hepCol . $r . '),ROUND(' . $hepCol . $r . '/Config!$B$1,6),"")');
+		} else {
+		    if ($hasEpa) {
+			$sheet->setCellValue($epaCol . $r, $pair['epa_value']);
+		    }
+		    $sheet->setCellValue($hepCol . $r, '=IF(ISNUMBER(' . $epaCol . $r . '),ROUND(' . $epaCol . $r . '*Config!$B$1,6),"")');
+		}
+	    }
+	}
+
+	$sheet->freezePane('C4');
+	$objPHPExcel->setActiveSheetIndex(0);
+
+	if (ob_get_length()) {
+	    ob_end_clean();
+	}
+	header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+	header('Content-Disposition: attachment;filename="Waste_Scope_Emission_Factors_Template_' . $year . '.xlsx"');
+	header('Cache-Control: max-age=0');
+	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+	$objWriter->save('php://output');
+	exit;
     }
 
     public function site_data() {
@@ -2830,6 +3317,81 @@ class Import_admin extends Base_Admin_Controller
 	$this->theme->view($data);
     }
 
+    /**
+     * True when a mapped import row contains a negative reading (not date/site/weather keys).
+     */
+    private function first_negative_import_field($row)
+    {
+	$skip = array('site_id', 'month_id', 'year_id', 'date_id', 'hour', 'cdd', 'hdd');
+	if (empty($row) || !is_array($row)) {
+	    return false;
+	}
+	foreach ($row as $field => $value) {
+	    if (in_array($field, $skip, true)) {
+		continue;
+	    }
+	    if ($this->is_negative_import_value($value)) {
+		return $field;
+	    }
+	}
+	return false;
+    }
+
+    private function is_negative_import_value($value)
+    {
+	if ($value === null || $value === '') {
+	    return false;
+	}
+	if (is_string($value)) {
+	    $value = str_replace(array(',', ' ', "\xC2\xA0"), '', trim($value));
+	}
+	return is_numeric($value) && (float) $value < 0;
+    }
+
+    private function write_simple_excel_sheet($objPHPExcel, $sheetIndex, $title, $columns, $rows)
+    {
+	while ($objPHPExcel->getSheetCount() <= $sheetIndex) {
+	    $objPHPExcel->createSheet();
+	}
+	$objPHPExcel->setActiveSheetIndex($sheetIndex);
+	$style = array('font' => array('bold' => true), 'align' => array(PHPExcel_Style_Alignment::HORIZONTAL_CENTER => true));
+	$objPHPExcel->getActiveSheet()->setTitle($title);
+	$objPHPExcel->getActiveSheet()->getStyle('1')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+	$objPHPExcel->getActiveSheet()->getStyle('1')->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+	$objPHPExcel->getActiveSheet()->getStyle('1')->getAlignment()->setWrapText(true);
+	$objPHPExcel->getActiveSheet()->getStyle('1')->applyFromArray($style);
+	$objPHPExcel->getActiveSheet()->getRowDimension('1')->setRowHeight(70);
+	$cells = array();
+	$later1 = "";
+	$later2 = 'A';
+	$flag = 0;
+	foreach ($columns as $key => $column) {
+	    $objPHPExcel->setActiveSheetIndex($sheetIndex)->setCellValue($later1 . $later2 . "1", $column);
+	    $cells[$key] = $later1 . $later2;
+	    $objPHPExcel->getActiveSheet()->getColumnDimension($later1 . $later2)->setWidth(18);
+	    if ($later2 == 'Z') {
+		if ($flag == 0) {
+		    $later1 = 'A';
+		    $flag = 1;
+		} else {
+		    $later1++;
+		}
+		$later2 = 'A';
+	    } else {
+		$later2++;
+	    }
+	}
+	$row = 2;
+	foreach ($rows as $data) {
+	    foreach ($data as $key => $val) {
+		if (array_key_exists($key, $cells)) {
+		    $objPHPExcel->setActiveSheetIndex($sheetIndex)->setCellValue($cells[$key] . $row, $val);
+		}
+	    }
+	    $row++;
+	}
+    }
+
     public function checkNegative() {
 		ini_set('memory_limit', '-1');
 		require_once APPPATH . 'libraries/PHPExcel/PHPExcel.php';
@@ -2840,6 +3402,7 @@ class Import_admin extends Base_Admin_Controller
 		$site_detail = $this->sites_model->get_site_detail_custom($site_id);
 		$months = array (1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec');
 		$worksheetTitles = ['Monthly Utilities','Daily Utilities'];
+		$skipNegativeFields = array('id', 'site_id', 'month_id', 'year_id', 'date_id', 'hour', 'cdd', 'hdd', 'created', 'modified', 'user_id', 'site_location_name');
 		for($index=0; $index < 2; $index++) {
 			// Add new sheet
 			$objPHPExcel->createSheet();
@@ -2853,27 +3416,19 @@ class Import_admin extends Base_Admin_Controller
 			$objPHPExcel->getActiveSheet()->getStyle('1')->applyFromArray($style);
 			$objPHPExcel->getActiveSheet()->getRowDimension('1')->setRowHeight(70);
 			$excelNegativeReport = $columns = [];
-			
-			$this->load->model('utilities/utilities_model');
-			$this->utilities_model->utilities_year = date('Y');
-			$this->utilities_model->site_id = 0;
-			if($index == 0) {
-				$currentYearUTilities = $this->utilities_model->getSiteUtility();
-			} else {
-				$currentYearUTilities = $this->utilities_model->getSiteUtilityDaily();
-			}
-	    $this->utilities_model->site_id = $site_id;
+			$currentYearUTilities = $this->import_model->getNegativeUtilityRows($index == 1);
 	    $i = 0;
 	    foreach ($currentYearUTilities as $key => $value) {
 		foreach ($value as $elementField => $elementValue) {
-		    if(!empty($elementValue) && isset($elementValue) && is_numeric($elementValue) && $elementValue < 0) {
-			$this->load->model('sites/sites_model');
-			$siteDetail = $this->sites_model->get_site_detail($value['site_id'],1,1);                        
-			$excelNegativeReport[$i]['Site Name'] = $siteDetail['site_location_name'];
+		    if (in_array($elementField, $skipNegativeFields, true)) {
+			continue;
+		    }
+		    if ($this->is_negative_import_value($elementValue)) {
+			$excelNegativeReport[$i]['Site Name'] = isset($value['site_location_name']) ? $value['site_location_name'] : '';
 			$columns['Site Name'] = 'Site Name';
 			$excelNegativeReport[$i]['Year'] = $value['year_id'];
 			$columns['Year'] = 'Year';
-			$excelNegativeReport[$i]['Month'] = $months[$value['month_id']];
+			$excelNegativeReport[$i]['Month'] = isset($months[$value['month_id']]) ? $months[$value['month_id']] : $value['month_id'];
 			$columns['Month'] = 'Month';
 			if($index != 0) {
 			    $excelNegativeReport[$i]['Day'] = $value['date_id'];
@@ -2919,6 +3474,23 @@ class Import_admin extends Base_Admin_Controller
 		$row++;
 	    }
 	}
+	$reconcileRows = $this->import_model->getDailyMonthlyDivergences();
+	foreach ($reconcileRows as $rKey => $rRow) {
+	    if (isset($months[$rRow['Month']])) {
+		$reconcileRows[$rKey]['Month'] = $months[$rRow['Month']];
+	    }
+	}
+	$reconcileColumns = array(
+	    'Site Name' => 'Site Name',
+	    'Year' => 'Year',
+	    'Month' => 'Month',
+	    'Utility Name' => 'Utility Name',
+	    'Value Daily' => 'Value Daily',
+	    'Value Monthly' => 'Value Monthly',
+	    'Difference' => 'Difference',
+	    'Flag' => 'Flag',
+	);
+	$this->write_simple_excel_sheet($objPHPExcel, 2, 'Daily vs Monthly', $reconcileColumns, $reconcileRows);
 	$data_action = 'Export';
 	$site_id = $_SESSION['admin']['site_id'];
 	$user_id = $_SESSION['admin']['user_id'];
@@ -2945,65 +3517,22 @@ class Import_admin extends Base_Admin_Controller
 
 	$site_id = $this->session->userdata[$this->section_name]['site_id'];
 	$months = array (1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec');
-	$excelCompareReport = $columns = [];
-	$this->load->model('utilities/utilities_model');
-	$this->utilities_model->utilities_year = date('Y');
-	$this->utilities_model->site_id = $site_id;
-	$currentYearMonthlyUTilities = $this->utilities_model->getSiteUtility();
-	$utilityMonthly = [
-	    'electricity' => 'total_electricity_kwh',
-	    'fuel_oil' => 'total_fuel_oil',
-	    'lpg' => 'total_lpg',
-	    'natural_gas' => 'total_natural_gas',
-	    'district_heating' => 'district_heating',
-	    'district_cooling' => 'district_cooling',
-	    'water' => 'water_total_consumption',
-	];
-	$utilityDaily = [
-	    'electricity' => 'total_electricity_kwh',
-	    'fuel_oil' => 'total_diesel_fuel',
-	    'lpg' => 'total_lpg_consumption',
-	    'natural_gas' => 'total_natural_gas_consumption',
-	    'district_heating' => 'total_district_heating_consumption',
-	    'district_cooling' => 'total_district_cooling_consumption',
-	    'water' => 'total_water_consumption',
-	];
-	$checkDisplay = [
-	    'electricity' => 'show_utility_electricity',
-	    'fuel_oil' => 'show_utility_fuel_oil',
-	    'lpg' => 'show_utility_lpg',
-	    'natural_gas' => 'show_utility_natural_gas',
-	    'district_heating' => 'show_utility_district_heating',
-	    'district_cooling' => 'show_utility_district_cooling',
-	    'water' => 'show_utility_water'
-	];
+	$excelCompareReport = $this->import_model->getDailyMonthlyDivergences(1, $site_id);
+	foreach ($excelCompareReport as $key => $row) {
+	    if (isset($months[$row['Month']])) {
+		$excelCompareReport[$key]['Month'] = $months[$row['Month']];
+	    }
+	}
 	$columns = [
 	    'Site Name' => 'Site Name',
 	    'Year' => 'Year',
 	    'Month' => 'Month',
 	    'Utility Name' => 'Utility Name',
 	    'Value Daily' => 'Value Daily',
-	    'Value Monthly' => 'Value Monthly'
+	    'Value Monthly' => 'Value Monthly',
+	    'Difference' => 'Difference',
+	    'Flag' => 'Flag',
 	];
-	foreach ($currentYearMonthlyUTilities as $key => $value) {
-	    $this->load->model('sites/sites_model');
-		$this->sites_model->id = $value['site_id'];
-	    $siteDetail = $this->sites_model->get_site_detail($value['site_id'],1,1);
-	    foreach ($utilityDaily as $keyUtility => $utility_name) {
-		if ($siteDetail[$checkDisplay[$keyUtility]] == 1) {
-		    $dailyData = $this->utilities_model->getSiteDailyByMonthlyUtility($value['site_id'],$value['year_id'],$value['month_id'],$utility_name, $keyUtility);
-		    if ($value[$utilityMonthly[$keyUtility]] !== $dailyData[$keyUtility]) {
-			$excelCompareReport[$i]['Site Name'] = $siteDetail['site_location_name'];
-			$excelCompareReport[$i]['Year'] = $value['year_id'];
-			$excelCompareReport[$i]['Month'] = $months[$value['month_id']];
-			$excelCompareReport[$i]['Utility Name'] = ucwords(str_replace('_', ' ', $keyUtility));
-			$excelCompareReport[$i]['Value Daily'] = $dailyData[$keyUtility];
-			$excelCompareReport[$i]['Value Monthly'] = $value[$utilityMonthly[$keyUtility]];
-			$i++;
-		    }
-		}
-	    }
-	}
 	// Add new sheet
 	$objPHPExcel->createSheet();
 	$objPHPExcel->setActiveSheetIndex(0);
@@ -3040,9 +3569,6 @@ class Import_admin extends Base_Admin_Controller
 	foreach ($excelCompareReport as $data) {
 	    foreach ($data as $key => $val) {
 		if (array_key_exists($key, $cells)) {
-		    if($val == 0) {
-			$val = '';
-		    }
 		    $objPHPExcel->setActiveSheetIndex(0)->setCellValue($cells[$key] . $row, $val);
 		}
 	    }
@@ -3057,12 +3583,9 @@ class Import_admin extends Base_Admin_Controller
 	header('Content-Type: application//vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 	header('Content-Disposition: attachment;filename="Compare Utilities Report.xlsx"');
 	header('Cache-Control: max-age=0');
-	// If you're serving to IE 9, then the following may be needed
 	header('Cache-Control: max-age=1');
-
-	// If you're serving to IE over SSL, then the following may be needed
-	header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
-	header('Pragma: public'); // HTTP/1.0
+	header('Cache-Control: cache, must-revalidate');
+	header('Pragma: public');
 
 	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 	$objWriter->save('php://output');

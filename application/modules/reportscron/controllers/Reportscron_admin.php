@@ -793,6 +793,11 @@ class Reportscron_admin extends Base_Admin_Controller
 
 		$filters_comparision_chart['end_year'] = (isset($enddateexplode[1])) ? $enddateexplode[1] : '';
 
+		if ($monthly && !empty($filters_comparision_chart['start_month']) && !empty($filters_comparision_chart['start_year'])) {
+			$filters['previous_month'] = (int) $filters_comparision_chart['start_month'];
+			$filters['previous_year'] = $filters_comparision_chart['start_year'];
+		}
+
 		if ($isLocal) {
 
 			$utility_cost_chart_results = $this->reportscron_model->utilityCostBarChart($filters_comparision_chart);
@@ -818,6 +823,7 @@ class Reportscron_admin extends Base_Admin_Controller
 			$totalHeatingDistrict = 0;
 
 			$totalCoolingDistrict = 0;
+			$totalFleetPetrol = 0;
 
 			$totalFuelConsumption = 0;
 
@@ -830,6 +836,7 @@ class Reportscron_admin extends Base_Admin_Controller
 			$totalHeatingDistrictConsumption = 0;
 
 			$totalCoolingDistrictConsumption = 0;
+			$totalFleetPetrolConsumption = 0;
 
 
 
@@ -868,6 +875,9 @@ class Reportscron_admin extends Base_Admin_Controller
 					$value['water'] = !empty($value['water']) ? $value['water'] : 0;
 
 					$value['water_consumption'] = !empty($value['water_consumption']) ? $value['water_consumption'] : 0;
+					$value['fleet_petrol'] = !empty($value['fleet_petrol']) ? $value['fleet_petrol'] : 0;
+
+					$value['fleet_petrol_consumption'] = !empty($value['fleet_petrol_consumption']) ? $value['fleet_petrol_consumption'] : 0;
 
 					$value['onsite_generator'] = !empty($value['onsite_generator']) ? $value['onsite_generator'] : 0;
 					$value['onsite_generator_fuel_oil'] = !empty($value['onsite_generator_fuel_oil']) ? $value['onsite_generator_fuel_oil'] : 0;
@@ -928,7 +938,9 @@ class Reportscron_admin extends Base_Admin_Controller
 
 					$totalCoolingDistrictConsumption += $value['cooling_district'];
 
+					$totalFleetPetrol += $value['fleet_petrol'];
 
+					$totalFleetPetrolConsumption += $value['fleet_petrol_consumption'];
 
 					switch ($cview) {
 
@@ -1155,7 +1167,8 @@ class Reportscron_admin extends Base_Admin_Controller
 					$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_room_night_budget'] = $value['total_room_night_budget'];
 					$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['guest_night'] = $value['total_guests'];
 					$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_guests_budget'] = $value['total_guests_budget'];
-
+					$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['fleet_petrol'] = $value['fleet_petrol'];
+					$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_fleet_petrol_cost'] = $value['total_fleet_petrol_cost'];
 					$days_of_month = cal_days_in_month(CAL_GREGORIAN, $value['month_id'], $value['year_id']);
 
 					$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['occupancy'] = (($value['total_room_night'] / ($value['rooms_keys'] * $days_of_month)) * 100);
@@ -1177,6 +1190,8 @@ class Reportscron_admin extends Base_Admin_Controller
 			$data['totalHeatingDistrict'] = $totalHeatingDistrict;
 
 			$data['totalCoolingDistrict'] = $totalCoolingDistrict;
+			$data['totalFleetPetrol'] = $totalFleetPetrol;
+			$data['totalFleetPetrolConsumption'] = $totalFleetPetrolConsumption;
 		} else {
 
 			$data['utility_cost_chart'] = array();
@@ -1303,10 +1318,12 @@ class Reportscron_admin extends Base_Admin_Controller
 			$totalHeatingDistrict_utility_cost_pre = 0;
 
 			$totalCoolingDistrict_utility_cost_pre = 0;
-
+			$totalFleetPetrol_utility_cost_pre = 0;
 
 
 			foreach ($utility_cost_chart_results_pre as $key => $value) {
+
+				$value['fleet_petrol'] = !empty($value['fleet_petrol']) ? $value['fleet_petrol'] : 0;
 
 				$value['cooling_district'] = !empty($value['cooling_district']) ? $value['cooling_district'] : 0;
 
@@ -1333,7 +1350,10 @@ class Reportscron_admin extends Base_Admin_Controller
 				$totalWater_utility_cost_pre += (!empty($value['water'])) ? $value['water'] : 0;
 
 				$totalHeatingDistrict_utility_cost_pre += (!empty($value['heating_district'])) ? $value['heating_district'] : 0;
+
 				$totalCoolingDistrict_utility_cost_pre += (!empty($value['cooling_district'])) ? $value['cooling_district'] : 0;
+
+				$totalFleetPetrol_utility_cost_pre += (!empty($value['fleet_petrol'])) ? $value['fleet_petrol'] : 0;
 
 				$totalCoolingDistrict_utility_cost_pre += (!empty($value['cooling_district'])) ? $value['cooling_district'] : 0;
 
@@ -1379,6 +1399,10 @@ class Reportscron_admin extends Base_Admin_Controller
 				$data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['total_room_night_budget'] = $value['total_room_night_budget'];
 				$data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['guest_night'] = $value['total_guests'];
 				$data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['total_guests_budget'] = $value['total_guests_budget'];
+				$data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['fleet_petrol'] = $value['fleet_petrol'];
+				$data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['total_fleet_petrol_cost'] = $value['total_fleet_petrol_cost'];
+				$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['fleet_petrol'] = $value['fleet_petrol'];
+				$data['utility_cost_chart'][$value['month_id']][$value['year_id']]['total_fleet_petrol_cost'] = $value['total_fleet_petrol_cost'];
 				
 				$data['utility_cost_chart_pre'][$value['month_id']][$value['year_id']]['total_electricity_kwh'] = (!empty($value['total_electricity_kwh'])) ? $value['total_electricity_kwh'] : 0;
 
@@ -1420,6 +1444,7 @@ class Reportscron_admin extends Base_Admin_Controller
 			$data['totalHeatingDistrict_utility_cost_pre'] = $totalHeatingDistrict_utility_cost_pre;
 
 			$data['totalCoolingDistrict_utility_cost_pre'] = $totalCoolingDistrict_utility_cost_pre;
+			$data['totalFleetPetrol_utility_cost_pre'] = $totalFleetPetrol_utility_cost_pre;
 		} else {
 
 			$data['utility_cost_chart_pre'] = array();
@@ -1871,6 +1896,87 @@ class Reportscron_admin extends Base_Admin_Controller
 			$data['cost_pie_chart_previousmonth'] = array();
 		}
 
+		// $data['kwh_pie_chart']/$data['cost_pie_chart'] above (kwhUnitBasedReportForCurrentYear()/
+		// costBasedReportForCurrentYear()) are a YTD cumulative total (month_id <= max_month_id), not
+		// a single month, so they don't match this page's single-month "Energy and cost split" labels.
+		// $data['kwh_pie_chart_previousmonth']/$data['cost_pie_chart_previousmonth'] just computed above
+		// are actually correct, single-month figures - for the monthly cron run, $filters['previous_month']/
+		// ['previous_year'] are overwritten (above, near filters_comparision_chart) to this report's own
+		// target month, not "last month" - so they're really this report's current-period data. Use them
+		// as "current" instead, and recompute previousmonth for real against the same month last year.
+		$data['kwh_pie_chart'] = $data['kwh_pie_chart_previousmonth'];
+		$data['cost_pie_chart'] = $data['cost_pie_chart_previousmonth'];
+
+		$filters_pie_lastyear = $filters;
+		$filters_pie_lastyear['previous_year'] = $filters['previous_year'] - 1;
+
+		$kwh_report_results = $this->reportscron_model->kwhUnitBasedReportForPreviousMonth($filters_pie_lastyear);
+
+		if (!empty($kwh_report_results)) {
+
+			$data['kwh_pie_chart_previousmonth']['electricity'] = (!empty($kwh_report_results['electricity'])) ? ($kwh_report_results['electricity'] * $dataFactor['electricity']) : 0;
+
+			$data['kwh_pie_chart_previousmonth']['fuel'] = (!empty($kwh_report_results['fuel'])) ? ($kwh_report_results['fuel'] * $dataFactor['fuel_oil']) : 0;
+
+			$data['kwh_pie_chart_previousmonth']['lpg'] = (!empty($kwh_report_results['lpg'])) ? ($kwh_report_results['lpg'] * $dataFactor['lpg']) : 0;
+
+			$data['kwh_pie_chart_previousmonth']['natural_gas'] = (!empty($kwh_report_results['natural_gas'])) ? ($kwh_report_results['natural_gas'] * $dataFactor['natural_gas']) : 0;
+
+			$data['kwh_pie_chart_previousmonth']['heating_district'] = (!empty($kwh_report_results['heating_district'])) ? ($kwh_report_results['heating_district'] * $dataFactor['district_heating']) : 0;
+
+			$data['kwh_pie_chart_previousmonth']['cooling_district'] = (!empty($kwh_report_results['cooling_district'])) ? ($kwh_report_results['cooling_district'] * $dataFactor['district_cooling']) : 0;
+		} else {
+
+			$data['kwh_pie_chart_previousmonth'] = array();
+		}
+
+		if ($isLocal) {
+
+			$kwh_report_results = $this->reportscron_model->costBasedReportForPreviousMonth($filters_pie_lastyear);
+		} else {
+
+			$kwh_report_results = $this->reportscron_forex_model->costBasedReportForPreviousMonth($filters_pie_lastyear);
+		}
+
+		if (!empty($kwh_report_results)) {
+
+			$kwh_report_results = array_map('floatval', $kwh_report_results);
+
+			$kwh_report_results['cooling_district'] = $kwh_report_results['cooling_district'] + $kwh_report_results['district_cooling_fixed_cost'];
+
+			$kwh_report_results['heating_district'] = $kwh_report_results['heating_district'] + $kwh_report_results['district_heating_fixed_cost'];
+
+			if ($site_details['show_utility_electricity']) {
+				$data['cost_pie_chart_previousmonth']['electricity'] = (!empty($kwh_report_results['electricity'])) ? $kwh_report_results['electricity'] : 0;
+			}
+
+			if ($site_details['show_utility_fuel_oil']) {
+				$data['cost_pie_chart_previousmonth']['fuel'] = (!empty($kwh_report_results['fuel'])) ? $kwh_report_results['fuel'] : 0;
+			}
+
+			if ($site_details['show_utility_lpg']) {
+				$data['cost_pie_chart_previousmonth']['lpg'] = (!empty($kwh_report_results['lpg'])) ? $kwh_report_results['lpg'] : 0;
+			}
+
+			if ($site_details['show_utility_natural_gas']) {
+				$data['cost_pie_chart_previousmonth']['natural_gas'] = (!empty($kwh_report_results['natural_gas'])) ? $kwh_report_results['natural_gas'] : 0;
+			}
+
+			if ($site_details['show_utility_district_heating']) {
+				$data['cost_pie_chart_previousmonth']['heating_district'] = (!empty($kwh_report_results['heating_district'])) ? $kwh_report_results['heating_district'] : 0;
+			}
+
+			if ($site_details['show_utility_district_cooling']) {
+				$data['cost_pie_chart_previousmonth']['cooling_district'] = (!empty($kwh_report_results['cooling_district'])) ? $kwh_report_results['cooling_district'] : 0;
+			}
+
+			if ($site_details['show_utility_water']) {
+				$data['cost_pie_chart_previousmonth']['water'] = (!empty($kwh_report_results['water'])) ? $kwh_report_results['water'] : 0;
+			}
+		} else {
+
+			$data['cost_pie_chart_previousmonth'] = array();
+		}
 
 
 		// Budget vs Actual data of Current Month, YTD and Annual
@@ -1934,6 +2040,8 @@ class Reportscron_admin extends Base_Admin_Controller
 			$value['district_cooling_cost_actual'] = !empty($value['district_cooling_cost_actual']) ? $value['district_cooling_cost_actual'] : 0;
 
 			$value['district_cooling_cost_budget'] = !empty($value['district_cooling_cost_budget']) ? $value['district_cooling_cost_budget'] : 0;
+
+			$value['district_cooling_fixed_cost'] = !empty($value['district_cooling_fixed_cost']) ? $value['district_cooling_fixed_cost'] : 0;
 
 			$value['district_heating_actual'] = !empty($value['district_heating_actual']) ? $value['district_heating_actual'] : 0;
 
@@ -2000,6 +2108,8 @@ class Reportscron_admin extends Base_Admin_Controller
 			$current_budget_actual_data['ytd']["district_cooling_cost_actual"] += $value["district_cooling_cost_actual"];
 
 			$current_budget_actual_data['ytd']["district_cooling_cost_budget"] += $value["district_cooling_cost_budget"];
+
+			$current_budget_actual_data['ytd']["district_cooling_fixed_cost"] += $value["district_cooling_fixed_cost"];
 
 			$current_budget_actual_data['ytd']["district_heating_actual"] += $value["district_heating_actual"];
 
@@ -2122,6 +2232,8 @@ class Reportscron_admin extends Base_Admin_Controller
 
 			$value['district_cooling_cost_budget'] = !empty($value['district_cooling_cost_budget']) ? $value['district_cooling_cost_budget'] : 0;
 
+			$value['district_cooling_fixed_cost'] = !empty($value['district_cooling_fixed_cost']) ? $value['district_cooling_fixed_cost'] : 0;
+
 			$value['district_heating_actual'] = !empty($value['district_heating_actual']) ? $value['district_heating_actual'] : 0;
 
 			$value['district_heating_budget'] = !empty($value['district_heating_budget']) ? $value['district_heating_budget'] : 0;
@@ -2187,6 +2299,8 @@ class Reportscron_admin extends Base_Admin_Controller
 			$current_budget_actual_data['monthly']["district_cooling_cost_actual"] += $value["district_cooling_cost_actual"];
 
 			$current_budget_actual_data['monthly']["district_cooling_cost_budget"] += $value["district_cooling_cost_budget"];
+
+			$current_budget_actual_data['monthly']["district_cooling_fixed_cost"] += $value["district_cooling_fixed_cost"];
 
 			$current_budget_actual_data['monthly']["district_heating_actual"] += $value["district_heating_actual"];
 
@@ -2300,6 +2414,8 @@ class Reportscron_admin extends Base_Admin_Controller
 			$current_budget_actual_data['annual']["district_cooling_cost_actual"] += $value["district_cooling_cost_actual"];
 
 			$current_budget_actual_data['annual']["district_cooling_cost_budget"] += $value["district_cooling_cost_budget"];
+
+			$current_budget_actual_data['annual']["district_cooling_fixed_cost"] += $value["district_cooling_fixed_cost"];
 
 			$current_budget_actual_data['annual']["district_heating_actual"] += $value["district_heating_actual"];
 
@@ -2639,11 +2755,12 @@ class Reportscron_admin extends Base_Admin_Controller
 				$progressOnTarget = array();
 				$dateParams = getProgressWidgetDateParams();
 				$current_month = $dateParams['month'];
+				$annualMonthWindow = 12;
 				$current_year = $dateParams['year'];
 				$running_year = $dateParams['running_year'];
 				$baselineYear = $site_detail['baseline_regression_year'];
 				$progressOnTargetMonthly = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear, 'month');
-				$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear);
+				$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear,'',$annualMonthWindow,$current_year);
 				$wasteDiversionNumeratorData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, 'recycling_wte', $current_year, $current_month);
 				$totalWasteData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, '', $current_year, $current_month);
 
@@ -2657,7 +2774,7 @@ class Reportscron_admin extends Base_Admin_Controller
 					'total_waste_target' => isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0
 				];
 				$dataNew = $currentMonth = $lastMonth = $sameMonthLastYear = [];
-				$dataNew = $this->sites_model->getMySitesWidgetData($site_detail);
+				$dataNew = $this->sites_model->getMySitesWidgetData($site_detail,true);
 				$currentMonth = $dataNew[0] ?? [];
 				$lastMonth = $dataNew[1] ?? [];
 				$sameMonthLastYear = $dataNew[2] ?? [];
@@ -2692,8 +2809,14 @@ class Reportscron_admin extends Base_Admin_Controller
 				// Waste report data
 				$currYear = date('Y') - 1;
 				$currMonth = 12;
-				$data['waste']['total_room_night'] = $data['utility_cost_chart'][$currMonth][$currYear]['room_night'];
-				$data['waste']['total_guests'] = $data['utility_cost_chart'][$currMonth][$currYear]['guest_night'];
+				for ($month = 1; $month <= $currMonth; $month++) {
+					$currentUtility = $data['utility_cost_chart'][$month][$currYear] ?? array();
+					$previousUtility = $data['utility_cost_chart_pre'][$month][$currYear-1] ?? array();
+					$data['waste']['total_room_night'] += (float) ($currentUtility['room_night'] ?? 0);
+					$data['waste']['previous_total_room_night'] += (float) ($previousUtility['room_night'] ?? 0);
+					$data['waste']['total_guests'] += (float) ($currentUtility['guest_night'] ?? 0);
+					$data['waste']['previous_total_guests'] += (float) ($previousUtility['guest_night'] ?? 0);
+				}
 				$data['waste']['WasteReport'] = $this->site_waste_model->getWasteReportData($site_id, $data['waste'], $currYear, $currMonth);
 				if(empty($data['waste']['WasteReport'])) {
 					$content_reports_waste_report_annual = '';
@@ -2756,7 +2879,7 @@ class Reportscron_admin extends Base_Admin_Controller
 				$cooling_district_value = 0;
 
 				foreach ($getUtilityData as $getUtilities) {
-					$this->sites->model->year = date('Y') - 1;
+					$this->sites_model->year = date('Y') - 1;
 					$site_detials = $this->sites_model->get_site_detail_custom($site_id);
 					$carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
 
@@ -2784,7 +2907,7 @@ class Reportscron_admin extends Base_Admin_Controller
 
 
 				foreach ($getUtilityData_prev as $getUtilities) {
-					$this->sites->model->year = date('Y') - 2;
+					$this->sites_model->year = date('Y') - 2;
 					$site_detials = $this->sites_model->get_site_detail_custom($site_id);
 					$carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
 
@@ -2815,20 +2938,91 @@ class Reportscron_admin extends Base_Admin_Controller
 
 
 
-				$data['measures']['HotelCarbonFootprintPerRoom'] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
+				$data['measures']['HotelCarbonFootprintPerRoom'][date("Y")] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
 
-				$data['measures']['HotelCarbonFootprintPerOccupiedRoom'] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
+				$data['measures']['HotelCarbonFootprintPerOccupiedRoom'][date("Y")] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
 
-				$data['measures']['HotelCarbonFootprintPerSquareMeter'] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
+				$data['measures']['HotelCarbonFootprintPerSquareMeter'][date("Y")] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
 
-				$data['measures']['HotelEnergyUsagePerOccupiedRoom'] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
+				$data['measures']['HotelEnergyUsagePerOccupiedRoom'][date("Y")] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
 
-				$data['measures']['HotelEnergyUsagePerSquareMeter'] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
+				$data['measures']['HotelEnergyUsagePerSquareMeter'][date("Y")] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
 
-				$data['measures']['HotelWaterUsagePerOccupiedRoom'] = round($water_total_consumption_measure / $total_room_night_measure, 2);
+				$data['measures']['HotelWaterUsagePerOccupiedRoom'][date("Y")] = round($water_total_consumption_measure / $total_room_night_measure, 2);
 
-				$data['measures']['HotelWaterUsagePerSquareMeter'] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
+				$data['measures']['HotelWaterUsagePerSquareMeter'][date("Y")] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
 
+					$chsb_measures = calculateCHSBMeasures(date('Y')-1, 12, $site_id, $site_detials, $result, $this->utilities_model);
+
+					// SAVE CHSB VALUES
+
+					$data['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_1'];
+
+					$data['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_2'];
+
+					$data['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_3'];
+
+					$data['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_4'];
+
+					$data['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_5'];
+
+					$data['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_6'];
+
+					$data['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+						'chsb_measure_no' => 7,
+						'chsb_value' => $chsb_measures['chsb_measure_7']
+					);
+
+					$data['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_8'];
+
+					$data['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_9'];
+
+					$data['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+						'chsb_measure_no' => 10,
+						'chsb_value' => $chsb_measures['chsb_measure_10']
+					);
+
+					$data['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+						'chsb_measure_no' => 11,
+						'chsb_value' => $chsb_measures['chsb_measure_11']
+					);
+
+					$data['measures']['RenewableEnergyPercentage'] = array(
+						'chsb_measure_no' => 12,
+						'chsb_value' => $chsb_measures['chsb_measure_12']
+					);
+
+					$data['measures']['RenewableElectricityPercentage'] = array(
+						'chsb_measure_no' => 13,
+						'chsb_value' => $chsb_measures['chsb_measure_13']
+					);
+
+					$data['measures']['ElectricityToNonElectricEnergy'] = array(
+						'chsb_measure_no' => 14,
+						'chsb_value' => $chsb_measures['chsb_measure_14']
+					);
+					$data['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_4a'];
+
+					$data['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_6a'];
+
+					$data['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_9a'];
+
+					if ($result['chsb_reporting'] == 1) {
+
+						$chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
+
+					}
 
 
 
@@ -2903,6 +3097,16 @@ class Reportscron_admin extends Base_Admin_Controller
 					$pdf->writeHTML($content_reports_carbon_footprint, true, false, true, false, '');
 				}
 
+				if ($result['chsb_reporting'] == 1 && !empty($data['measures']) && !empty($data['measure_readings'])) {
+					require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_chsb_reporting_reports.php';
+					$pdf->mytd_report_subtitle = !empty($data['pdf_report_title']) ? $data['pdf_report_title'] : '';
+					$pdf->mytd_page_header = true;
+					$pdf->AddPage();
+					render_chsb_reporting_pdf($pdf, $data);
+					$pdf->mytd_page_header = false;
+					$pdf->SetFont('helvetica', '', 9);
+				}
+
 				if ($content_reports_waste_report_annual != '') {
 					$pdf->AddPage();
 					$pdf->writeHTML($content_reports_waste_report_annual, true, false, true, false, '');
@@ -2938,7 +3142,7 @@ class Reportscron_admin extends Base_Admin_Controller
 			$waste_monthly_piechart_reports = '';
 
 
-
+			$site_details =  $this->sites_model->get_site_detail_custom($site_id);
 			$data['monthly']['currentBudgetActualData'] = $allcurrentBudgetActualData;
 
 			$data['monthly']['pdf_report_title'] = 'Monthly Utilities report - ' . ($fullmontharray[$data['monthly']['filters']["filters_comparision_chart"]['start_month']]) . ' ' . ($data['monthly']['filters']["filters_comparision_chart"]['start_year']);
@@ -3020,13 +3224,17 @@ class Reportscron_admin extends Base_Admin_Controller
 			$this->load->model('sites/site_waste_model');
 			$this->reports_model->site_id = $site_id;
 			$progressOnTarget = array();
-			$dateParams = getProgressWidgetDateParams();
+			// Must pass this report's own month/year - without them, getProgressWidgetDateParams()
+			// defaults to today's real date internally, so $current_month/$current_year (and the
+			// progress_baseline_roomnight_YTD figures built from them below) would always be
+			// Jan-to-latest-available-month regardless of which month this report is actually for.
+			$dateParams = getProgressWidgetDateParams($data['monthly']['filters']['filters_comparision_chart']['start_month'], $data['monthly']['filters']['filters_comparision_chart']['start_year']);
 			$current_month = $dateParams['month'];
 			$current_year = $dateParams['year'];
 			$running_year = $dateParams['running_year'];
 			$baselineYear = $site_detail['baseline_regression_year'];
 			$progressOnTargetMonthly = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear, 'month');
-			$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear);
+			$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear, '', $current_month, $current_year);
 			$wasteDiversionNumeratorData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, 'recycling_wte', $current_year, $current_month);
 			$totalWasteData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, '', $current_year, $current_month);
 
@@ -3040,7 +3248,9 @@ class Reportscron_admin extends Base_Admin_Controller
 				'total_waste_target' => isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0
 			];
 			$dataNew = $currentMonth = $lastMonth = $sameMonthLastYear = [];
-			$dataNew = $this->sites_model->getMySitesWidgetData($site_detail);
+			// Pass this report's own month/year - otherwise the carbon YTD figures below always come
+			// out as "Jan to today's-month-minus-1" regardless of which month this report is for.
+			$dataNew = $this->sites_model->getMySitesWidgetData($site_detail, null, $current_month, $current_year);
 			$currentMonth = $dataNew[0] ?? [];
 			$lastMonth = $dataNew[1] ?? [];
 			$sameMonthLastYear = $dataNew[2] ?? [];
@@ -3082,8 +3292,16 @@ class Reportscron_admin extends Base_Admin_Controller
 			// Waste report data
 			$currYear = $data['monthly']['filters']['current_year'];
 			$currMonth = $data['monthly']['filters']['previous_month'];
-			$data['monthly']['waste']['total_room_night'] = $data['monthly']['utility_cost_chart'][$currMonth][$currYear]['room_night'];
-			$data['monthly']['waste']['total_guests'] = $data['monthly']['utility_cost_chart'][$currMonth][$currYear]['guest_night'];
+			// $data['monthly']['utility_cost_chart'] isn't populated yet at this point - the top-level
+			// $data['utility_cost_chart'] (built earlier for the single-month comparison chart, which
+			// always includes both this year and the prior year for the same month) is the correct,
+			// already-available source. Also setting previous_total_room_night/previous_total_guests,
+			// which were missing entirely - without them, getWasteReportData() silently falls back to
+			// using the current month's own room/guest nights for "previous" too.
+			$data['monthly']['waste']['total_room_night'] = isset($data['utility_cost_chart'][$currMonth][$currYear]['room_night']) ? $data['utility_cost_chart'][$currMonth][$currYear]['room_night'] : 0;
+			$data['monthly']['waste']['total_guests'] = isset($data['utility_cost_chart'][$currMonth][$currYear]['guest_night']) ? $data['utility_cost_chart'][$currMonth][$currYear]['guest_night'] : 0;
+			$data['monthly']['waste']['previous_total_room_night'] = isset($data['utility_cost_chart'][$currMonth][$currYear - 1]['room_night']) ? $data['utility_cost_chart'][$currMonth][$currYear - 1]['room_night'] : 0;
+			$data['monthly']['waste']['previous_total_guests'] = isset($data['utility_cost_chart'][$currMonth][$currYear - 1]['guest_night']) ? $data['utility_cost_chart'][$currMonth][$currYear - 1]['guest_night'] : 0;
 			$data['monthly']['waste']['WasteReport'] = $this->site_waste_model->getWasteReportData($site_id, $data['monthly']['waste'], $currYear, $currMonth);
 			if(empty($data['monthly']['waste']['WasteReport'])) {
 				$content_reports_waste_report = '';
@@ -3091,6 +3309,320 @@ class Reportscron_admin extends Base_Admin_Controller
 				$content_reports_waste_report = $this->load->view('admin_landing_pdf_reports_waste', $data['monthly']['waste'], true);
 			}
 
+			// Data for the native monthly PDF templates (progress cards, utilities table, piecharts, carbon chart, waste trends).
+			$data['monthly']['site_id'] = $site_id;
+			$data['monthly']['currency'] = isset($data['currency']) ? $data['currency'] : CURRENT_CURRENCY;
+
+			// Full-year utility data (current & previous year) for the carbon chart and waste trends.
+			$this->reportscron_model->site_id = $site_id;
+			$this->reportscron_forex_model->site_id = $site_id;
+			$ytd_filter = array(
+				'start_month' => 1,
+				'start_year'  => $currYear,
+				'end_month'   => 12,
+				'end_year'    => $currYear,
+			);
+			$ytd_pre_filter = array(
+				'start_month' => 1,
+				'start_year'  => $currYear - 1,
+				'end_month'   => 12,
+				'end_year'    => $currYear - 1,
+			);
+			if (isset($data['currency']) && $data['currency'] == "base") {
+				$ytd_cur = $this->reportscron_forex_model->utilityCostBarChart($ytd_filter);
+				$ytd_pre = $this->reportscron_forex_model->utilityCostBarChart($ytd_pre_filter);
+			} else {
+				$ytd_cur = $this->reportscron_model->utilityCostBarChart($ytd_filter);
+				$ytd_pre = $this->reportscron_model->utilityCostBarChart($ytd_pre_filter);
+			}
+			$ytd_utility = array();
+			$waste_trends_utility_cost_chart = array();
+			if (!empty($ytd_cur)) {
+				foreach ($ytd_cur as $v) {
+					$ytd_utility[$v['year_id']][$v['month_id']] = $v;
+					$waste_trends_utility_cost_chart[$v['month_id']][$v['year_id']] = $v;
+					$waste_trends_utility_cost_chart[$v['month_id']][$v['year_id']]['room_night'] = (float) $v['total_room_night'];
+					$waste_trends_utility_cost_chart[$v['month_id']][$v['year_id']]['guest_night'] = (float) $v['total_guests'];
+				}
+			}
+			if (!empty($ytd_pre)) {
+				foreach ($ytd_pre as $v) {
+					$ytd_utility[$v['year_id']][$v['month_id']] = $v;
+					$waste_trends_utility_cost_chart[$v['month_id']][$v['year_id']] = $v;
+					$waste_trends_utility_cost_chart[$v['month_id']][$v['year_id']]['room_night'] = (float) $v['total_room_night'];
+					$waste_trends_utility_cost_chart[$v['month_id']][$v['year_id']]['guest_night'] = (float) $v['total_guests'];
+				}
+			}
+
+			// Same full-year [month][year] shape Reports_admin.php builds into $data['utility_cost_chart']
+			// (room_night/guest_night, plus the raw electricity/fuel/lpg/water/etc. fields utilityCostBarChart()
+			// already returns) - the waste trends view (per-month "Food waste per room night") and the
+			// piecharts "previous year" rebuild (admin_landing_pdf_reports_monthly_hidden_piecharts_new.php)
+			// both read this same key/shape for every month, not just the single reporting month.
+			// Merge rather than overwrite: $data['monthly']['utility_cost_chart'] already arrives here
+			// (from the caller) holding the single reporting month's field set used by the Monthly
+			// utilities report table - fill in/extend with the full-year data instead of replacing it.
+			foreach ($waste_trends_utility_cost_chart as $wtm => $years) {
+				foreach ($years as $wty => $monthData) {
+					$data['monthly']['utility_cost_chart'][$wtm][$wty] = isset($data['monthly']['utility_cost_chart'][$wtm][$wty])
+						? array_merge($monthData, $data['monthly']['utility_cost_chart'][$wtm][$wty])
+						: $monthData;
+				}
+			}
+
+			$data['monthly']['WasteReportYTD'] = array();
+			$data['monthly']['WasteTrendsMonthly'] = array();
+			$data['monthly']['WasteTrendsRoomGuestNights'] = array();
+			if (!empty($data['monthly']['waste']['WasteReport'])) {
+				// YTD room/guest nights (Jan..currMonth sum, both years) for the Waste trends KPI/table ratios.
+				$ytdRoomNight = 0;
+				$ytdPrevRoomNight = 0;
+				$ytdGuests = 0;
+				$ytdPrevGuests = 0;
+				for ($ytdMonth = 1; $ytdMonth <= $currMonth; $ytdMonth++) {
+					$ytdRoomNight += isset($ytd_utility[$currYear][$ytdMonth]['total_room_night']) ? (float) $ytd_utility[$currYear][$ytdMonth]['total_room_night'] : 0;
+					$ytdPrevRoomNight += isset($ytd_utility[$currYear - 1][$ytdMonth]['total_room_night']) ? (float) $ytd_utility[$currYear - 1][$ytdMonth]['total_room_night'] : 0;
+					$ytdGuests += isset($ytd_utility[$currYear][$ytdMonth]['total_guests']) ? (float) $ytd_utility[$currYear][$ytdMonth]['total_guests'] : 0;
+					$ytdPrevGuests += isset($ytd_utility[$currYear - 1][$ytdMonth]['total_guests']) ? (float) $ytd_utility[$currYear - 1][$ytdMonth]['total_guests'] : 0;
+				}
+				$wasteDataYtd = array(
+					'total_room_night' => $ytdRoomNight,
+					'previous_total_room_night' => $ytdPrevRoomNight,
+					'total_guests' => $ytdGuests,
+					'previous_total_guests' => $ytdPrevGuests,
+				);
+				$data['monthly']['WasteReportYTD'] = $this->site_waste_model->getWasteReportData($site_id, $wasteDataYtd, $currYear, $currMonth, true, false);
+
+				// Loop the full year (not just Jan..currMonth) so last year's remaining
+				// months can still be plotted as context on the trend charts.
+				for ($wtm = 1; $wtm <= 12; $wtm++) {
+					$curRoomNight = isset($ytd_utility[$currYear][$wtm]['total_room_night']) ? (float) $ytd_utility[$currYear][$wtm]['total_room_night'] : 0;
+					$prevRoomNight = isset($ytd_utility[$currYear - 1][$wtm]['total_room_night']) ? (float) $ytd_utility[$currYear - 1][$wtm]['total_room_night'] : 0;
+					$curGuests = isset($ytd_utility[$currYear][$wtm]['total_guests']) ? (float) $ytd_utility[$currYear][$wtm]['total_guests'] : 0;
+					$prevGuests = isset($ytd_utility[$currYear - 1][$wtm]['total_guests']) ? (float) $ytd_utility[$currYear - 1][$wtm]['total_guests'] : 0;
+
+					$data['monthly']['WasteTrendsRoomGuestNights'][$currYear][$wtm] = array('room_night' => $curRoomNight, 'guest_night' => $curGuests);
+					$data['monthly']['WasteTrendsRoomGuestNights'][$currYear - 1][$wtm] = array('room_night' => $prevRoomNight, 'guest_night' => $prevGuests);
+
+					$monthWasteData = array(
+						'total_room_night' => $curRoomNight,
+						'previous_total_room_night' => $prevRoomNight,
+						'total_guests' => $curGuests,
+						'previous_total_guests' => $prevGuests,
+					);
+					$data['monthly']['WasteTrendsMonthly'][$wtm] = $this->site_waste_model->getWasteReportData($site_id, $monthWasteData, $currYear, $wtm);
+				}
+				$wasteTrendsResolved = $this->site_waste_model->getWasteTrendsData(
+					$site_id,
+					$currYear,
+					$currMonth,
+					$waste_trends_utility_cost_chart,
+					$data['monthly']['WasteTrendsMonthly'],
+					$data['monthly']['WasteReportYTD'],
+					$site_detail
+				);
+				$data['monthly']['WasteTrendsMonthly'] = $wasteTrendsResolved['WasteTrendsMonthly'];
+				$data['monthly']['WasteReportYTD'] = $wasteTrendsResolved['WasteReportYTD'];
+			}
+
+			$this->utilities_model->utilities_month = date("n") - 1;
+
+            $this->utilities_model->utilities_year = date("Y");
+
+
+
+            if ($this->utilities_model->utilities_month == 0) {
+
+                $this->utilities_model->utilities_month = 12;
+
+                $this->utilities_model->utilities_year = date("Y") - 1;
+
+            }
+
+
+
+            $this->utilities_model->site_id = $site_id;
+
+            $getUtilityData = $this->utilities_model->getSiteUtilityCurYear();
+
+
+
+            $this->utilities_model->utilities_month = date("n");
+
+            $this->utilities_model->utilities_year = date("Y") - 1;
+
+            $getUtilityData_prev = $this->utilities_model->getSiteUtilityLastYear();
+
+
+
+            $carbon_footPrint_measure = 0;
+
+            $total_room_night_measure = 0;
+
+            $utility_kwh_total_measure = 0;
+
+            $water_total_consumption_measure = 0;
+
+
+
+            foreach ($getUtilityData as $getUtilities) {
+
+                // Normalize - some rows have empty-string numeric columns, which throws
+                // "non-numeric value" warnings (and corrupts the PDF output stream) below.
+                $getUtilities = array_map('floatval', $getUtilities);
+
+                $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
+
+
+
+                $total_room_night_measure += $getUtilities['total_room_night'];
+
+                $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+            }
+
+
+
+            foreach ($getUtilityData_prev as $getUtilities) {
+
+
+
+                $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detail['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detail['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detail['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detail['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detail['district_cooling_emission_factor']);
+
+
+
+                $total_room_night_measure += $getUtilities['total_room_night'];
+
+                $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+            }
+
+
+
+            $data['monthly']['measures']['HotelCarbonFootprintPerRoom'][date('Y')] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
+
+            $data['monthly']['measures']['HotelCarbonFootprintPerOccupiedRoom'][date('Y')] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
+
+            $data['monthly']['measures']['HotelCarbonFootprintPerSquareMeter'][date('Y')] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
+
+            $data['monthly']['measures']['HotelEnergyUsagePerOccupiedRoom'][date('Y')] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
+
+            $data['monthly']['measures']['HotelEnergyUsagePerSquareMeter'][date('Y')] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
+
+            $data['monthly']['measures']['HotelWaterUsagePerOccupiedRoom'][date('Y')] = round($water_total_consumption_measure / $total_room_night_measure, 2);
+
+            $data['monthly']['measures']['HotelWaterUsagePerSquareMeter'][date('Y')] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
+			// date('Y')/date('n') meant this always computed a 12-month window ending at today's
+			// real month, not this report's own month - so the CHSB figures silently drifted from
+			// the page's "12 months ending <report month>" label. Use the report's own month/year,
+			// same as Reports_admin.php's equivalent call.
+			$chsb_measures = calculateCHSBMeasures($current_year, $current_month, $site_id, $site_details, $result, $this->utilities_model);
+
+					// SAVE CHSB VALUES
+
+					$data['monthly']['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_1'];
+
+					$data['monthly']['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_2'];
+
+					$data['monthly']['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_3'];
+
+					$data['monthly']['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_4'];
+
+					$data['monthly']['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_5'];
+
+					$data['monthly']['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_6'];
+
+					$data['monthly']['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+						'chsb_measure_no' => 7,
+						'chsb_value' => $chsb_measures['chsb_measure_7']
+					);
+
+					$data['monthly']['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_8'];
+
+					$data['monthly']['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_9'];
+
+					$data['monthly']['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+						'chsb_measure_no' => 10,
+						'chsb_value' => $chsb_measures['chsb_measure_10']
+					);
+
+					$data['monthly']['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+						'chsb_measure_no' => 11,
+						'chsb_value' => $chsb_measures['chsb_measure_11']
+					);
+
+					$data['monthly']['measures']['RenewableEnergyPercentage'] = array(
+						'chsb_measure_no' => 12,
+						'chsb_value' => $chsb_measures['chsb_measure_12']
+					);
+
+					$data['monthly']['measures']['RenewableElectricityPercentage'] = array(
+						'chsb_measure_no' => 13,
+						'chsb_value' => $chsb_measures['chsb_measure_13']
+					);
+
+					$data['monthly']['measures']['ElectricityToNonElectricEnergy'] = array(
+						'chsb_measure_no' => 14,
+						'chsb_value' => $chsb_measures['chsb_measure_14']
+					);
+					$data['monthly']['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_4a'];
+
+					$data['monthly']['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_6a'];
+
+					$data['monthly']['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_9a'];
+
+            if ($result['chsb_reporting'] == 1) {
+
+                $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data['monthly'], true);
+
+            }
 			$content_site_detail = $this->load->view('admin_landing_pdf_site_detail', $data['monthly'], true);
 
 			$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -3128,17 +3660,55 @@ class Reportscron_admin extends Base_Admin_Controller
 				$pdf->writeHTML($content_site_detail, true, false, true, false, '');
 			}
 
+			// Modern PDF header (logo/site name/GENERATED date) must be set before AddPage() below,
+			// since Header() fires immediately when AddPage() is called. Matches Reports_admin.php's
+			// equivalent monthly-report section, which was never replicated here.
+			$pdf->mytd_report_subtitle = !empty($data['monthly']['pdf_report_title']) ? $data['monthly']['pdf_report_title'] : '';
+			$pdf->mytd_page_header = true;
 			$pdf->AddPage();
-			$pdf->writeHTML($content_progress_on_target_report);
-
-			$pdf->writeHTML($content_reports, true, false, true, false, '');
+			// Progress cards + monthly utilities table are drawn natively on $pdf from inside this view.
+			$data['monthly']['pdf'] = $pdf;
+			$this->load->view('admin_landing_pdf_reports_monthly_hidden', $data['monthly'], true);
+			$pdf->mytd_page_header = false;
 
 
 			if ($show_piechart) {
 
-				$pdf->AddPage();
-
-				$pdf->writeHTML($content_reports_piecharts, true, false, true, false, '');
+				// Without these, the view's periodStr falls back to date('n')/date('Y') (today's
+				// real date), so the page header would show the generation month instead of this
+				// report's own month/year. render_piecharts_new_pdf() is called with $data['monthly']
+				// (not the controller's own $filters), and extract()s $data['monthly']['filters'] as
+				// its local $filters - so these keys must be set on $data['monthly']['filters'], not
+				// on the controller's $filters, or the view never sees them.
+				$data['monthly']['filters']['report_month_piechart'] = $current_month;
+				$data['monthly']['filters']['report_year_piechart'] = $current_year;
+				// Modern PDF header, same as above - render_piecharts_new_pdf() adds its own page,
+				// so the flag must be set before calling it.
+				$pdf->mytd_report_subtitle = !empty($data['monthly']['pdf_report_title']) ? $data['monthly']['pdf_report_title'] : '';
+				$pdf->mytd_page_header = true;
+				// utility_cost_chart rows here already have district_cooling_fixed_cost/
+				// district_heating_fixed_cost folded into cooling_district/heating_district (unlike
+				// Reports_admin.php's equivalent array, which never carries these two keys at this
+				// point) - the piecharts view unconditionally adds them on top to build last-year
+				// figures, so leaving them present here double-counts the fixed cost. Strip them from
+				// a copy used only for this call, so the view's own addition is a no-op here too.
+				$piechart_data = $data['monthly'];
+				foreach ($piechart_data['utility_cost_chart'] as &$pcYearRows) {
+					if (!is_array($pcYearRows)) {
+						continue;
+					}
+					foreach ($pcYearRows as &$pcRow) {
+						if (!is_array($pcRow)) {
+							continue;
+						}
+						unset($pcRow['district_cooling_fixed_cost'], $pcRow['district_heating_fixed_cost']);
+					}
+				}
+				unset($pcYearRows, $pcRow);
+				require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_reports_monthly_hidden_piecharts_new_mtd_ui.php';
+				render_piecharts_new_pdf($pdf, $piechart_data);
+				$pdf->mytd_page_header = false;
+				$pdf->SetFont('helvetica', '', 9);
 			}
 
 
@@ -3154,14 +3724,76 @@ class Reportscron_admin extends Base_Admin_Controller
 
 			if ($content_reports_carbon_footprint != '') {
 
+				// Modern PDF header, same as the two sections above - must be set before AddPage().
+				$pdf->mytd_report_subtitle = !empty($data['monthly']['pdf_report_title']) ? $data['monthly']['pdf_report_title'] : '';
+				$pdf->mytd_page_header = true;
 				$pdf->AddPage();
 
-				$pdf->writeHTML($content_reports_carbon_footprint, true, false, true, false, '');
+				// Full-year current & previous year utility data, for the carbon chart's YTD trend.
+				$data_for_carbon = $data['monthly'];
+				$data_for_carbon['site_id'] = $site_id;
+				$data_for_carbon['site_detail'] = isset($data_for_carbon['site_detail']) ? $data_for_carbon['site_detail'] : $site_detail;
+				$data_for_carbon['utility_cost_chart'] = array();
+				$data_for_carbon['utility_cost_chart_pre'] = array();
+				if (!empty($ytd_cur)) {
+					foreach ($ytd_cur as $v) {
+						$daysInMonth = (int) date('t', mktime(0, 0, 0, (int) $v['month_id'], 1, (int) $v['year_id']));
+						$v['guest_night'] = isset($v['total_guests']) ? (float) $v['total_guests'] : 0;
+						$v['occupancy'] = (!empty($v['rooms_keys']) && $daysInMonth > 0) ? ((((float) $v['total_room_night']) / ((float) $v['rooms_keys'] * $daysInMonth)) * 100) : 0;
+						$data_for_carbon['utility_cost_chart'][$v['month_id']][$v['year_id']] = $v;
+					}
+				}
+				if (!empty($ytd_pre)) {
+					foreach ($ytd_pre as $v) {
+						$daysInMonth = (int) date('t', mktime(0, 0, 0, (int) $v['month_id'], 1, (int) $v['year_id']));
+						$v['guest_night'] = isset($v['total_guests']) ? (float) $v['total_guests'] : 0;
+						$v['occupancy'] = (!empty($v['rooms_keys']) && $daysInMonth > 0) ? ((((float) $v['total_room_night']) / ((float) $v['rooms_keys'] * $daysInMonth)) * 100) : 0;
+						$data_for_carbon['utility_cost_chart_pre'][$v['month_id']][$v['year_id']] = $v;
+					}
+				}
+				require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_reports_carbon_footprint_new_mtd_ui.php';
+				if (function_exists('render_carbon_footprint_new_pdf')) {
+					render_carbon_footprint_new_pdf($pdf, $data_for_carbon);
+				}
 			}
 
-			if ($content_reports_waste_report != '') {
+			if ($result['chsb_reporting'] == 1 && !empty($data['monthly']['measures']) && !empty($data['measure_readings'])) {
+				require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_chsb_reporting_reports.php';
+				$chsb_data = $data['monthly'];
+				$chsb_data['measure_readings'] = $data['measure_readings'];
+				if (empty($chsb_data['site_detail']) && !empty($data['site_detail'])) {
+					$chsb_data['site_detail'] = $data['site_detail'];
+				}
+				$pdf->mytd_report_subtitle = !empty($data['monthly']['pdf_report_title']) ? $data['monthly']['pdf_report_title'] : '';
+				$pdf->mytd_page_header = true;
 				$pdf->AddPage();
-				$pdf->writeHTML($content_reports_waste_report, true, false, true, false, '');
+				render_chsb_reporting_pdf($pdf, $chsb_data);
+				$pdf->SetFont('helvetica', '', 9);
+			}
+
+			// if ($content_reports_waste_report != '') {
+			// 	$pdf->AddPage();
+			// 	$pdf->writeHTML($content_reports_waste_report, true, false, true, false, '');
+			// }
+			if (!empty($data['monthly']['waste']['WasteReport']['wasteReport'])) {
+				require_once APPPATH . 'modules/reports/views/admin_landing_pdf_reports_waste.php';
+				$data_for_waste = $data['monthly'];
+				$data_for_waste['WasteReport'] = $data['monthly']['waste']['WasteReport'];
+				$pdf->mytd_report_subtitle = !empty($data['monthly']['pdf_report_title']) ? $data['monthly']['pdf_report_title'] : '';
+				$pdf->mytd_page_header = true;
+				$pdf->AddPage();
+				render_waste_report_pdf($pdf, $data_for_waste);
+				$pdf->mytd_page_header = false;
+				$pdf->SetFont('helvetica', '', 9);
+			}
+
+			if (!empty($data['monthly']['WasteTrendsMonthly'])) {
+				require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_reports_waste_trends_new_mtd_ui.php';
+				$pdf->mytd_report_subtitle = !empty($data['monthly']['pdf_report_title']) ? $data['monthly']['pdf_report_title'] : '';
+				$pdf->mytd_page_header = true;
+				$pdf->AddPage();
+				render_waste_trends_pdf($pdf, $data['monthly']);
+				$pdf->SetFont('helvetica', '', 9);
 			}
 
 			/* REGRESSION CHARTS POPULATE IN PDF */
@@ -3173,6 +3805,7 @@ class Reportscron_admin extends Base_Admin_Controller
 					$total_regression_cur = $data['monthly']['regression']['total_regression_cur'][$currentUtility];
 					$total_variation_cur = (($total_consumption_cur - $total_regression_cur) / $total_consumption_cur) * 100;
 
+					$pdf->mytd_page_header = false;
 					$pdf->AddPage();
 					$html = '<br/><br/><br/><div style="border:2px solid  #f69546;">
 						<table width="100%" cellpadding="4" cellspacing="4">
@@ -3277,9 +3910,13 @@ class Reportscron_admin extends Base_Admin_Controller
 
 				$data['pdf_report_title'] = 'YTD Utilities report - ' . date('Y');
 
-				$data['previous_title'] = 'Previous Year - ' . (date('Y') - 1);
+				// Shortened to "Previous"/"Current" (not "Previous Year"/"Current Year") so the
+				// two-line wrap in admin_landing_pdf_reports_table_new_mtd_ui.php's header fits
+				// its narrow columns without overflowing into the neighbouring column, same as
+				// the Budget column already does.
+				$data['previous_title'] = 'Previous - ' . (date('Y') - 1);
 
-				$data['current_title'] = 'Current Year - ' . date('Y');
+				$data['current_title'] = 'Current - ' . date('Y');
 
 				$data['budget_title'] = 'Budget - ' . date('Y');
 
@@ -3337,7 +3974,96 @@ class Reportscron_admin extends Base_Admin_Controller
 					}
 				}
 
+				// Build the MYTD waste page from cumulative January-to-last-reported-month data.
+				$currYear = (int) $data['filters']['current_year'];
+				$currMonth = (int) $data['filters']['max_month_id'];
+				$previousYear = $currYear - 1;
+				$data['waste'] = array(
+					'total_room_night' => 0,
+					'previous_total_room_night' => 0,
+					'total_guests' => 0,
+					'previous_total_guests' => 0,
+				);
+				for ($month = 1; $month <= $currMonth; $month++) {
+					$currentUtility = $data['utility_cost_chart'][$month][$currYear] ?? array();
+					$previousUtility = $data['utility_cost_chart'][$month][$previousYear] ?? array();
+					$data['waste']['total_room_night'] += (float) ($currentUtility['room_night'] ?? 0);
+					$data['waste']['previous_total_room_night'] += (float) ($previousUtility['room_night'] ?? 0);
+					$data['waste']['total_guests'] += (float) ($currentUtility['guest_night'] ?? 0);
+					$data['waste']['previous_total_guests'] += (float) ($previousUtility['guest_night'] ?? 0);
+				}
+				$data['waste']['WasteReport'] = $this->site_waste_model->getWasteReportData(
+					$site_id,
+					$data['waste'],
+					$currYear,
+					$currMonth,
+					true
+				);
+				$content_reports_waste_report_ytd = '';
+				if (!empty($data['waste']['WasteReport'])) {
+					$content_reports_waste_report_ytd = $this->load->view(
+						'admin_landing_pdf_reports_waste',
+						$data['waste'],
+						true
+					);
+				}
 
+				// --- Modern (MYTD-style) UI for the YTD report: progress cards, modern
+				// table/pie/carbon pages - reusing the exact same data-building calls the
+				// Monthly branch above uses, just fed with this report's own YTD $currYear/$currMonth. ---
+				$is_ytd_report = true;
+				$data['is_ytd_report'] = true;
+
+				$dateParams = getProgressWidgetDateParams($currMonth, $currYear);
+				$current_month = $dateParams['month'];
+				$current_year = $dateParams['year'];
+				$running_year = $dateParams['running_year'];
+
+				$baselineYear = $site_detail['baseline_regression_year'];
+				$this->reports_model->site_id = $site_id;
+
+				$progressOnTargetMonthly = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear, 'month');
+				$progressOnTarget = $this->reports_model->getProgressOnTargetWithBaseline($baselineYear, '', $current_month, $current_year);
+				$wasteDiversionNumeratorData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, 'recycling_wte', $current_year, $current_month);
+				$totalWasteData = $this->site_waste_model->getWasteYTDByDestinationAndCurrMonth($site_detail, '', $current_year, $current_month);
+
+				$progressOnTarget[$baselineYear]['waste_diversion_numerator'] = isset($wasteDiversionNumeratorData['YTDTotal'][$baselineYear]) ? $wasteDiversionNumeratorData['YTDTotal'][$baselineYear] : 0;
+				$progressOnTarget[$baselineYear]['total_waste_target'] = isset($totalWasteData['YTDTotal'][$baselineYear]) ? $totalWasteData['YTDTotal'][$baselineYear] : 0;
+				$progressOnTarget[$running_year]['waste_diversion_numerator'] = isset($wasteDiversionNumeratorData['YTDTotal'][$running_year]) ? $wasteDiversionNumeratorData['YTDTotal'][$running_year] : 0;
+				$progressOnTarget[$running_year]['total_waste_target'] = isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0;
+
+				$progressValueWasteYTD = [
+					'total_waste_baseline_target' => isset($totalWasteData['YTDTotal'][$baselineYear]) ? $totalWasteData['YTDTotal'][$baselineYear] : 0,
+					'total_waste_target' => isset($totalWasteData['YTDTotal'][$running_year]) ? $totalWasteData['YTDTotal'][$running_year] : 0
+				];
+				$dataNew = $this->sites_model->getMySitesWidgetData($site_detail, null, $current_month, $current_year);
+				$currentMonthCarbon = $dataNew[0] ?? [];
+				$sameMonthLastYearCarbon = $dataNew[2] ?? [];
+
+				$carbonData = [
+					'carbon_footprint_currentMonth' => $currentMonthCarbon['carbon_footprint'] ?? 0,
+					'carbon_footprint_SameMonthPreviousYear' => $sameMonthLastYearCarbon['carbon_footprint'] ?? 0,
+					'ytd_carbon_footprint_new' => $dataNew['ytd_carbon_footprint_new'] ?? 0,
+					'ytd_carbon_footprintPreviousYear' => $dataNew['ytd_carbon_footprintPreviousYear'] ?? 0,
+					'ytd_carbon_footprint_baseline_new' => $dataNew['ytd_carbon_footprint_baseline_new'] ?? 0
+				];
+				$progressOnTargetResult = calculateProgressOnTarget(
+					$progressOnTarget,
+					$current_month,
+					$current_year,
+					$site_detail,
+					$carbonData,
+					$progressValueWasteYTD
+				);
+				$data['progressOnTarget'] = isset($progressOnTarget) ? $progressOnTarget : [];
+				$data['progressOnTargetMonthly'] = isset($progressOnTargetMonthly) ? $progressOnTargetMonthly : [];
+				$data['progressOnTargetWasteYtd'] = $progressValueWasteYTD;
+				$data['ProgressTargetPercentage'] = $progressOnTargetResult['ProgressTargetPercentage'];
+				$data['progressTarget'] = $progressOnTargetResult['progressTarget'] ?? [];
+				$data['progress_roomnight_YTD'] = $progressOnTargetResult['progress_roomnight_YTD'];
+				$data['progress_baseline_roomnight_YTD'] = $progressOnTargetResult['progress_baseline_roomnight_YTD'];
+				$data['progress_guestnight_YTD'] = $progressOnTargetResult['progress_guestnight_YTD'];
+				$data['progress_baseline_guestnight_YTD'] = $progressOnTargetResult['progress_baseline_guestnight_YTD'];
 
 				$content_reports = $this->load->view('admin_landing_pdf_reports', $data, true);
 
@@ -3348,7 +4074,207 @@ class Reportscron_admin extends Base_Admin_Controller
 				$content_reports_carbon_footprint = $this->load->view('admin_landing_pdf_reports_carbon_footprint', $data, true);
 
 				$content_site_detail = $this->load->view('admin_landing_pdf_site_detail', $data, true);
+				$this->utilities_model->utilities_month = date("n") - 1;
 
+                $this->utilities_model->utilities_year = date("Y");
+
+
+
+                if ($this->utilities_model->utilities_month == 0) {
+
+                    $this->utilities_model->utilities_month = 12;
+
+                    $this->utilities_model->utilities_year = date("Y") - 1;
+
+                }
+
+                $this->utilities_model->site_id = $site_id;
+
+                $getUtilityData = $this->utilities_model->getSiteUtilityCurYear();
+
+
+
+                $this->utilities_model->utilities_month = date("n");
+
+                $this->utilities_model->utilities_year = date("Y") - 1;
+
+                $getUtilityData_prev = $this->utilities_model->getSiteUtilityLastYear();
+
+
+
+                $carbon_footPrint_measure = 0;
+
+                $total_room_night_measure = 0;
+
+                $utility_kwh_total_measure = 0;
+
+                $water_total_consumption_measure = 0;
+
+
+
+                foreach ($getUtilityData as $getUtilities) {
+
+                    // Normalize - some rows have empty-string numeric columns, which throws
+                    // "non-numeric value" warnings (and corrupts the PDF output stream) below.
+                    $getUtilities = array_map('floatval', $getUtilities);
+
+                    $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detials['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detials['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detials['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detials['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detials['district_cooling_emission_factor']);
+
+
+
+                    $total_room_night_measure += $getUtilities['total_room_night'];
+
+                    $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                    $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                    $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                    $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                    $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                    $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                    $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                    $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+                }
+
+
+
+                foreach ($getUtilityData_prev as $getUtilities) {
+
+
+
+                    $carbon_footPrint_measure += ($getUtilities['total_electricity_kwh'] * $site_detail['electricity_emission_factor']) + ($getUtilities['total_lpg_cost'] * $site_detail['lpg_emission_factor']) + ($getUtilities['total_fuel_oil_cost'] * $site_detail['fuel_emission_factor']) + ($getUtilities['district_heating_cost'] * $site_detail['district_heating_emission_factor']) + ($getUtilities['district_cooling_cost'] * $site_detail['district_cooling_emission_factor']);
+
+
+
+                    $total_room_night_measure += $getUtilities['total_room_night'];
+
+                    $water_total_consumption_measure += $getUtilities['water_total_consumption'];
+
+
+
+                    $lpg_value = $getUtilities['total_lpg'] * 13.269;
+
+                    $electricity_value = $getUtilities['total_electricity_kwh'] * 1;
+
+                    $natural_gas_value = $getUtilities['total_natural_gas'] * 10.3454063;
+
+                    $fuel_value = $getUtilities['total_fuel_oil'] * 9.95342803564829;
+
+                    $heating_district_value = $getUtilities['district_heating'] * 1;
+
+                    $cooling_district_value = $getUtilities['district_cooling'] * 1;
+
+
+
+                    $utility_kwh_total_measure += ($electricity_value + $fuel_value + $lpg_value + $natural_gas_value + $heating_district_value + $cooling_district_value);
+
+                }
+
+
+
+                $data['measures']['HotelCarbonFootprintPerRoom'][date('Y')] = round($carbon_footPrint_measure / $result['rooms_keys'], 2);
+
+                $data['measures']['HotelCarbonFootprintPerOccupiedRoom'][date('Y')] = round($carbon_footPrint_measure / $total_room_night_measure, 2);
+
+                $data['measures']['HotelCarbonFootprintPerSquareMeter'][date('Y')] = round($carbon_footPrint_measure / $result['site_builtup_area'], 2);
+
+                $data['measures']['HotelEnergyUsagePerOccupiedRoom'][date('Y')] = round($utility_kwh_total_measure / $total_room_night_measure, 2);
+
+                $data['measures']['HotelEnergyUsagePerSquareMeter'][date('Y')] = round($utility_kwh_total_measure / $result['site_builtup_area'], 2);
+
+                $data['measures']['HotelWaterUsagePerOccupiedRoom'][date('Y')] = round($water_total_consumption_measure / $total_room_night_measure, 2);
+
+                $data['measures']['HotelWaterUsagePerSquareMeter'][date('Y')] = round($water_total_consumption_measure / $result['site_builtup_area'], 2);
+				// Use this report's own period ($currYear/$currMonth, e.g. the last complete
+				// month), not today's real calendar date - calculateCHSBMeasures() uses this to
+				// pick the rolling-12-month window for the CHSB figures, so date('Y')/date('n')
+				// here silently used a different (and, once today's date rolls past the report's
+				// own month, differently-dated) 12-month window than the one used everywhere
+				// else (Monthly's own call above, and the reports/ module's equivalent YTD call,
+				// both already use the report's own year/month).
+				$chsb_measures = calculateCHSBMeasures($currYear, $currMonth, $site_id, $site_details, $result, $this->utilities_model);
+
+					// SAVE CHSB VALUES
+
+					$data['measures']['HCMIRoomsFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_1'];
+
+					$data['measures']['HotelCarbonFootprintPerRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_2'];
+
+					$data['measures']['HotelCarbonFootprintPerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_3'];
+
+					$data['measures']['HotelCarbonFootprintPerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_4'];
+
+					$data['measures']['HotelEnergyUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_5'];
+
+					$data['measures']['HotelEnergyUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_6'];
+
+					$data['measures']['HCMIMeetingFootprintPerMeetingHour'] = array(
+						'chsb_measure_no' => 7,
+						'chsb_value' => $chsb_measures['chsb_measure_7']
+					);
+
+					$data['measures']['HotelWaterUsagePerOccupiedRoom']['chsb_value'] =
+						$chsb_measures['chsb_measure_8'];
+
+					$data['measures']['HotelWaterUsagePerSquareMeter']['chsb_value'] =
+						$chsb_measures['chsb_measure_9'];
+
+					$data['measures']['HWMIRoomsWaterUsagePerOccupiedRoom'] = array(
+						'chsb_measure_no' => 10,
+						'chsb_value' => $chsb_measures['chsb_measure_10']
+					);
+
+					$data['measures']['HWMIMeetingWaterUsagePerMeetingHour'] = array(
+						'chsb_measure_no' => 11,
+						'chsb_value' => $chsb_measures['chsb_measure_11']
+					);
+
+					$data['measures']['RenewableEnergyPercentage'] = array(
+						'chsb_measure_no' => 12,
+						'chsb_value' => $chsb_measures['chsb_measure_12']
+					);
+
+					$data['measures']['RenewableElectricityPercentage'] = array(
+						'chsb_measure_no' => 13,
+						'chsb_value' => $chsb_measures['chsb_measure_13']
+					);
+
+					$data['measures']['ElectricityToNonElectricEnergy'] = array(
+						'chsb_measure_no' => 14,
+						'chsb_value' => $chsb_measures['chsb_measure_14']
+					);
+					$data['measures']['HotelCarbonFootprintPerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_4a'];
+
+					$data['measures']['HotelEnergyUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_6a'];
+
+					$data['measures']['HotelWaterUsagePerSquareFoot']['chsb_value'] =
+						$chsb_measures['chsb_measure_9a'];
+
+
+
+                if ($result['chsb_reporting'] == 1) {
+
+                    $chsb_reporting = $this->load->view('admin_landing_pdf_chsb_reporting_reports', $data, true);
+
+                }
 
 
 				$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -3388,22 +4314,122 @@ class Reportscron_admin extends Base_Admin_Controller
 					$pdf->writeHTML($content_site_detail, true, false, true, false, '');
 				}
 
-
-
+				// Modern PDF header (logo/site name/GENERATED date) must be set before AddPage()
+				// below, since Header() fires immediately when AddPage() is called - matches the
+				// Monthly branch above.
+				$pdf->mytd_report_subtitle = !empty($data['pdf_report_title']) ? $data['pdf_report_title'] : '';
+				$pdf->mytd_page_header = true;
 				$pdf->AddPage();
-
-				$pdf->writeHTML($content_reports, true, false, true, false, '');
-
-
+				// Progress cards + utilities table are drawn natively on $pdf from inside this
+				// view's own include() calls (admin_landing_pdf_reports.php, unlike Monthly which
+				// uses admin_landing_pdf_reports_monthly_hidden.php) - its own Jan-to-currMonth
+				// summing loop is what produces correct YTD totals, unlike Monthly's single-month
+				// lookup.
+				$data['pdf'] = $pdf;
+				$this->load->view('admin_landing_pdf_reports', $data, true);
+				$pdf->mytd_page_header = false;
 
 				if ($show_piechart) {
-
-					$pdf->AddPage();
-
-					$pdf->writeHTML($content_reports_piecharts, true, false, true, false, '');
+					// $data['kwh_pie_chart']/$data['cost_pie_chart'] were originally computed as
+					// genuine YTD-cumulative totals (kwhUnitBasedReportForCurrentYear()/
+					// costBasedReportForCurrentYear(), month_id <= max_month_id - see the big
+					// comment near where $data['kwh_pie_chart'] is first built, above) - but the
+					// Monthly branch's own code later overwrites them with
+					// $data['kwh_pie_chart_previousmonth']/$data['cost_pie_chart_previousmonth']
+					// (a single month, repurposed for Monthly's own report). By the time this YTD
+					// continuation runs, $data['kwh_pie_chart']/$data['cost_pie_chart'] are
+					// Monthly's single-month figures, not YTD - recompute them fresh here instead
+					// of reusing whatever Monthly left behind.
+					$piechart_data = $data;
+					// $dataFactor (like $isLocal above) belongs to indexCalculation(), a
+					// different method - it does not exist in this method's scope, so every
+					// kwh figure below was silently being multiplied by null (= 0), zeroing out
+					// the whole Energy chart. Recompute it locally the same way
+					// indexCalculation() does.
+					$dataFactor = getMmbtuFactorConversionAllUtility($site_id);
+					$kwh_report_results = $this->reportscron_model->kwhUnitBasedReportForCurrentYear($filters);
+					$piechart_data['kwh_pie_chart'] = array();
+					if (!empty($kwh_report_results)) {
+						$kwh_report_results = array_map('floatval', $kwh_report_results);
+						if ($site_details['show_utility_electricity']) {
+							$piechart_data['kwh_pie_chart']['electricity'] = (!empty($kwh_report_results['electricity'])) ? ($kwh_report_results['electricity'] * $dataFactor['electricity']) : 0;
+						}
+						if ($site_details['show_utility_fuel_oil']) {
+							$piechart_data['kwh_pie_chart']['fuel'] = (!empty($kwh_report_results['fuel'])) ? ($kwh_report_results['fuel'] * $dataFactor['fuel_oil']) : 0;
+						}
+						if ($site_details['show_utility_lpg']) {
+							$piechart_data['kwh_pie_chart']['lpg'] = (!empty($kwh_report_results['lpg'])) ? ($kwh_report_results['lpg'] * $dataFactor['lpg']) : 0;
+						}
+						if ($site_details['show_utility_natural_gas']) {
+							$piechart_data['kwh_pie_chart']['natural_gas'] = (!empty($kwh_report_results['natural_gas'])) ? ($kwh_report_results['natural_gas'] * $dataFactor['natural_gas']) : 0;
+						}
+						if ($site_details['show_utility_district_heating']) {
+							$piechart_data['kwh_pie_chart']['heating_district'] = (!empty($kwh_report_results['heating_district'])) ? ($kwh_report_results['heating_district'] * $dataFactor['district_heating']) : 0;
+						}
+						if ($site_details['show_utility_district_cooling']) {
+							$piechart_data['kwh_pie_chart']['cooling_district'] = (!empty($kwh_report_results['cooling_district'])) ? ($kwh_report_results['cooling_district'] * $dataFactor['district_cooling']) : 0;
+						}
+					}
+					// $isLocal belongs to indexCalculation(), a different method - it does not
+					// exist in this method's scope. The established check inside
+					// generate_report_pdf() itself (used a few hundred lines above, for the
+					// carbon chart's own YTD data fetch) is $data['currency'] == "base".
+					$kwh_report_results = (isset($data['currency']) && $data['currency'] == "base") ? $this->reportscron_forex_model->costBasedReportForCurrentYear($filters) : $this->reportscron_model->costBasedReportForCurrentYear($filters);
+					$piechart_data['cost_pie_chart'] = array();
+					if (!empty($kwh_report_results)) {
+						if ($site_details['show_utility_electricity']) {
+							$piechart_data['cost_pie_chart']['electricity'] = (!empty($kwh_report_results['electricity'])) ? $kwh_report_results['electricity'] : 0;
+						}
+						if ($site_details['show_utility_fuel_oil']) {
+							$piechart_data['cost_pie_chart']['fuel'] = (!empty($kwh_report_results['fuel'])) ? $kwh_report_results['fuel'] : 0;
+						}
+						if ($site_details['show_utility_lpg']) {
+							$piechart_data['cost_pie_chart']['lpg'] = (!empty($kwh_report_results['lpg'])) ? $kwh_report_results['lpg'] : 0;
+						}
+						if ($site_details['show_utility_natural_gas']) {
+							$piechart_data['cost_pie_chart']['natural_gas'] = (!empty($kwh_report_results['natural_gas'])) ? $kwh_report_results['natural_gas'] : 0;
+						}
+						if ($site_details['show_utility_district_heating']) {
+							// Unlike the kWh side above, adding the fixed-cost component here is
+							// correct (cost + cost, not cost onto consumption) - this must match
+							// the table's own "Total Cost" for district heating/cooling, which
+							// already includes it (confirmed against reports/Reports_admin.php's
+							// own cost_pie_chart, which does this same addition).
+							$piechart_data['cost_pie_chart']['heating_district'] = (!empty($kwh_report_results['heating_district'])) ? $kwh_report_results['heating_district'] + $kwh_report_results['district_heating_fixed_cost'] : 0;
+						}
+						if ($site_details['show_utility_district_cooling']) {
+							$piechart_data['cost_pie_chart']['cooling_district'] = (!empty($kwh_report_results['cooling_district'])) ? $kwh_report_results['cooling_district'] + $kwh_report_results['district_cooling_fixed_cost'] : 0;
+						}
+						if ($site_details['show_utility_water']) {
+							$piechart_data['cost_pie_chart']['water'] = (!empty($kwh_report_results['water'])) ? $kwh_report_results['water'] : 0;
+						}
+					}
+					// utility_cost_chart rows here already have district_cooling_fixed_cost/
+					// district_heating_fixed_cost folded into cooling_district/heating_district
+					// (same situation as the Monthly branch above) - the piecharts view
+					// unconditionally adds them on top to build last-year figures, so leaving
+					// them present here double-counts the fixed cost. Strip them from a copy
+					// used only for this call.
+					foreach ($piechart_data['utility_cost_chart'] as &$pcYearRows) {
+						if (!is_array($pcYearRows)) {
+							continue;
+						}
+						foreach ($pcYearRows as &$pcRow) {
+							if (!is_array($pcRow)) {
+								continue;
+							}
+							unset($pcRow['district_cooling_fixed_cost'], $pcRow['district_heating_fixed_cost']);
+						}
+					}
+					unset($pcYearRows, $pcRow);
+					// Modern PDF header, same as above - render_piecharts_new_pdf() adds its own page.
+					$pdf->mytd_report_subtitle = !empty($data['pdf_report_title']) ? $data['pdf_report_title'] : '';
+					$pdf->mytd_page_header = true;
+					require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_reports_monthly_hidden_piecharts_new_mtd_ui.php';
+					render_piecharts_new_pdf($pdf, $piechart_data);
+					$pdf->mytd_page_header = false;
+					$pdf->SetFont('helvetica', '', 9);
 				}
-
-
 
 				if ($show_actionplans) {
 
@@ -3412,13 +4438,65 @@ class Reportscron_admin extends Base_Admin_Controller
 					$pdf->writeHTML($content_reports_actionplans, true, false, true, false, '');
 				}
 
-
-
 				if ($content_reports_carbon_footprint != '') {
-
+					// Modern PDF header, same as the sections above - must be set before AddPage().
+					$pdf->mytd_report_subtitle = !empty($data['pdf_report_title']) ? $data['pdf_report_title'] : '';
+					$pdf->mytd_page_header = true;
 					$pdf->AddPage();
 
-					$pdf->writeHTML($content_reports_carbon_footprint, true, false, true, false, '');
+					// Full-year current & previous year utility data, for the carbon chart's
+					// YTD trend - $ytd_cur/$ytd_pre were already fetched above for the Monthly
+					// branch's own carbon page and cover the whole calendar year, so reusable here.
+					$data_for_carbon = $data;
+					$data_for_carbon['site_id'] = $site_id;
+					$data_for_carbon['site_detail'] = isset($data_for_carbon['site_detail']) ? $data_for_carbon['site_detail'] : $site_detail;
+					$data_for_carbon['utility_cost_chart'] = array();
+					$data_for_carbon['utility_cost_chart_pre'] = array();
+					if (!empty($ytd_cur)) {
+						foreach ($ytd_cur as $v) {
+							$daysInMonth = (int) date('t', mktime(0, 0, 0, (int) $v['month_id'], 1, (int) $v['year_id']));
+							$v['guest_night'] = isset($v['total_guests']) ? (float) $v['total_guests'] : 0;
+							$v['occupancy'] = (!empty($v['rooms_keys']) && $daysInMonth > 0) ? ((((float) $v['total_room_night']) / ((float) $v['rooms_keys'] * $daysInMonth)) * 100) : 0;
+							$data_for_carbon['utility_cost_chart'][$v['month_id']][$v['year_id']] = $v;
+						}
+					}
+					if (!empty($ytd_pre)) {
+						foreach ($ytd_pre as $v) {
+							$daysInMonth = (int) date('t', mktime(0, 0, 0, (int) $v['month_id'], 1, (int) $v['year_id']));
+							$v['guest_night'] = isset($v['total_guests']) ? (float) $v['total_guests'] : 0;
+							$v['occupancy'] = (!empty($v['rooms_keys']) && $daysInMonth > 0) ? ((((float) $v['total_room_night']) / ((float) $v['rooms_keys'] * $daysInMonth)) * 100) : 0;
+							$data_for_carbon['utility_cost_chart_pre'][$v['month_id']][$v['year_id']] = $v;
+						}
+					}
+					require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_reports_carbon_footprint_new_mtd_ui.php';
+					if (function_exists('render_carbon_footprint_new_pdf')) {
+						render_carbon_footprint_new_pdf($pdf, $data_for_carbon);
+					}
+				}
+
+				if ($result['chsb_reporting'] == 1 && !empty($data['measures']) && !empty($data['measure_readings'])) {
+					require_once APPPATH . 'modules/reportscron/views/admin_landing_pdf_chsb_reporting_reports.php';
+					$pdf->mytd_report_subtitle = !empty($data['pdf_report_title']) ? $data['pdf_report_title'] : '';
+					$pdf->mytd_page_header = true;
+					$pdf->AddPage();
+					render_chsb_reporting_pdf($pdf, $data);
+					$pdf->SetFont('helvetica', '', 9);
+				}
+
+				if (!empty($data['waste']['WasteReport']['wasteReport'])) {
+					// Reused as-is from the Monthly branch above - same shared view/function,
+					// just fed this YTD report's own waste data.
+					require_once APPPATH . 'modules/reports/views/admin_landing_pdf_reports_waste.php';
+					$data_for_waste = $data;
+					$data_for_waste['WasteReport'] = $data['waste']['WasteReport'];
+					$pdf->mytd_report_subtitle = !empty($data['pdf_report_title']) ? $data['pdf_report_title'] : '';
+					$pdf->mytd_page_header = true;
+					$pdf->AddPage();
+					render_waste_report_pdf($pdf, $data_for_waste);
+					// Do NOT reset mytd_page_header here - Footer() for this page fires lazily,
+					// at the next AddPage()/Output(), not here. This is the last page for YTD, so
+					// resetting the flag before Output() silently gave it the old footer style.
+					$pdf->SetFont('helvetica', '', 9);
 				}
 
 				$file_name = BASE_PATH_CUSTOM . "/assets/uploads/cron/" . $pdfName;
@@ -4064,6 +5142,7 @@ class Reportscron_admin extends Base_Admin_Controller
 			"heating_district",
 
 			"cooling_district",
+			"fleet_petrol",
 
 		);
 
@@ -4084,6 +5163,7 @@ class Reportscron_admin extends Base_Admin_Controller
 		$coolingTitle = lang("cooling-district");
 
 		$occupancyTitle = lang("occupancy");
+		$fleetPetrolTitle = lang("fleet_petrol");
 
 
 
@@ -4146,6 +5226,7 @@ class Reportscron_admin extends Base_Admin_Controller
 			$coolingTitle,
 
 			$occupancyTitle,
+			$fleetPetrolTitle,
 
 		);
 
@@ -4332,6 +5413,8 @@ class Reportscron_admin extends Base_Admin_Controller
 					$utility_cost_chart[$value['month_id']][$value['year_id']]['total_room_night_budget'] = $value['total_room_night_budget'];
 					$utility_cost_chart[$value['month_id']][$value['year_id']]['guest_night'] = $value['total_guests'];
 					$utility_cost_chart[$value['month_id']][$value['year_id']]['total_guests_budget'] = $value['total_guests_budget'];
+					$utility_cost_chart[$value['month_id']][$value['year_id']]['fleet_petrol'] = $value['fleet_petrol'];
+					$utility_cost_chart[$value['month_id']][$value['year_id']]['total_fleet_petrol_cost'] = $value['total_fleet_petrol_cost'];
 
 					$days_of_month = cal_days_in_month(CAL_GREGORIAN, $value['month_id'], $value['year_id']);
 
@@ -4396,7 +5479,7 @@ class Reportscron_admin extends Base_Admin_Controller
 					$pre_data_occupancy = (!empty($utility_cost_chart[$month][$prevYear]['occupancy'])) ? $utility_cost_chart[$month][$prevYear]['occupancy'] : 0;
 
 					$pre_data_budget = (!empty($utility_cost_chart[$month][$prevYear]['budget'])) ? $utility_cost_chart[$month][$prevYear]['budget'] : 0;
-
+					$pre_data_fleet_petrol = (!empty($utility_cost_chart[$month][$year - 1]['fleet_petrol'])) ? $utility_cost_chart[$month][$year - 1]['fleet_petrol'] : 0;
 
 
 					// Current year data
@@ -4442,7 +5525,7 @@ class Reportscron_admin extends Base_Admin_Controller
 					$data_occupancy = (!empty($utility_cost_chart[$month][$year]['occupancy'])) ? $utility_cost_chart[$month][$year]['occupancy'] : 0;
 
 					$data_budget = (!empty($utility_cost_chart[$month][$year]['budget'])) ? $utility_cost_chart[$month][$year]['budget'] : 0;
-
+					$data_fleet_petrol = (!empty($utility_cost_chart[$month][$year]['fleet_petrol'])) ? $utility_cost_chart[$month][$year]['fleet_petrol'] : 0;
 
 
 					// Round values
@@ -4614,6 +5697,16 @@ class Reportscron_admin extends Base_Admin_Controller
 
 
 						$chart_index[] = $chart_index_carbon[] = "cooling_district";
+					}
+					
+					if (!empty($site_details['show_utility_fleet']) && ($pre_data_fleet_petrol != 0 || $data_fleet_petrol != 0)) {
+						$chart_data[0][] = $fleetPetrolTitle;
+						$chart_data[1][] = $pre_data_fleet_petrol;
+						$chart_data[2][] = $data_fleet_petrol;
+						$carbon_footprint[0][] = $fleetPetrolTitle;
+						$carbon_footprint[1][] = round($pre_data_fleet_petrol * 2.3, $decimal_places);
+						$carbon_footprint[2][] = round($data_fleet_petrol * 2.3, $decimal_places);
+						$chart_index[] = $chart_index_carbon[] = "fleet_petrol";
 					}
 
 
@@ -6082,6 +7175,10 @@ class Reportscron_admin extends Base_Admin_Controller
 				array_push($monthlyTickedSites,  $cronSettings['site_cron_settings']['site_id']);
 			}
 		}
+		if (empty($monthlyTickedSites)) {
+			log_message('error', 'Combined EUI Chart skipped: no monthly ticked sites.');
+			return;
+		}
 
 		$this->load->model('reports/reports_model');
 		$allSiteRanking = [];
@@ -6168,7 +7265,7 @@ class Reportscron_admin extends Base_Admin_Controller
 		$data = ($isPerMeter) ? array_column($ranking, 'eui_per_meter') : array_column($ranking, 'eui');
 		$siteCount = count($categories);
     	$chartHeight = max(280, ($siteCount * 24) + 120);
-		$Unit = $isPerMeter ? 'kWh/m²' : 'kWh/RN';
+		$Unit = $isPerMeter ? "kWh/m\u{00B2}" : 'kWh/RN';
 		$chartData = [
 			"chart" => [
 				"type" => "bar",
@@ -6512,10 +7609,10 @@ class Reportscron_admin extends Base_Admin_Controller
 		$chartImagePath = BASE_PATH_CUSTOM . "/assets/uploads/highcharts/site_eui_combined.png";
 		$chartPerMeterImagePath = BASE_PATH_CUSTOM . "/assets/uploads/highcharts/site_eui_per_meter_combined.png";
 
-		if (!file_exists($chartImagePath)) {
+		if (!file_exists($chartImagePath) || filesize($chartImagePath) < 2048) {
 			return null;
 		}
-		if (!file_exists($chartPerMeterImagePath)) {
+		if (!file_exists($chartPerMeterImagePath) || filesize($chartPerMeterImagePath) < 2048) {
 			return null;
 		}
 		list($imgWidthPx, $imgHeightPx) = getimagesize($chartImagePath);
@@ -6591,6 +7688,10 @@ class Reportscron_admin extends Base_Admin_Controller
                 array_push($monthlyTickedSites,  $cronSettings['site_cron_settings']['site_id']);
             }
         }
+		if (empty($monthlyTickedSites)) {
+			log_message('error', 'generate_mpdf_new skipped: no monthly ticked sites.');
+			return;
+		}
 		foreach ($users as $key => $user) {
 			foreach ($user['user_regions'] as $key => $value) {
 				$region_specific_sites[$key] = $this->reportscron_model->getUserSitesWithRegionId($user['id'], $key);
@@ -6842,6 +7943,10 @@ class Reportscron_admin extends Base_Admin_Controller
 					$pdf->Output($file_name, 'F'); // D - downlaod, F- Save
 					$attachments[$regionName[$regionId - 1]] = $file_name;
 				}
+				if (empty($attachments)) {
+					log_message('error', 'generate_mpdf_new skipped email for user ' . $user['username'] . ': no monthly ticked sites in assigned regions.');
+					continue;
+				}
 					/* NEW : generate separate EUI chart pdf */
 					$euiChartPdf = $this->generateEUIChartPDF();
 					if ($euiChartPdf) {
@@ -6858,7 +7963,7 @@ class Reportscron_admin extends Base_Admin_Controller
 				        $lastYear    = (int) $lastYearDt->format('Y');
 
 					$filePath = $this->sites_model->generateGroupUtilityReport($currentYear,$currMonth,$prevYear,$prevMonth,$lastYear,1);
-					if (file_exists($filePath) && filesize($filePath) > 0) {
+					if (!empty($filePath) && file_exists($filePath) && filesize($filePath) > 0) {
 						$attachments['Group Utility Report'] = $filePath;
 					} else {
 						log_message('error', 'Excel not generated: ' . $filePath);
@@ -6878,7 +7983,7 @@ class Reportscron_admin extends Base_Admin_Controller
 					</li>
 					<li>
 						<strong>EUI Comparison Chart:</strong>
-						An End-Use Intensity (kWh/m²) comparative chart of all your properties on HEP.
+						An End-Use Intensity (kWh/m\u{00B2}) comparative chart of all your properties on HEP.
 					</li>
 					<li>
 						<strong>Detailed Data Spreadsheet:</strong>
@@ -7036,10 +8141,62 @@ class MYPDF extends TCPDF
 
 	public $site_name = '';
 	public $site_logo = '';
+	public $mytd_page_header = false;
+	public $mytd_report_subtitle = '';
+
+	public function setInterFont($style, $size)
+	{
+		$flags = strtoupper($style);
+		$suffix = '';
+		if (strpos($flags, 'B') !== false && strpos($flags, 'I') !== false) {
+			$suffix = 'bi';
+		} elseif (strpos($flags, 'B') !== false) {
+			$suffix = 'b';
+		} elseif (strpos($flags, 'I') !== false) {
+			$suffix = 'i';
+		}
+		$file = K_PATH_FONTS . 'inter' . $suffix . '.php';
+		if (!is_file($file)) {
+			$file = APPPATH . 'libraries/tcpdf/fonts/inter' . $suffix . '.php';
+		}
+		$this->SetFont('inter', $style, $size, str_replace('\\', '/', $file));
+	}
+
+	public function writeHTML($html, $ln = true, $fill = false, $reseth = false, $cell = false, $align = '')
+	{
+		return parent::writeHTML(sanitize_report_output_html($html), $ln, $fill, $reseth, $cell, $align);
+	}
 
 	public function Header()
 	{
 		$image_file = K_PATH_IMAGES . $this->site_logo;
+
+		if ($this->mytd_page_header) {
+			if (file_exists($image_file)) {
+				$this->Image($image_file, 10, 6, 32, 12, '', '', 'T', false, 300, '', false, false, 0, false, false, false);
+			}
+			$this->setInterFont('B', 11);
+			$this->SetTextColor(17, 24, 39);
+			$this->SetXY(46, 6);
+			$this->Cell(108, 6, $this->site_name, 0, 0, 'C');
+			$this->setInterFont('', 8);
+			$this->SetTextColor(107, 119, 133);
+			$this->SetXY(46, 12);
+			$this->Cell(108, 5, $this->mytd_report_subtitle, 0, 0, 'C');
+			$this->setInterFont('', 6.5);
+			$this->SetTextColor(107, 119, 133);
+			$this->SetXY(158, 6);
+			$this->Cell(42, 4, 'GENERATED', 0, 0, 'R');
+			$this->setInterFont('B', 9);
+			$this->SetTextColor(17, 24, 39);
+			$this->SetXY(158, 11);
+			$this->Cell(42, 5, date('d-M-Y'), 0, 0, 'R');
+			$this->SetDrawColor(213, 223, 233);
+			$this->SetLineWidth(0.2);
+			$this->Line(10, 22, 200, 22);
+			$this->SetTextColor(0, 0, 0);
+			return;
+		}
 
 		if (file_exists($image_file)) {
 			$this->Image($image_file, 10, 2, 30, 18, '', '', 'T', false, 300, '', false, false, 0, false, false, false);
@@ -7054,6 +8211,21 @@ class MYPDF extends TCPDF
 
 	public function Footer()
 	{
+		if ($this->mytd_page_header) {
+			$this->SetY(-12);
+			$this->SetDrawColor(213, 223, 233);
+			$this->SetLineWidth(0.2);
+			$this->Line(10, $this->GetY(), 200, $this->GetY());
+			$this->setInterFont('', 6.5);
+			$this->SetTextColor(107, 119, 133);
+			$this->SetXY(10, -9.5);
+			$this->Cell(150, 5, 'HEP - Hotel Energy Portal | Copyright Â© ' . date('Y') . ' EEG - Energy Efficiency Group. All rights reserved.', 0, 0, 'L');
+			$this->setInterFont('B', 7);
+			$this->SetTextColor(23, 55, 94);
+			$this->SetXY(160, -9.5);
+			$this->Cell(40, 5, 'Page ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, 0, 'R');
+			return;
+		}
 		$this->SetY(-15);
 		$this->SetFont('helvetica', 'I', 8);
 		$footText = "Page " . $this->getAliasNumPage() . "/" . $this->getAliasNbPages();

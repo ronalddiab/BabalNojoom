@@ -1763,19 +1763,19 @@ $popupInfoArray = [
 	
 	<div class="row col-sm-12">
 		<?php
-			$utilities = array('show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_utility_water_waste', 'show_waste_management');
-			$utilities_unit = array('show_utility_electricity_unit', 'show_utility_fuel_oil_unit', 'show_utility_lpg_unit', 'show_utility_water_unit', 'show_utility_irrigation_water_unit', 'show_utility_natural_gas_unit', 'show_utility_district_cooling_unit', 'show_utility_district_heating_unit', 'show_utility_water_waste_unit', 'show_waste_management_unit');
-			$energy_modelling = [
-				'show_utility_electricity' => 'electricity',
-				'show_utility_fuel_oil' => 'fuel_oil',
-				'show_utility_lpg' => 'lpg',
-				'show_utility_water' => 'water',
-				'show_utility_irrigation_water' => 'irrigation_water',
-				'show_utility_natural_gas' => 'natural_gas',
-				'show_utility_district_cooling' => 'district_cooling',
-				'show_utility_district_heating' => 'district_heating'
-			];
-			$decimal_point = 2;
+		$utilities = array('show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_utility_water_waste', 'show_waste_management', 'show_utility_fleet');
+		$utilities_unit = array('show_utility_electricity_unit', 'show_utility_fuel_oil_unit', 'show_utility_lpg_unit', 'show_utility_water_unit', 'show_utility_irrigation_water_unit', 'show_utility_natural_gas_unit', 'show_utility_district_cooling_unit', 'show_utility_district_heating_unit', 'show_utility_water_waste_unit', 'show_waste_management_unit');
+		$energy_modelling = [
+		    'show_utility_electricity' => 'electricity',
+		    'show_utility_fuel_oil' => 'fuel_oil',
+		    'show_utility_lpg' => 'lpg',
+		    'show_utility_water' => 'water',
+		    'show_utility_irrigation_water' => 'irrigation_water',
+		    'show_utility_natural_gas' => 'natural_gas',
+		    'show_utility_district_cooling' => 'district_cooling',
+		    'show_utility_district_heating' => 'district_heating'
+		];
+		$decimal_point = 2;
 		?>
 		<div class="row col-sm-12">
 			<div class="form-control-block col-sm-5 panel panel-primary" style="border-color:#d4d4d4ff !important;">
@@ -1790,30 +1790,30 @@ $popupInfoArray = [
 				<div class="row">
 					<?php foreach ($utilities as $utility) { ?>
 					<div class="form-col-12 form-control-block col-sm-12">
-							<div class="form-control-block col-sm-4">
-							<?php echo form_label(lang($utility), $utility, ["class" => "main-label"]); ?>
-							</div>
-							<div class="form-control-block col-sm-4">
-							<label class="radio-outer"><input type="radio" <?php
-								if (isset($$utility) && $$utility == 1) {
-								echo 'checked="checked"';
-								}
-								?> class="icheck" name="<?php echo $utility; ?>" value="1">Yes</label>
-							<label><input type="radio" <?php
-								if (!isset($$utility) || $$utility == 0) {
-								echo 'checked="checked"';
-								}
-								?> class="icheck" name="<?php echo $utility; ?>" value="0">No</label>
-							</div>
+						<div class="form-control-block col-sm-4">
+						<?php echo form_label(lang($utility), $utility, ["class" => "main-label"]); ?>
+						</div>
+						<div class="form-control-block col-sm-4">
+						<label class="radio-outer"><input type="radio" <?php
+							if (isset($$utility) && $$utility == 1) {
+							echo 'checked="checked"';
+							}
+							?> class="icheck" name="<?php echo $utility; ?>" value="1">Yes</label>
+						<label><input type="radio" <?php
+							if (!isset($$utility) || $$utility == 0) {
+							echo 'checked="checked"';
+							}
+							?> class="icheck" name="<?php echo $utility; ?>" value="0">No</label>
+						</div>
 						<div class="form-control-block col-sm-4" style="margin-left: 0px;margin-right: 0px;padding-left: 0px;padding-right: 0px;">
-							<?php if ($utility != 'show_waste_management' && $utility != 'show_utility_water_waste' && $utility != 'show_utility_irrigation_water') { ?>
-							<div class="form-dropdown">
-								<?php
-								$list = $energy_modelling_data[$energy_modelling[$utility]]['utility_unit_dropdown'];
-								$name = 'utility_unit_'.$energy_modelling[$utility];
-								$value = $energy_modelling_data[$energy_modelling[$utility]]['utility_unit_value'];
-								echo form_dropdown($name, $list, $value, 'data-type = "custom-dropdown" ');
-								?>
+						<?php if ($utility != 'show_waste_management' && $utility != 'show_utility_water_waste' && $utility != 'show_utility_irrigation_water' && $utility != 'show_utility_fleet') { ?>
+						<div class="form-dropdown">
+							<?php
+							$list = $energy_modelling_data[$energy_modelling[$utility]]['utility_unit_dropdown'];
+							$name = 'utility_unit_'.$energy_modelling[$utility];
+							$value = $energy_modelling_data[$energy_modelling[$utility]]['utility_unit_value'];
+							echo form_dropdown($name, $list, $value, 'data-type = "custom-dropdown" ');
+							?>
 							</div>
 							<?php } ?>
 							</div>
@@ -1890,7 +1890,8 @@ $popupInfoArray = [
 						$energy_days = 0;
 						$energy_r2 = 0;
 						}
-					if ($utility != 'show_waste_management' && $utility != 'show_utility_water_waste' && $utility != 'show_utility_irrigation_water') { ?>
+					?>
+						<?php if ($utility != 'show_waste_management' && $utility != 'show_utility_water_waste' && $utility != 'show_utility_irrigation_water' && $utility != 'show_utility_fleet') { ?>
 					<div class="form-col-12 form-control-block col-sm-12">
 					<div class="form-control-block col-sm-2">
 						<input name='<?php echo 'energy_modeling[' . $energy_modelling[$utility] . '][cdd]'; ?>' type='text' class='input-control' placeholder='CDD' value="<?php echo $energy_cdd; ?>">

@@ -1557,9 +1557,263 @@ class Import_model extends Base_Model {
 
     }
 
+    /**
+     * Daily/monthly rows that contain a negative consumption or cost value (any year).
+     */
+    public function getNegativeUtilityRows($isDaily = false)
+    {
+	$table = $isDaily ? $this->_table_daily : $this->_table;
+	$skip = array('id', 
+    'site_id', 
+    'month_id', 
+    'year_id', 
+    'date_id', 
+    'hour', 
+    'cdd', 
+    'hdd', 
+    'created', 
+    'modified', 
+    'user_id',
+    'vehicle_petrol',
+    'forex',
+    'electricity_invoice_scan',
+    'fuel_oil_invoice_scan',
+    'lpg_invoice_scan',
+    'natural_gas_invoice_scan',
+    'district_heating_invoice_scan',
+    'district_cooling_invoice_scan',
+    'water_invoice_scan',
+    'created_by',
+    'created_on',
+    'modify_by',
+    'modify_on',
+    'rental_program_residence_electricity',
+    'rental_program_residence_electricity_rate',
+    'rental_program_residence_electricity_cost',
+    'rental_program_residence_fuel_oil',
+    'rental_program_residence_fuel_oil_rate',
+    'rental_program_residence_fuel_oil_cost',
+    'rental_program_residence_lpg',
+    'rental_program_residence_lpg_rate',
+    'rental_program_residence_lpg_cost',
+    'rental_program_residence_natural_gas',
+    'rental_program_residence_natural_gas_rate',
+    'rental_program_residence_natural_gas_cost',
+    'rental_program_residence_district_heating',
+    'rental_program_residence_district_heating_rate',
+    'rental_program_residence_district_heating_cost',
+    'rental_program_residence_district_cooling',
+    'rental_program_residence_district_cooling_rate',
+    'rental_program_residence_district_cooling_cost',
+    'rental_program_residence_water',
+    'rental_program_residence_water_rate',
+    'rental_program_residence_water_cost',
+    'private_program_electricity',
+    'private_program_electricity_rate',
+    'private_program_electricity_cost',
+    'private_program_fuel_oil',
+    'private_program_fuel_oil_rate',
+    'private_program_fuel_oil_cost',
+    'private_program_lpg',
+    'private_program_lpg_rate',
+    'private_program_lpg_cost',
+    'private_program_natural_gas',
+    'private_program_natural_gas_rate',
+    'private_program_natural_gas_cost',
+    'private_program_district_heating',
+    'private_program_district_heating_rate',
+    'private_program_district_heating_cost',
+    'private_program_district_cooling',
+    'private_program_district_cooling_rate',
+    'private_program_district_cooling_cost',
+    'private_program_water',
+    'private_program_water_rate',
+    'private_program_water_cost',
+    'employee_living_quarter_electricity',
+    'employee_living_quarter_fuel_oil',
+    'employee_living_quarter_lpg',
+    'employee_living_quarter_natural_gas',
+    'employee_living_quarter_district_heating',
+    'employee_living_quarter_district_cooling',
+    'employee_living_quarter_water',
+    'employee_living_quarter_offsite_electricity',
+    'employee_living_quarter_offsite_fuel_oil',
+    'employee_living_quarter_offsite_lpg',
+    'employee_living_quarter_offsite_district_heating',
+    'employee_living_quarter_offsite_district_cooling',
+    'employee_living_quarter_offsite_water',
+    'electricity_hotel',
+    'electricity_hotel_rate',
+    'electricity_hotel_cost',
+    'fuel_oil_hotel',
+    'fuel_oil_hotel_rate',
+    'fuel_oil_hotel_cost',
+    'lpg_hotel',
+    'lpg_hotel_rate',
+    'lpg_hotel_cost',
+    'natural_gas_hotel',
+    'natural_gas_hotel_rate',
+    'natural_gas_hotel_cost',
+    'district_heating_hotel',
+    'district_heating_hotel_rate',
+    'district_heating_hotel_cost',
+    'district_cooling_hotel',
+    'district_cooling_hotel_rate',
+    'district_cooling_hotel_cost',
+    'water_hotel',
+    'water_hotel_rate',
+    'water_hotel_cost',
+    'employee_living_quarter_offsite_natural_gas',
+    'average_cost_per_kwh',
+    'project_id',
+    'average_pf',
+    'maximum_demand',
+    'fixed_fees',
+    'maximum_demand_unit',
+    'maximum_demand_price',
+    'total_maximum_demand',
+    'water_consumption_breakdown_cooling_towers',
+    'water_consumption_breakdown_boh',
+    'water_consumption_breakdown_rooms',
+    'total_consumption_breakdown',
+    'operation_general_waste',
+    'operation_paper_waste',
+    'operation_food_waste',
+    'operation_cardboard_waste',
+    'operation_plastic_waste',
+    'operation_glass_waste',
+    'operation_recycled_waste',
+    'water_utility_supply_rate',
+    'water_utility_supply_cost',
+    'water_irrigation_rate',
+    'water_irrigation_cost',
+    'waste_water_rate',
+    'waste_water_cost',
+    'water_Cisterns_rate',
+    'water_Cisterns_cost',
+    'water_ro_rate',
+    'water_ro_cost',
+    'total_consumption_breakdown_budget',
+    'total_consumption_breakdown_budget_cost',
+    'maximum_demand_cost',
+    'electricity_total_budget',
+    'electricity_total_budget_cost',
+    'forex'
+    );
+	$fields = $this->db->list_fields($table);
+	$or = array();
+	foreach ($fields as $field) {
+	    if (in_array($field, $skip, true)) {
+		continue;
+	    }
+	    $or[] = "`{$field}` < 0";
+	}
+	if (empty($or)) {
+	    return array();
+	}
+	$sql = "SELECT t.*, s.site_location_name
+	    FROM {$table} t
+	    LEFT JOIN " . TBL_SITES . " s ON s.id = t.site_id
+	    WHERE t.site_id != 0 AND t.year_id != 0 AND t.month_id != 0
+	    " . ($isDaily ? " AND t.date_id != 0" : "") . "
+	    AND (" . implode(' OR ', $or) . ")
+	    ORDER BY s.site_location_name, t.year_id, t.month_id";
+	return $this->db->query($sql)->result_array();
+    }
 
+    /**
+     * Months where summed daily readings diverge from the monthly utilities_cost row.
+     * Skips months with no daily data. Tolerance is 1 consumption unit.
+     */
+    public function getDailyMonthlyDivergences($tolerance = 1, $site_id = 0)
+    {
+	$map = array(
+	    'electricity' => array('monthly' => 'total_electricity_kwh', 'daily' => 'electricity', 'flag' => 'show_utility_electricity'),
+	    'fuel_oil' => array('monthly' => 'total_fuel_oil', 'daily' => 'fuel_oil', 'flag' => 'show_utility_fuel_oil'),
+	    'lpg' => array('monthly' => 'total_lpg', 'daily' => 'lpg', 'flag' => 'show_utility_lpg'),
+	    'natural_gas' => array('monthly' => 'total_natural_gas', 'daily' => 'natural_gas', 'flag' => 'show_utility_natural_gas'),
+	    'district_heating' => array('monthly' => 'district_heating', 'daily' => 'district_heating', 'flag' => 'show_utility_district_heating'),
+	    'district_cooling' => array('monthly' => 'district_cooling', 'daily' => 'district_cooling', 'flag' => 'show_utility_district_cooling'),
+	    'water' => array('monthly' => 'water_total_consumption', 'daily' => 'water', 'flag' => 'show_utility_water'),
+	);
+	$dailyWhere = "site_id != 0 AND year_id != 0 AND month_id != 0 AND date_id != 0";
+	$binds = array();
+	if (!empty($site_id)) {
+	    $dailyWhere .= " AND site_id = ?";
+	    $binds[] = (int) $site_id;
+	}
+	$dailySql = "SELECT site_id, year_id, month_id,
+		SUM(COALESCE(total_electricity_kwh, 0)) AS electricity,
+		SUM(COALESCE(total_diesel_fuel, 0)) AS fuel_oil,
+		SUM(COALESCE(total_lpg_consumption, 0)) AS lpg,
+		SUM(COALESCE(total_natural_gas_consumption, 0)) AS natural_gas,
+		SUM(COALESCE(total_district_heating_consumption, 0)) AS district_heating,
+		SUM(COALESCE(total_district_cooling_consumption, 0)) AS district_cooling,
+		SUM(COALESCE(total_water_consumption, 0)) AS water
+	    FROM {$this->_table_daily}
+	    WHERE {$dailyWhere}
+	    GROUP BY site_id, year_id, month_id";
+	$dailyRows = empty($binds) ? $this->db->query($dailySql)->result_array() : $this->db->query($dailySql, $binds)->result_array();
+	$dailyMap = array();
+	foreach ($dailyRows as $daily) {
+	    $dailyMap[$daily['site_id'] . '_' . $daily['year_id'] . '_' . $daily['month_id']] = $daily;
+	}
 
-    public function deleteHourlyFixedSubmissionUtilityIfexists($data = array()){
+	$this->db->select('u.site_id, u.year_id, u.month_id, s.site_location_name,
+		s.show_utility_electricity, s.show_utility_fuel_oil, s.show_utility_lpg,
+		s.show_utility_natural_gas, s.show_utility_district_heating,
+		s.show_utility_district_cooling, s.show_utility_water,
+		u.total_electricity_kwh, u.total_fuel_oil, u.total_lpg, u.total_natural_gas,
+		u.district_heating, u.district_cooling, u.water_total_consumption');
+	$this->db->from($this->_table . ' AS u');
+	$this->db->join(TBL_SITES . ' AS s', 's.id = u.site_id', 'left');
+	$this->db->where('u.site_id !=', 0);
+	$this->db->where('u.year_id !=', 0);
+	$this->db->where('u.month_id !=', 0);
+	if (!empty($site_id)) {
+	    $this->db->where('u.site_id', (int) $site_id);
+	}
+	$monthlyRows = $this->db->get()->result_array();
+
+	$divergences = array();
+	$tolerance = abs((float) $tolerance);
+	foreach ($monthlyRows as $row) {
+	    $key = $row['site_id'] . '_' . $row['year_id'] . '_' . $row['month_id'];
+	    if (!isset($dailyMap[$key])) {
+		continue;
+	    }
+	    foreach ($map as $utility => $cfg) {
+		if (empty($row[$cfg['flag']])) {
+		    continue;
+		}
+		$dailySum = (float) $dailyMap[$key][$cfg['daily']];
+		$monthlyVal = (float) $row[$cfg['monthly']];
+		if ($dailySum == 0 && $monthlyVal == 0) {
+		    continue;
+		}
+		if ($dailySum == 0) {
+		    continue;
+		}
+		$diff = $dailySum - $monthlyVal;
+		if (abs($diff) > $tolerance) {
+		    $divergences[] = array(
+			'Site Name' => $row['site_location_name'],
+			'Year' => $row['year_id'],
+			'Month' => $row['month_id'],
+			'Utility Name' => ucwords(str_replace('_', ' ', $utility)),
+			'Value Daily' => $dailySum,
+			'Value Monthly' => $monthlyVal,
+			'Difference' => $diff,
+			'Flag' => 'Diverged',
+		    );
+		}
+	    }
+	}
+	return $divergences;
+    }
+
+    public function deleteHourlyFixedSubmissionUtilityIfexists($data = array())
+	{
 
         $this->db->where_in('id',$data);
 

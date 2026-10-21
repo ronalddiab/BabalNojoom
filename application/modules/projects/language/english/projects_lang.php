@@ -111,6 +111,6 @@ $lang['select-region'] = 'Select Region';
 $lang['select-action-category'] = 'Select Category';
 $lang['select-action-project'] = 'Select Sub Category';
 $lang['select-action-todo'] = 'Select Action Plan';
-$lang['kwh-savings'] = 'Kwh Savings';
+$lang['kWh-savings'] = 'kWh Savings';
 $lang['cost-savings'] = 'Cost Savings';
 $lang['Actions'] = 'Actions';

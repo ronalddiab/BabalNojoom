@@ -2115,7 +2115,6 @@ class Projects_model extends Base_Model {
     }
 
 
-
     function getAllActionPlansBySiteId($site_id = 0) {
 
         $this->db->select('*');
@@ -2131,8 +2130,6 @@ class Projects_model extends Base_Model {
         return $result->result_array();
 
     }
-
-
 
 }
 
