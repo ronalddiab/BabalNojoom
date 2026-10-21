@@ -103,8 +103,8 @@ $kwh_pie_chart_previousmonth_cost_water_share = ($cost_pie_chart_previousmonth_t
                     <td width="100%">
                         <table width="100%" border="0" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td width="50%"><img height="200" src="<?php echo $pieChartImg; ?>" /></td>
-                                <td width="50%"><img height="200" src="<?php echo $pieChartNewImg; ?>" /></td>
+                                <td width="50%"><img height="400" src="<?php echo $pieChartImg; ?>" /></td>
+                                <td width="50%"><img height="400" src="<?php echo $pieChartNewImg; ?>" /></td>
                             </tr>
                             <tr>
                                 <td valign="top">
@@ -227,7 +227,7 @@ $kwh_pie_chart_previousmonth_cost_water_share = ($cost_pie_chart_previousmonth_t
                                                             <?php if ($totalElectricity) { ?>
                                                                 <tr>
                                                                     <td width="45%">Electricity</td>
-                                                                    <td width="35%"><?php number_format($cost_pie_chart['electricity']); ?></td>
+                                                                    <td width="35%"><?php echo number_format($cost_pie_chart['electricity']); ?></td>
                                                                     <td width="20%"><?php echo $kwh_pie_chart_cmonth_electricity_share; ?>%</td>
                                                                 </tr>
                                                             <?php } ?>
@@ -310,8 +310,8 @@ $kwh_pie_chart_previousmonth_cost_water_share = ($cost_pie_chart_previousmonth_t
                     <td width="100%">
                         <table width="100%" border="0" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td width="50%"><img height="200" src="<?php echo $pieChartNew2Img; ?>" /></td>
-                                <td width="50%"><img height="200" src="<?php echo $pieChartNew3Img; ?>" /></td>
+                                <td width="50%"><img height="400" src="<?php echo $pieChartNew2Img; ?>" /></td>
+                                <td width="50%"><img height="400" src="<?php echo $pieChartNew3Img; ?>" /></td>
                             </tr>
                             <tr>
                                 <td valign="top">

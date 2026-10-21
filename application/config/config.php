@@ -545,7 +545,7 @@ if (date('m') == 1) {
     $config['YTD_month_count'] = 12;
 }
 
-$config['chart_legend_colors'] = array('Electricity' => '#3366cc', 'Fuel' => '#dc3912', 'LPG' => '#ff9900', 'Natural_Gas' => '#109618', 'Water' => '#0099c6', 'District_Heating' => '#990099', 'District_Cooling' => '#012351', 'Waste' => '#34ebb4', 'Occupancy' => '#992600', 'Average' => '#e57e00', 'Generalwaste' => '#3366cc', 'Paperwaste' => '#dc3912', 'Foodwaste' => '#ff9900', 'Cardboardwaste' => '#109618', 'Plasticwaste' => '#e57e00', 'Glasswaste' => '#0099c6', 'Recyclewaste' => '#9c27b0', 'Landfill' => '#dc3912', '2018' => '#51b7ff', '2019' => '#bda2ff', '2020' => '#ff82d0', '2021' => '#ff7f77', '2022' => '#ffa600', '2023' => '#51b7ff', '2024' => '#1dafaf');
+$config['chart_legend_colors'] = array('Electricity' => '#3366cc', 'Fuel' => '#dc3912', 'LPG' => '#ff9900', 'Natural_Gas' => '#109618', 'Water' => '#0099c6', 'District_Heating' => '#990099', 'District_Cooling' => '#012351', 'Waste' => '#34ebb4', 'Occupancy' => '#992600', 'Average' => '#e57e00', 'Generalwaste' => '#3366cc', 'Paperwaste' => '#dc3912', 'Foodwaste' => '#ff9900', 'Cardboardwaste' => '#109618', 'Plasticwaste' => '#e57e00', 'Glasswaste' => '#0099c6', 'Recyclewaste' => '#9c27b0', 'Landfill' => '#dc3912', '2018' => '#51b7ff', '2019' => '#bda2ff', '2020' => '#ff82d0', '2021' => '#ff7f77', '2022' => '#ffa600', '2023' => '#51b7ff', '2024' => '#1dafaf', 'Fleet_Petrol' => '#b697cd');
 
 $config['sites_type'] = array(1=>'Resort',2=>'City Hotel',3=>'Standalone Residence',4=>'Corporate Office');
 

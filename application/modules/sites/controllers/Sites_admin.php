@@ -83,7 +83,7 @@ class Sites_admin extends Base_Admin_Controller
 		return array(
 
 			array(
-				'actions' => array('index', 'edit', 'add', 'action', 'delete', 'save', 'view_data', 'set_user_theme', 'set_notification', 'pdf', 'cron_settings', 'get_sites', 'waste', 'emission', 'delete_emission_image', 'view_area_history', 'residence', 'export_waste', 'replicate_residence', 'export_utility', 'permission', 'export_prev_utility', 'setSiteNotificationManually', 'export_site_info', 'export_utility_choices', 'export_utility_invoices','export_utility_last_updated_log', 'group_utility_report', 'export_group_waste_corporate_report'),
+				'actions' => array('index', 'edit', 'add', 'action', 'delete', 'save', 'view_data', 'set_user_theme', 'set_notification', 'pdf', 'cron_settings', 'get_sites', 'waste', 'emission', 'delete_emission_image', 'view_area_history', 'residence', 'export_waste', 'replicate_residence', 'export_utility', 'permission', 'export_prev_utility', 'setSiteNotificationManually', 'export_site_info', 'export_utility_choices', 'export_utility_invoices','export_utility_last_updated_log', 'group_utility_report', 'export_group_waste_corporate_report', 'download_corporate_utilities_dashboard'),
 				'users'   => array('@'),
 
 			),
@@ -536,7 +536,7 @@ class Sites_admin extends Base_Admin_Controller
 		$this->form_validation->set_rules('water_intensity_benchmark_target', lang('water-intensity'), 'trim');
 		$this->form_validation->set_rules('waste_intensity_benchmark_target', lang('waste-intensity'), 'trim');
 
-		$utilities        = array('show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_waste_management');
+		$utilities        = array('show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_waste_management', 'show_utility_fleet');
 
 		$energy_modelling = [
 
@@ -714,6 +714,7 @@ class Sites_admin extends Base_Admin_Controller
 				$colmuns['Site Name']         = "site_id";
 
 				$colmuns['Measure']           = "measure_id";
+				$colmuns['Count']             = "count";
 
 				$colmuns['Low']               = "low";
 
@@ -797,6 +798,8 @@ class Sites_admin extends Base_Admin_Controller
 
 
 					$measure_name = trim($data->sheets[0]['cells'][$i][2]);
+					$dataInsert['measure_name'] = $measure_name;
+					$dataInsert['measure_code'] = explode(':',$measure_name)[0];
 
 					$measure_id = $this->import_model->get_measureId($measure_name);
 
@@ -1079,6 +1082,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_heating = intval($data['show_utility_district_heating']);
 			$show_utility_district_heating_boiler = intval($data['show_utility_district_heating_boiler']);
 			$show_waste_management         = intval($data['show_waste_management']);
+			$show_utility_fleet         = intval($data['show_utility_fleet']);
 
 			$utility_unit_electricity      = intval($data['utility_unit_electricity']);
 			$utility_unit_fuel_oil         = intval($data['utility_unit_fuel_oil']);
@@ -1520,6 +1524,7 @@ class Sites_admin extends Base_Admin_Controller
 				$data_array['utility_unit_district_heating']   = $utility_unit_district_heating;
 
 				$data_array['show_waste_management']           = $show_waste_management;
+				$data_array['show_utility_fleet']           = $show_utility_fleet;
 
 				$data_array['baseline_regression_year']        = trim($data['baseline_regression_year']);
 
@@ -1594,6 +1599,7 @@ class Sites_admin extends Base_Admin_Controller
 					$site_notification_lists = getNotificationStaticList($site_id);
 					$this->sites_model->save_default_notifications($site_id, $site_notification_lists);
 				}
+				$this->sites_model->assign_site_to_corporate_and_super_admins($site_id, isset($data_array['region_id']) ? $data_array['region_id'] : 0);
 
 
 
@@ -1802,6 +1808,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_heating = $result['show_utility_district_heating'];
 			$show_utility_district_heating_boiler = $result['show_utility_district_heating_boiler'];
 			$show_waste_management         = $result['show_waste_management'];
+			$show_utility_fleet         = $result['show_utility_fleet'];
 
 			$chsb_reporting          = $result['chsb_reporting'];
 			$chsb_segment          = $result['chsb_segment'];
@@ -2014,6 +2021,7 @@ class Sites_admin extends Base_Admin_Controller
 		$data['show_utility_district_heating'] = $show_utility_district_heating;
 		$data['show_utility_district_heating_boiler'] = $show_utility_district_heating_boiler;
 		$data['show_waste_management']         = $show_waste_management;
+		$data['show_utility_fleet']           = $show_utility_fleet;
 
 		$data['show_total_utility_notification'] = $show_total_utility_notification;
 
@@ -2104,6 +2112,7 @@ class Sites_admin extends Base_Admin_Controller
 				/* Number Of columns define */
 				$colmuns['Site Name']         = "site_id";
 				$colmuns['Measure']           = "measure_id";
+				$colmuns['Count']             = "count";
 				$colmuns['Low']               = "low";
 				$colmuns['Lower Quartile']    = "lower_quartile";
 				$colmuns['Mean']              = "mean";
@@ -2148,6 +2157,8 @@ class Sites_admin extends Base_Admin_Controller
 					$siteId = $allSiteids[trim($data->sheets[0]['cells'][$i][1])]['id'];
 
 					$measure_name = trim($data->sheets[0]['cells'][$i][2]);
+					$dataInsert['measure_name'] = $measure_name;
+					$dataInsert['measure_code'] = explode(':',$measure_name)[0];
 					$measure_id = $this->import_model->get_measureId($measure_name);
 
 					if ($siteId == '') {
@@ -2347,6 +2358,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_cooling = intval($data['show_utility_district_cooling']);
 			$show_utility_district_heating = intval($data['show_utility_district_heating']);
 			$show_utility_district_heating_boiler = intval($data['show_utility_district_heating_boiler']);
+			$show_utility_fleet         = intval($data['show_utility_fleet']);
 			$show_waste_management         = intval($data['show_waste_management']);
 			$utility_unit_electricity      = intval($data['utility_unit_electricity']);
 			$utility_unit_fuel_oil         = intval($data['utility_unit_fuel_oil']);
@@ -2612,6 +2624,7 @@ class Sites_admin extends Base_Admin_Controller
 				$data_array['utility_unit_district_heating']   = $utility_unit_district_heating;
 
 				$data_array['show_waste_management']           = $show_waste_management;
+				$data_array['show_utility_fleet']           = $show_utility_fleet;
 
 				$data_array['baseline_regression_year']        = trim($data['baseline_regression_year']);
 				$data_array['local_currency']                  = trim($data['local_currency']);
@@ -2656,11 +2669,13 @@ class Sites_admin extends Base_Admin_Controller
 				$this->sites_model->save_renewable_energy($site_id, $data['renewable_energy'], $is_renewable_energy);
 				$this->sites_model->save_daily_reading_settings($site_id, $data['daily_reading'], $data['daily_reading']);
 				$this->sites_model->save_daily_reading_utilites_setting($site_id, $data['daily_reading_utlities']);
+				$this->sites_model->update_measure_reading($site_id,$data);
 
 				if (empty($data_array['id'])) {
 					$site_notification_lists = getNotificationStaticList($site_id);
 					$this->sites_model->save_default_notifications($site_id, $site_notification_lists);
 				}
+				$this->sites_model->assign_site_to_corporate_and_super_admins($site_id, isset($data_array['region_id']) ? $data_array['region_id'] : 0);
 
 				if ($id == 0) {
 					$this->theme->set_message(lang('site-add-success'), 'success');
@@ -2782,6 +2797,7 @@ class Sites_admin extends Base_Admin_Controller
 			$show_utility_district_heating = $result['show_utility_district_heating'];
 			$show_utility_district_heating_boiler = $result['show_utility_district_heating_boiler'];
 			$show_waste_management         = $result['show_waste_management'];
+			$show_utility_fleet         = $result['show_utility_fleet'];
 			$chsb_reporting          = $result['chsb_reporting'];
 			$chsb_segment          = $result['chsb_segment'];
 			$csr                     = $result['csr'];
@@ -2911,6 +2927,7 @@ class Sites_admin extends Base_Admin_Controller
 		$data['show_utility_district_heating'] = $show_utility_district_heating;
 		$data['show_utility_district_heating_boiler'] = $show_utility_district_heating_boiler;
 		$data['show_waste_management']         = $show_waste_management;
+		$data['show_utility_fleet']           = $show_utility_fleet;
 
 		$data['show_total_utility_notification'] = $show_total_utility_notification;
 		$data['chsb_reporting'] = $chsb_reporting;
@@ -3435,7 +3452,7 @@ class Sites_admin extends Base_Admin_Controller
 
 		ob_end_clean();
 
-		$pdf->writeHTML($content, true, false, true, false, '');
+		$pdf->writeHTML(sanitize_report_output_html($content), true, false, true, false, '');
 
 		$pdf->Output($pdfName, 'D'); // D - downlaod, F- Save
 
@@ -3741,509 +3758,107 @@ class Sites_admin extends Base_Admin_Controller
 		$this->site_waste_model->user_id = $this->user_id;
 		$this->site_waste_model->year_id = NULL;
 		$this->site_waste_model->month_id = NULL;
+		$this->site_waste_model->rebates = NULL;
 
-		if (!$this->input->post()) {
-			$site_waste_result = $this->site_waste_model->get_site_waste_model_detail_by_siteId_userId();
-			$site_waste = $site_waste_result[0]['s'];
-		}
+		$site_waste_result = $this->site_waste_model->get_site_waste_model_detail_by_siteId_userId();
+		$site_waste = (isset($site_waste_result[0]['s']) && !empty($site_waste_result[0]['s'])) ? $site_waste_result[0]['s'] : [];
 
 		if ($this->input->post()) {
 			$postData = $this->input->post();
-			if ($_POST['wasteFormSubmit']) {
-				$this->site_waste_model->typical_destination_bottles_cans = isset($postData['typical_destination_bottles_cans']) ? $postData['typical_destination_bottles_cans'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_bottles_cans = isset($postData['unit_measure_dropdown_bottles_cans']) ? $postData['unit_measure_dropdown_bottles_cans'] : 0;
-				$this->site_waste_model->source_bottles_cans = isset($postData['source_bottles_cans']) ? implode(',', $postData['source_bottles_cans']) : 0;
-				$this->site_waste_model->monthly_tracking_bottles_cans = isset($postData['monthly_tracking_bottles_cans']) ? $postData['monthly_tracking_bottles_cans'] : 0;
-				$this->site_waste_model->unit_measure_bottles_cans = NULL;
-				$this->site_waste_model->disposal_cost_bottles_cans = NULL;
-				$this->site_waste_model->total_bottles_cans = NULL;
-				$this->site_waste_model->is_check_bottles_cans = isset($postData['is_check_bottles_cans']) ? $postData['is_check_bottles_cans'] : 0;
-				if (!($this->site_waste_model->is_check_bottles_cans)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'bottles_cans');
+			if (!empty($postData['wasteFormSubmit'])) {
+				$wasteStreams = array(
+					'bottles_cans',
+					'wastetoenergy',
+					'cardboard',
+					'paper',
+					'mixed_glass',
+					'alluminium',
+					'pete_plastic_bottles',
+					'hdpe',
+					'other_plastics',
+					'bottled_amenities',
+					'soap_bars',
+					'palettes_and_crates',
+					'e_waste',
+					'durable_goods',
+					'solid_food_waste',
+					'leftover_food',
+					'inedible_parts',
+					'liquid_food_waste',
+					'kitchen_grease',
+					'liquid_hazardous_waste',
+					'other_hazardous_waste',
+					'batteries',
+					'light_bulbs',
+					'light_fixtures',
+					'textiles',
+					'wood',
+					'building_constructions',
+					'other',
+					'recycling',
+					'commingled_recyclables',
+					'paper_cardboard',
+					'mixed_metals',
+					'plastics',
+					'donations',
+					'toiletry_donations',
+					'biodegradable',
+					'mixed_organic',
+					'food_waste',
+					'landfill_other',
+					'hazardous_waste',
+					'universal_waste',
+					'other_materials',
+					'hazardous_and_universal_waste',
+					'medical_waste',
+					'tin',
+				);
+
+				foreach ($wasteStreams as $stream) {
+					$destKey = 'typical_destination_' . $stream;
+					$unitKey = 'unit_measure_dropdown_' . $stream;
+					$sourceKey = 'source_' . $stream;
+					$trackKey = 'monthly_tracking_' . $stream;
+					$checkKey = 'is_check_' . $stream;
+
+					$existingDest = isset($site_waste[$destKey]) ? $site_waste[$destKey] : 0;
+					$existingUnit = isset($site_waste[$unitKey]) ? $site_waste[$unitKey] : 0;
+					$existingSource = isset($site_waste[$sourceKey]) ? $site_waste[$sourceKey] : 0;
+					$existingTrack = isset($site_waste[$trackKey]) ? $site_waste[$trackKey] : 0;
+					$existingCheck = isset($site_waste[$checkKey]) ? $site_waste[$checkKey] : 0;
+
+					$this->site_waste_model->$destKey = array_key_exists($destKey, $postData) ? $postData[$destKey] : $existingDest;
+					$this->site_waste_model->$unitKey = array_key_exists($unitKey, $postData) ? $postData[$unitKey] : $existingUnit;
+					if (array_key_exists($sourceKey, $postData)) {
+						$this->site_waste_model->$sourceKey = is_array($postData[$sourceKey]) ? implode(',', $postData[$sourceKey]) : $postData[$sourceKey];
+					} else {
+						$this->site_waste_model->$sourceKey = $existingSource;
+					}
+					$this->site_waste_model->$trackKey = array_key_exists($trackKey, $postData) ? $postData[$trackKey] : $existingTrack;
+
+					// Keep monthly totals/costs; they are not part of this settings form.
+					$measureKey = 'unit_measure_' . $stream;
+					$costKey = 'disposal_cost_' . $stream;
+					$totalKey = 'total_' . $stream;
+					if (isset($site_waste[$measureKey])) {
+						$this->site_waste_model->$measureKey = $site_waste[$measureKey];
+					}
+					if (isset($site_waste[$costKey])) {
+						$this->site_waste_model->$costKey = $site_waste[$costKey];
+					}
+					if (isset($site_waste[$totalKey])) {
+						$this->site_waste_model->$totalKey = $site_waste[$totalKey];
+					}
+
+					$newCheck = array_key_exists($checkKey, $postData) ? $postData[$checkKey] : $existingCheck;
+					$this->site_waste_model->$checkKey = $newCheck;
+					if (!empty($existingCheck) && empty($newCheck)) {
+						$this->site_waste_model->update_untracked_record($siteId, $stream);
+					}
 				}
-				$this->site_waste_model->typical_destination_wastetoenergy = isset($postData['typical_destination_wastetoenergy']) ? $postData['typical_destination_wastetoenergy'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_wastetoenergy = isset($postData['unit_measure_dropdown_wastetoenergy']) ? $postData['unit_measure_dropdown_wastetoenergy'] : 0;
-				$this->site_waste_model->source_wastetoenergy = isset($postData['source_wastetoenergy']) ? implode(',', $postData['source_wastetoenergy']) : 0;
-				$this->site_waste_model->monthly_tracking_wastetoenergy = isset($postData['monthly_tracking_wastetoenergy']) ? $postData['monthly_tracking_wastetoenergy'] : 0;
-				$this->site_waste_model->unit_measure_wastetoenergy = NULL;
-				$this->site_waste_model->disposal_cost_wastetoenergy = NULL;
-				$this->site_waste_model->total_wastetoenergy = NULL;
-				$this->site_waste_model->is_check_wastetoenergy = isset($postData['is_check_wastetoenergy']) ? $postData['is_check_wastetoenergy'] : 0;
-				if (!($this->site_waste_model->is_check_wastetoenergy)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'wastetoenergy');
-				}
-				$this->site_waste_model->typical_destination_cardboard = isset($postData['typical_destination_cardboard']) ? $postData['typical_destination_cardboard'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_cardboard = isset($postData['unit_measure_dropdown_cardboard']) ? $postData['unit_measure_dropdown_cardboard'] : 0;
-				$this->site_waste_model->source_cardboard = isset($postData['source_cardboard']) ? implode(',', $postData['source_cardboard']) : 0;
-				$this->site_waste_model->monthly_tracking_cardboard = isset($postData['monthly_tracking_cardboard']) ? $postData['monthly_tracking_cardboard'] : 0;
-				$this->site_waste_model->unit_measure_cardboard = NULL;
-				$this->site_waste_model->disposal_cost_cardboard = NULL;
-				$this->site_waste_model->total_cardboard = NULL;
-				$this->site_waste_model->is_check_cardboard = isset($postData['is_check_cardboard']) ? $postData['is_check_cardboard'] : 0;
-				if (!($this->site_waste_model->is_check_cardboard)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'cardboard');
-				}
-				$this->site_waste_model->typical_destination_paper = isset($postData['typical_destination_paper']) ? $postData['typical_destination_paper'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_paper = isset($postData['unit_measure_dropdown_paper']) ? $postData['unit_measure_dropdown_paper'] : 0;
-				$this->site_waste_model->source_paper = isset($postData['source_paper']) ? implode(',', $postData['source_paper']) : 0;
-				$this->site_waste_model->monthly_tracking_paper = isset($postData['monthly_tracking_paper']) ? $postData['monthly_tracking_paper'] : 0;
-				$this->site_waste_model->unit_measure_paper = NULL;
-				$this->site_waste_model->disposal_cost_paper = NULL;
-				$this->site_waste_model->total_paper = NULL;
-				$this->site_waste_model->is_check_paper = isset($postData['is_check_paper']) ? $postData['is_check_paper'] : 0;
-				if (!($this->site_waste_model->is_check_paper)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'paper');
-				}
-				$this->site_waste_model->typical_destination_mixed_glass = isset($postData['typical_destination_mixed_glass']) ? $postData['typical_destination_mixed_glass'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_mixed_glass = isset($postData['unit_measure_dropdown_mixed_glass']) ? $postData['unit_measure_dropdown_mixed_glass'] : 0;
-				$this->site_waste_model->source_mixed_glass = isset($postData['source_mixed_glass']) ? implode(',', $postData['source_mixed_glass']) : 0;
-				$this->site_waste_model->monthly_tracking_mixed_glass = isset($postData['monthly_tracking_mixed_glass']) ? $postData['monthly_tracking_mixed_glass'] : 0;
-				$this->site_waste_model->unit_measure_mixed_glass = NULL;
-				$this->site_waste_model->disposal_cost_mixed_glass = NULL;
-				$this->site_waste_model->total_mixed_glass = NULL;
-				$this->site_waste_model->is_check_mixed_glass = isset($postData['is_check_mixed_glass']) ? $postData['is_check_mixed_glass'] : 0;
-				if (!($this->site_waste_model->is_check_mixed_glass)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'mixed_glass');
-				}
-				$this->site_waste_model->typical_destination_alluminium = isset($postData['typical_destination_alluminium']) ? $postData['typical_destination_alluminium'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_alluminium = isset($postData['unit_measure_dropdown_alluminium']) ? $postData['unit_measure_dropdown_alluminium'] : 0;
-				$this->site_waste_model->source_alluminium = isset($postData['source_alluminium']) ? implode(',', $postData['source_alluminium']) : 0;
-				$this->site_waste_model->monthly_tracking_alluminium = isset($postData['monthly_tracking_alluminium']) ? $postData['monthly_tracking_alluminium'] : 0;
-				$this->site_waste_model->unit_measure_alluminium = NULL;
-				$this->site_waste_model->disposal_cost_alluminium = NULL;
-				$this->site_waste_model->total_alluminium = NULL;
-				$this->site_waste_model->is_check_alluminium = isset($postData['is_check_alluminium']) ? $postData['is_check_alluminium'] : 0;
-				if (!($this->site_waste_model->is_check_alluminium)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'alluminium');
-				}
-				$this->site_waste_model->typical_destination_pete_plastic_bottles = isset($postData['typical_destination_pete_plastic_bottles']) ? $postData['typical_destination_pete_plastic_bottles'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_pete_plastic_bottles = isset($postData['unit_measure_dropdown_pete_plastic_bottles']) ? $postData['unit_measure_dropdown_pete_plastic_bottles'] : 0;
-				$this->site_waste_model->source_pete_plastic_bottles = isset($postData['source_pete_plastic_bottles']) ? implode(',', $postData['source_pete_plastic_bottles']) : 0;
-				$this->site_waste_model->monthly_tracking_pete_plastic_bottles = isset($postData['monthly_tracking_pete_plastic_bottles']) ? $postData['monthly_tracking_pete_plastic_bottles'] : 0;
-				$this->site_waste_model->unit_measure_pete_plastic_bottles = NULL;
-				$this->site_waste_model->disposal_cost_pete_plastic_bottles = NULL;
-				$this->site_waste_model->total_pete_plastic_bottles = NULL;
-				$this->site_waste_model->is_check_pete_plastic_bottles = isset($postData['is_check_pete_plastic_bottles']) ? $postData['is_check_pete_plastic_bottles'] : 0;
-				if (!($this->site_waste_model->is_check_pete_plastic_bottles)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'pete_plastic_bottles');
-				}
-				$this->site_waste_model->typical_destination_hdpe = isset($postData['typical_destination_hdpe']) ? $postData['typical_destination_hdpe'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_hdpe = isset($postData['unit_measure_dropdown_hdpe']) ? $postData['unit_measure_dropdown_hdpe'] : 0;
-				$this->site_waste_model->source_hdpe = isset($postData['source_hdpe']) ? implode(',', $postData['source_hdpe']) : 0;
-				$this->site_waste_model->monthly_tracking_hdpe = isset($postData['monthly_tracking_hdpe']) ? $postData['monthly_tracking_hdpe'] : 0;
-				$this->site_waste_model->unit_measure_hdpe = NULL;
-				$this->site_waste_model->disposal_cost_hdpe = NULL;
-				$this->site_waste_model->total_hdpe = NULL;
-				$this->site_waste_model->is_check_hdpe = isset($postData['is_check_hdpe']) ? $postData['is_check_hdpe'] : 0;
-				if (!($this->site_waste_model->is_check_hdpe)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'hdpe');
-				}
-				$this->site_waste_model->typical_destination_other_plastics = isset($postData['typical_destination_other_plastics']) ? $postData['typical_destination_other_plastics'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_other_plastics = isset($postData['unit_measure_dropdown_other_plastics']) ? $postData['unit_measure_dropdown_other_plastics'] : 0;
-				$this->site_waste_model->source_other_plastics = isset($postData['source_other_plastics']) ? implode(',', $postData['source_other_plastics']) : 0;
-				$this->site_waste_model->monthly_tracking_other_plastics = isset($postData['monthly_tracking_other_plastics']) ? $postData['monthly_tracking_other_plastics'] : 0;
-				$this->site_waste_model->unit_measure_other_plastics = NULL;
-				$this->site_waste_model->disposal_cost_other_plastics = NULL;
-				$this->site_waste_model->total_other_plastics = NULL;
-				$this->site_waste_model->is_check_other_plastics = isset($postData['is_check_other_plastics']) ? $postData['is_check_other_plastics'] : 0;
-				if (!($this->site_waste_model->is_check_other_plastics)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'other_plastics');
-				}
-				$this->site_waste_model->typical_destination_bottled_amenities = isset($postData['typical_destination_bottled_amenities']) ? $postData['typical_destination_bottled_amenities'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_bottled_amenities = isset($postData['unit_measure_dropdown_bottled_amenities']) ? $postData['unit_measure_dropdown_bottled_amenities'] : 0;
-				$this->site_waste_model->source_bottled_amenities = isset($postData['source_bottled_amenities']) ? implode(',', $postData['source_bottled_amenities']) : 0;
-				$this->site_waste_model->monthly_tracking_bottled_amenities = isset($postData['monthly_tracking_bottled_amenities']) ? $postData['monthly_tracking_bottled_amenities'] : 0;
-				$this->site_waste_model->unit_measure_bottled_amenities = NULL;
-				$this->site_waste_model->disposal_cost_bottled_amenities = NULL;
-				$this->site_waste_model->total_bottled_amenities = NULL;
-				$this->site_waste_model->is_check_bottled_amenities = isset($postData['is_check_bottled_amenities']) ? $postData['is_check_bottled_amenities'] : 0;
-				if (!($this->site_waste_model->is_check_bottled_amenities)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'bottled_amenities');
-				}
-				$this->site_waste_model->typical_destination_soap_bars = isset($postData['typical_destination_soap_bars']) ? $postData['typical_destination_soap_bars'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_soap_bars = isset($postData['unit_measure_dropdown_soap_bars']) ? $postData['unit_measure_dropdown_soap_bars'] : 0;
-				$this->site_waste_model->source_soap_bars = isset($postData['source_soap_bars']) ? implode(',', $postData['source_soap_bars']) : 0;
-				$this->site_waste_model->monthly_tracking_soap_bars = isset($postData['monthly_tracking_soap_bars']) ? $postData['monthly_tracking_soap_bars'] : 0;
-				$this->site_waste_model->unit_measure_soap_bars = NULL;
-				$this->site_waste_model->disposal_cost_soap_bars = NULL;
-				$this->site_waste_model->total_soap_bars = NULL;
-				$this->site_waste_model->is_check_soap_bars = isset($postData['is_check_soap_bars']) ? $postData['is_check_soap_bars'] : 0;
-				if (!($this->site_waste_model->is_check_soap_bars)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'soap_bars');
-				}
-				$this->site_waste_model->typical_destination_palettes_and_crates = isset($postData['typical_destination_palettes_and_crates']) ? $postData['typical_destination_palettes_and_crates'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_palettes_and_crates = isset($postData['unit_measure_dropdown_palettes_and_crates']) ? $postData['unit_measure_dropdown_palettes_and_crates'] : 0;
-				$this->site_waste_model->source_palettes_and_crates = isset($postData['source_palettes_and_crates']) ? implode(',', $postData['source_palettes_and_crates']) : 0;
-				$this->site_waste_model->monthly_tracking_palettes_and_crates = isset($postData['monthly_tracking_palettes_and_crates']) ? $postData['monthly_tracking_palettes_and_crates'] : 0;
-				$this->site_waste_model->unit_measure_palettes_and_crates = NULL;
-				$this->site_waste_model->disposal_cost_palettes_and_crates = NULL;
-				$this->site_waste_model->total_palettes_and_crates = NULL;
-				$this->site_waste_model->is_check_palettes_and_crates = isset($postData['is_check_palettes_and_crates']) ? $postData['is_check_palettes_and_crates'] : 0;
-				if (!($this->site_waste_model->is_check_palettes_and_crates)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'palettes_and_crates');
-				}
-				$this->site_waste_model->typical_destination_e_waste = isset($postData['typical_destination_e_waste']) ? $postData['typical_destination_e_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_e_waste = isset($postData['unit_measure_dropdown_e_waste']) ? $postData['unit_measure_dropdown_e_waste'] : 0;
-				$this->site_waste_model->source_e_waste = isset($postData['source_e_waste']) ? implode(',', $postData['source_e_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_e_waste = isset($postData['monthly_tracking_e_waste']) ? $postData['monthly_tracking_e_waste'] : 0;
-				$this->site_waste_model->unit_measure_e_waste = NULL;
-				$this->site_waste_model->disposal_cost_e_waste = NULL;
-				$this->site_waste_model->total_e_waste = NULL;
-				$this->site_waste_model->is_check_e_waste = isset($postData['is_check_e_waste']) ? $postData['is_check_e_waste'] : 0;
-				if (!($this->site_waste_model->is_check_e_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'e_waste');
-				}
-				$this->site_waste_model->typical_destination_durable_goods = isset($postData['typical_destination_durable_goods']) ? $postData['typical_destination_durable_goods'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_durable_goods = isset($postData['unit_measure_dropdown_durable_goods']) ? $postData['unit_measure_dropdown_durable_goods'] : 0;
-				$this->site_waste_model->source_durable_goods = isset($postData['source_durable_goods']) ? implode(',', $postData['source_durable_goods']) : 0;
-				$this->site_waste_model->monthly_tracking_durable_goods = isset($postData['monthly_tracking_durable_goods']) ? $postData['monthly_tracking_durable_goods'] : 0;
-				$this->site_waste_model->unit_measure_durable_goods = NULL;
-				$this->site_waste_model->disposal_cost_durable_goods = NULL;
-				$this->site_waste_model->total_durable_goods = NULL;
-				$this->site_waste_model->is_check_durable_goods = isset($postData['is_check_durable_goods']) ? $postData['is_check_durable_goods'] : 0;
-				if (!($this->site_waste_model->is_check_durable_goods)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'durable_goods');
-				}
-				$this->site_waste_model->typical_destination_solid_food_waste = isset($postData['typical_destination_solid_food_waste']) ? $postData['typical_destination_solid_food_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_solid_food_waste = isset($postData['unit_measure_dropdown_solid_food_waste']) ? $postData['unit_measure_dropdown_solid_food_waste'] : 0;
-				$this->site_waste_model->source_solid_food_waste = isset($postData['source_solid_food_waste']) ? implode(',', $postData['source_solid_food_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_solid_food_waste = isset($postData['monthly_tracking_solid_food_waste']) ? $postData['monthly_tracking_solid_food_waste'] : 0;
-				$this->site_waste_model->unit_measure_solid_food_waste = NULL;
-				$this->site_waste_model->disposal_cost_solid_food_waste = NULL;
-				$this->site_waste_model->total_solid_food_waste = NULL;
-				$this->site_waste_model->is_check_solid_food_waste = isset($postData['is_check_solid_food_waste']) ? $postData['is_check_solid_food_waste'] : 0;
-				if (!($this->site_waste_model->is_check_solid_food_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'solid_food_waste');
-				}
-				$this->site_waste_model->typical_destination_leftover_food = isset($postData['typical_destination_leftover_food']) ? $postData['typical_destination_leftover_food'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_leftover_food = isset($postData['unit_measure_dropdown_leftover_food']) ? $postData['unit_measure_dropdown_leftover_food'] : 0;
-				$this->site_waste_model->source_leftover_food = isset($postData['source_leftover_food']) ? implode(',', $postData['source_leftover_food']) : 0;
-				$this->site_waste_model->monthly_tracking_leftover_food = isset($postData['monthly_tracking_leftover_food']) ? $postData['monthly_tracking_leftover_food'] : 0;
-				$this->site_waste_model->unit_measure_leftover_food = NULL;
-				$this->site_waste_model->disposal_cost_leftover_food = NULL;
-				$this->site_waste_model->total_leftover_food = NULL;
-				$this->site_waste_model->is_check_leftover_food = isset($postData['is_check_leftover_food']) ? $postData['is_check_leftover_food'] : 0;
-				if (!($this->site_waste_model->is_check_leftover_food)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'leftover_food');
-				}
-				$this->site_waste_model->typical_destination_inedible_parts = isset($postData['typical_destination_inedible_parts']) ? $postData['typical_destination_inedible_parts'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_inedible_parts = isset($postData['unit_measure_dropdown_inedible_parts']) ? $postData['unit_measure_dropdown_inedible_parts'] : 0;
-				$this->site_waste_model->source_inedible_parts = isset($postData['source_inedible_parts']) ? implode(',', $postData['source_inedible_parts']) : 0;
-				$this->site_waste_model->monthly_tracking_inedible_parts = isset($postData['monthly_tracking_inedible_parts']) ? $postData['monthly_tracking_inedible_parts'] : 0;
-				$this->site_waste_model->unit_measure_inedible_parts = NULL;
-				$this->site_waste_model->disposal_cost_inedible_parts = NULL;
-				$this->site_waste_model->total_inedible_parts = NULL;
-				$this->site_waste_model->is_check_inedible_parts = isset($postData['is_check_inedible_parts']) ? $postData['is_check_inedible_parts'] : 0;
-				if (!($this->site_waste_model->is_check_inedible_parts)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'inedible_parts');
-				}
-				$this->site_waste_model->typical_destination_liquid_food_waste = isset($postData['typical_destination_liquid_food_waste']) ? $postData['typical_destination_liquid_food_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_liquid_food_waste = isset($postData['unit_measure_dropdown_liquid_food_waste']) ? $postData['unit_measure_dropdown_liquid_food_waste'] : 0;
-				$this->site_waste_model->source_liquid_food_waste = isset($postData['source_liquid_food_waste']) ? implode(',', $postData['source_liquid_food_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_liquid_food_waste = isset($postData['monthly_tracking_liquid_food_waste']) ? $postData['monthly_tracking_liquid_food_waste'] : 0;
-				$this->site_waste_model->unit_measure_liquid_food_waste = NULL;
-				$this->site_waste_model->disposal_cost_liquid_food_waste = NULL;
-				$this->site_waste_model->total_liquid_food_waste = NULL;
-				$this->site_waste_model->is_check_liquid_food_waste = isset($postData['is_check_liquid_food_waste']) ? $postData['is_check_liquid_food_waste'] : 0;
-				if (!($this->site_waste_model->is_check_liquid_food_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'liquid_food_waste');
-				}
-				$this->site_waste_model->typical_destination_kitchen_grease = isset($postData['typical_destination_kitchen_grease']) ? $postData['typical_destination_kitchen_grease'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_kitchen_grease = isset($postData['unit_measure_dropdown_kitchen_grease']) ? $postData['unit_measure_dropdown_kitchen_grease'] : 0;
-				$this->site_waste_model->source_kitchen_grease = isset($postData['source_kitchen_grease']) ? implode(',', $postData['source_kitchen_grease']) : 0;
-				$this->site_waste_model->monthly_tracking_kitchen_grease = isset($postData['monthly_tracking_kitchen_grease']) ? $postData['monthly_tracking_kitchen_grease'] : 0;
-				$this->site_waste_model->unit_measure_kitchen_grease = NULL;
-				$this->site_waste_model->disposal_cost_kitchen_grease = NULL;
-				$this->site_waste_model->total_kitchen_grease = NULL;
-				$this->site_waste_model->is_check_kitchen_grease = isset($postData['is_check_kitchen_grease']) ? $postData['is_check_kitchen_grease'] : 0;
-				if (!($this->site_waste_model->is_check_kitchen_grease)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'kitchen_grease');
-				}
-				$this->site_waste_model->typical_destination_liquid_hazardous_waste = isset($postData['typical_destination_liquid_hazardous_waste']) ? $postData['typical_destination_liquid_hazardous_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_liquid_hazardous_waste = isset($postData['unit_measure_dropdown_liquid_hazardous_waste']) ? $postData['unit_measure_dropdown_liquid_hazardous_waste'] : 0;
-				$this->site_waste_model->source_liquid_hazardous_waste = isset($postData['source_liquid_hazardous_waste']) ? implode(',', $postData['source_liquid_hazardous_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_liquid_hazardous_waste = isset($postData['monthly_tracking_liquid_hazardous_waste']) ? $postData['monthly_tracking_liquid_hazardous_waste'] : 0;
-				$this->site_waste_model->unit_measure_liquid_hazardous_waste = NULL;
-				$this->site_waste_model->disposal_cost_liquid_hazardous_waste = NULL;
-				$this->site_waste_model->total_liquid_hazardous_waste = NULL;
-				$this->site_waste_model->is_check_liquid_hazardous_waste = isset($postData['is_check_liquid_hazardous_waste']) ? $postData['is_check_liquid_hazardous_waste'] : 0;
-				if (!($this->site_waste_model->is_check_liquid_hazardous_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'liquid_hazardous_waste');
-				}
-				$this->site_waste_model->typical_destination_other_hazardous_waste = isset($postData['typical_destination_other_hazardous_waste']) ? $postData['typical_destination_other_hazardous_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_other_hazardous_waste = isset($postData['unit_measure_dropdown_other_hazardous_waste']) ? $postData['unit_measure_dropdown_other_hazardous_waste'] : 0;
-				$this->site_waste_model->source_other_hazardous_waste = isset($postData['source_other_hazardous_waste']) ? implode(',', $postData['source_other_hazardous_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_other_hazardous_waste = isset($postData['monthly_tracking_other_hazardous_waste']) ? $postData['monthly_tracking_other_hazardous_waste'] : 0;
-				$this->site_waste_model->unit_measure_other_hazardous_waste = NULL;
-				$this->site_waste_model->disposal_cost_other_hazardous_waste = NULL;
-				$this->site_waste_model->total_other_hazardous_waste = NULL;
-				$this->site_waste_model->is_check_other_hazardous_waste = isset($postData['is_check_other_hazardous_waste']) ? $postData['is_check_other_hazardous_waste'] : 0;
-				if (!($this->site_waste_model->is_check_other_hazardous_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'other_hazardous_waste');
-				}
-				$this->site_waste_model->typical_destination_batteries = isset($postData['typical_destination_batteries']) ? $postData['typical_destination_batteries'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_batteries = isset($postData['unit_measure_dropdown_batteries']) ? $postData['unit_measure_dropdown_batteries'] : 0;
-				$this->site_waste_model->source_batteries = isset($postData['source_batteries']) ? implode(',', $postData['source_batteries']) : 0;
-				$this->site_waste_model->monthly_tracking_batteries = isset($postData['monthly_tracking_batteries']) ? $postData['monthly_tracking_batteries'] : 0;
-				$this->site_waste_model->unit_measure_batteries = NULL;
-				$this->site_waste_model->disposal_cost_batteries = NULL;
-				$this->site_waste_model->total_batteries = NULL;
-				$this->site_waste_model->is_check_batteries = isset($postData['is_check_batteries']) ? $postData['is_check_batteries'] : 0;
-				if (!($this->site_waste_model->is_check_batteries)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'batteries');
-				}
-				$this->site_waste_model->typical_destination_light_bulbs = isset($postData['typical_destination_light_bulbs']) ? $postData['typical_destination_light_bulbs'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_light_bulbs = isset($postData['unit_measure_dropdown_light_bulbs']) ? $postData['unit_measure_dropdown_light_bulbs'] : 0;
-				$this->site_waste_model->source_light_bulbs = isset($postData['source_light_bulbs']) ? implode(',', $postData['source_light_bulbs']) : 0;
-				$this->site_waste_model->monthly_tracking_light_bulbs = isset($postData['monthly_tracking_light_bulbs']) ? $postData['monthly_tracking_light_bulbs'] : 0;
-				$this->site_waste_model->unit_measure_light_bulbs = NULL;
-				$this->site_waste_model->disposal_cost_light_bulbs = NULL;
-				$this->site_waste_model->total_light_bulbs = NULL;
-				$this->site_waste_model->is_check_light_bulbs = isset($postData['is_check_light_bulbs']) ? $postData['is_check_light_bulbs'] : 0;
-				if (!($this->site_waste_model->is_check_light_bulbs)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'light_bulbs');
-				}
-				$this->site_waste_model->typical_destination_light_fixtures = isset($postData['typical_destination_light_fixtures']) ? $postData['typical_destination_light_fixtures'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_light_fixtures = isset($postData['unit_measure_dropdown_light_fixtures']) ? $postData['unit_measure_dropdown_light_fixtures'] : 0;
-				$this->site_waste_model->source_light_fixtures = isset($postData['source_light_fixtures']) ? implode(',', $postData['source_light_fixtures']) : 0;
-				$this->site_waste_model->monthly_tracking_light_fixtures = isset($postData['monthly_tracking_light_fixtures']) ? $postData['monthly_tracking_light_fixtures'] : 0;
-				$this->site_waste_model->unit_measure_light_fixtures = NULL;
-				$this->site_waste_model->disposal_cost_light_fixtures = NULL;
-				$this->site_waste_model->total_light_fixtures = NULL;
-				$this->site_waste_model->is_check_light_fixtures = isset($postData['is_check_light_fixtures']) ? $postData['is_check_light_fixtures'] : 0;
-				if (!($this->site_waste_model->is_check_light_fixtures)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'light_fixtures');
-				}
-				$this->site_waste_model->typical_destination_textiles = isset($postData['typical_destination_textiles']) ? $postData['typical_destination_textiles'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_textiles = isset($postData['unit_measure_dropdown_textiles']) ? $postData['unit_measure_dropdown_textiles'] : 0;
-				$this->site_waste_model->source_textiles = isset($postData['source_textiles']) ? implode(',', $postData['source_textiles']) : 0;
-				$this->site_waste_model->monthly_tracking_textiles = isset($postData['monthly_tracking_textiles']) ? $postData['monthly_tracking_textiles'] : 0;
-				$this->site_waste_model->unit_measure_textiles = NULL;
-				$this->site_waste_model->disposal_cost_textiles = NULL;
-				$this->site_waste_model->total_textiles = NULL;
-				$this->site_waste_model->is_check_textiles = isset($postData['is_check_textiles']) ? $postData['is_check_textiles'] : 0;
-				if (!($this->site_waste_model->is_check_textiles)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'textiles');
-				}
-				$this->site_waste_model->typical_destination_wood = isset($postData['typical_destination_wood']) ? $postData['typical_destination_wood'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_wood = isset($postData['unit_measure_dropdown_wood']) ? $postData['unit_measure_dropdown_wood'] : 0;
-				$this->site_waste_model->source_wood = isset($postData['source_wood']) ? implode(',', $postData['source_wood']) : 0;
-				$this->site_waste_model->monthly_tracking_wood = isset($postData['monthly_tracking_wood']) ? $postData['monthly_tracking_wood'] : 0;
-				$this->site_waste_model->unit_measure_wood = NULL;
-				$this->site_waste_model->disposal_cost_wood = NULL;
-				$this->site_waste_model->total_wood = NULL;
-				$this->site_waste_model->is_check_wood = isset($postData['is_check_wood']) ? $postData['is_check_wood'] : 0;
-				if (!($this->site_waste_model->is_check_wood)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'wood');
-				}
-				$this->site_waste_model->typical_destination_building_constructions = isset($postData['typical_destination_building_constructions']) ? $postData['typical_destination_building_constructions'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_building_constructions = isset($postData['unit_measure_dropdown_building_constructions']) ? $postData['unit_measure_dropdown_building_constructions'] : 0;
-				$this->site_waste_model->source_building_constructions = isset($postData['source_building_constructions']) ? implode(',', $postData['source_building_constructions']) : 0;
-				$this->site_waste_model->monthly_tracking_building_constructions = isset($postData['monthly_tracking_building_constructions']) ? $postData['monthly_tracking_building_constructions'] : 0;
-				$this->site_waste_model->unit_measure_building_constructions = NULL;
-				$this->site_waste_model->disposal_cost_building_constructions = NULL;
-				$this->site_waste_model->total_building_constructions = NULL;
-				$this->site_waste_model->is_check_building_constructions = isset($postData['is_check_building_constructions']) ? $postData['is_check_building_constructions'] : 0;
-				if (!($this->site_waste_model->is_check_building_constructions)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'building_constructions');
-				}
-				$this->site_waste_model->typical_destination_other = isset($postData['typical_destination_other']) ? $postData['typical_destination_other'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_other = isset($postData['unit_measure_dropdown_other']) ? $postData['unit_measure_dropdown_other'] : 0;
-				$this->site_waste_model->source_other = isset($postData['source_other']) ? implode(',', $postData['source_other']) : 0;
-				$this->site_waste_model->monthly_tracking_other = isset($postData['monthly_tracking_other']) ? $postData['monthly_tracking_other'] : 0;
-				$this->site_waste_model->unit_measure_other = NULL;
-				$this->site_waste_model->disposal_cost_other = NULL;
-				$this->site_waste_model->total_other = NULL;
-				$this->site_waste_model->is_check_other = isset($postData['is_check_other']) ? $postData['is_check_other'] : 0;
-				if (!($this->site_waste_model->is_check_other)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'other');
-				}
-				$this->site_waste_model->typical_destination_recycling = isset($postData['typical_destination_recycling']) ? $postData['typical_destination_recycling'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_recycling = isset($postData['unit_measure_dropdown_recycling']) ? $postData['unit_measure_dropdown_recycling'] : 0;
-				$this->site_waste_model->source_recycling = isset($postData['source_recycling']) ? implode(',', $postData['source_recycling']) : 0;
-				$this->site_waste_model->monthly_tracking_recycling = isset($postData['monthly_tracking_recycling']) ? $postData['monthly_tracking_recycling'] : 0;
-				$this->site_waste_model->unit_measure_recycling = NULL;
-				$this->site_waste_model->disposal_cost_recycling = NULL;
-				$this->site_waste_model->total_recycling = NULL;
-				$this->site_waste_model->is_check_recycling = isset($postData['is_check_recycling']) ? $postData['is_check_recycling'] : 0;
-				if (!($this->site_waste_model->is_check_recycling)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'recycling');
-				}
-				$this->site_waste_model->typical_destination_commingled_recyclables = isset($postData['typical_destination_commingled_recyclables']) ? $postData['typical_destination_commingled_recyclables'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_commingled_recyclables = isset($postData['unit_measure_dropdown_commingled_recyclables']) ? $postData['unit_measure_dropdown_commingled_recyclables'] : 0;
-				$this->site_waste_model->source_commingled_recyclables = isset($postData['source_commingled_recyclables']) ? implode(',', $postData['source_commingled_recyclables']) : 0;
-				$this->site_waste_model->monthly_tracking_commingled_recyclables = isset($postData['monthly_tracking_commingled_recyclables']) ? $postData['monthly_tracking_commingled_recyclables'] : 0;
-				$this->site_waste_model->unit_measure_commingled_recyclables = NULL;
-				$this->site_waste_model->disposal_cost_commingled_recyclables = NULL;
-				$this->site_waste_model->total_commingled_recyclables = NULL;
-				$this->site_waste_model->is_check_commingled_recyclables = isset($postData['is_check_commingled_recyclables']) ? $postData['is_check_commingled_recyclables'] : 0;
-				if (!($this->site_waste_model->is_check_commingled_recyclables)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'commingled_recyclables');
-				}
-				$this->site_waste_model->typical_destination_paper_cardboard = isset($postData['typical_destination_paper_cardboard']) ? $postData['typical_destination_paper_cardboard'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_paper_cardboard = isset($postData['unit_measure_dropdown_paper_cardboard']) ? $postData['unit_measure_dropdown_paper_cardboard'] : 0;
-				$this->site_waste_model->source_paper_cardboard = isset($postData['source_paper_cardboard']) ? implode(',', $postData['source_paper_cardboard']) : 0;
-				$this->site_waste_model->monthly_tracking_paper_cardboard = isset($postData['monthly_tracking_paper_cardboard']) ? $postData['monthly_tracking_paper_cardboard'] : 0;
-				$this->site_waste_model->unit_measure_paper_cardboard = NULL;
-				$this->site_waste_model->disposal_cost_paper_cardboard = NULL;
-				$this->site_waste_model->total_paper_cardboard = NULL;
-				$this->site_waste_model->is_check_paper_cardboard = isset($postData['is_check_paper_cardboard']) ? $postData['is_check_paper_cardboard'] : 0;
-				if (!($this->site_waste_model->is_check_paper_cardboard)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'paper_cardboard');
-				}
-				$this->site_waste_model->typical_destination_mixed_metals = isset($postData['typical_destination_mixed_metals']) ? $postData['typical_destination_mixed_metals'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_mixed_metals = isset($postData['unit_measure_dropdown_mixed_metals']) ? $postData['unit_measure_dropdown_mixed_metals'] : 0;
-				$this->site_waste_model->source_mixed_metals = isset($postData['source_mixed_metals']) ? implode(',', $postData['source_mixed_metals']) : 0;
-				$this->site_waste_model->monthly_tracking_mixed_metals = isset($postData['monthly_tracking_mixed_metals']) ? $postData['monthly_tracking_mixed_metals'] : 0;
-				$this->site_waste_model->unit_measure_mixed_metals = NULL;
-				$this->site_waste_model->disposal_cost_mixed_metals = NULL;
-				$this->site_waste_model->total_mixed_metals = NULL;
-				$this->site_waste_model->is_check_mixed_metals = isset($postData['is_check_mixed_metals']) ? $postData['is_check_mixed_metals'] : 0;
-				if (!($this->site_waste_model->is_check_mixed_metals)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'mixed_metals');
-				}
-				$this->site_waste_model->typical_destination_plastics = isset($postData['typical_destination_plastics']) ? $postData['typical_destination_plastics'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_plastics = isset($postData['unit_measure_dropdown_plastics']) ? $postData['unit_measure_dropdown_plastics'] : 0;
-				$this->site_waste_model->source_plastics = isset($postData['source_plastics']) ? implode(',', $postData['source_plastics']) : 0;
-				$this->site_waste_model->monthly_tracking_plastics = isset($postData['monthly_tracking_plastics']) ? $postData['monthly_tracking_plastics'] : 0;
-				$this->site_waste_model->unit_measure_plastics = NULL;
-				$this->site_waste_model->disposal_cost_plastics = NULL;
-				$this->site_waste_model->total_plastics = NULL;
-				$this->site_waste_model->is_check_plastics = isset($postData['is_check_plastics']) ? $postData['is_check_plastics'] : 0;
-				if (!($this->site_waste_model->is_check_plastics)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'plastics');
-				}
-				$this->site_waste_model->typical_destination_donations = isset($postData['typical_destination_donations']) ? $postData['typical_destination_donations'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_donations = isset($postData['unit_measure_dropdown_donations']) ? $postData['unit_measure_dropdown_donations'] : 0;
-				$this->site_waste_model->source_donations = isset($postData['source_donations']) ? implode(',', $postData['source_donations']) : 0;
-				$this->site_waste_model->monthly_tracking_donations = isset($postData['monthly_tracking_donations']) ? $postData['monthly_tracking_donations'] : 0;
-				$this->site_waste_model->unit_measure_donations = NULL;
-				$this->site_waste_model->disposal_cost_donations = NULL;
-				$this->site_waste_model->total_donations = NULL;
-				$this->site_waste_model->is_check_donations = isset($postData['is_check_donations']) ? $postData['is_check_donations'] : 0;
-				if (!($this->site_waste_model->is_check_donations)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'donations');
-				}
-				$this->site_waste_model->typical_destination_toiletry_donations = isset($postData['typical_destination_toiletry_donations']) ? $postData['typical_destination_toiletry_donations'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_toiletry_donations = isset($postData['unit_measure_dropdown_toiletry_donations']) ? $postData['unit_measure_dropdown_toiletry_donations'] : 0;
-				$this->site_waste_model->source_toiletry_donations = isset($postData['source_toiletry_donations']) ? implode(',', $postData['source_toiletry_donations']) : 0;
-				$this->site_waste_model->monthly_tracking_toiletry_donations = isset($postData['monthly_tracking_toiletry_donations']) ? $postData['monthly_tracking_toiletry_donations'] : 0;
-				$this->site_waste_model->unit_measure_toiletry_donations = NULL;
-				$this->site_waste_model->disposal_cost_toiletry_donations = NULL;
-				$this->site_waste_model->total_toiletry_donations = NULL;
-				$this->site_waste_model->is_check_toiletry_donations = isset($postData['is_check_toiletry_donations']) ? $postData['is_check_toiletry_donations'] : 0;
-				if (!($this->site_waste_model->is_check_toiletry_donations)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'toiletry_donations');
-				}
-				$this->site_waste_model->typical_destination_biodegradable = isset($postData['typical_destination_biodegradable']) ? $postData['typical_destination_biodegradable'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_biodegradable = isset($postData['unit_measure_dropdown_biodegradable']) ? $postData['unit_measure_dropdown_biodegradable'] : 0;
-				$this->site_waste_model->source_biodegradable = isset($postData['source_biodegradable']) ? implode(',', $postData['source_biodegradable']) : 0;
-				$this->site_waste_model->monthly_tracking_biodegradable = isset($postData['monthly_tracking_biodegradable']) ? $postData['monthly_tracking_biodegradable'] : 0;
-				$this->site_waste_model->unit_measure_biodegradable = NULL;
-				$this->site_waste_model->disposal_cost_biodegradable = NULL;
-				$this->site_waste_model->total_biodegradable = NULL;
-				$this->site_waste_model->is_check_biodegradable = isset($postData['is_check_biodegradable']) ? $postData['is_check_biodegradable'] : 0;
-				if (!($this->site_waste_model->is_check_biodegradable)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'biodegradable');
-				}
-				$this->site_waste_model->typical_destination_mixed_organic = isset($postData['typical_destination_mixed_organic']) ? $postData['typical_destination_mixed_organic'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_mixed_organic = isset($postData['unit_measure_dropdown_mixed_organic']) ? $postData['unit_measure_dropdown_mixed_organic'] : 0;
-				$this->site_waste_model->source_mixed_organic = isset($postData['source_mixed_organic']) ? implode(',', $postData['source_mixed_organic']) : 0;
-				$this->site_waste_model->monthly_tracking_mixed_organic = isset($postData['monthly_tracking_mixed_organic']) ? $postData['monthly_tracking_mixed_organic'] : 0;
-				$this->site_waste_model->unit_measure_mixed_organic = NULL;
-				$this->site_waste_model->disposal_cost_mixed_organic = NULL;
-				$this->site_waste_model->total_mixed_organic = NULL;
-				$this->site_waste_model->is_check_mixed_organic = isset($postData['is_check_mixed_organic']) ? $postData['is_check_mixed_organic'] : 0;
-				if (!($this->site_waste_model->is_check_mixed_organic)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'mixed_organic');
-				}
-				$this->site_waste_model->typical_destination_food_waste = isset($postData['typical_destination_food_waste']) ? $postData['typical_destination_food_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_food_waste = isset($postData['unit_measure_dropdown_food_waste']) ? $postData['unit_measure_dropdown_food_waste'] : 0;
-				$this->site_waste_model->source_food_waste = isset($postData['source_food_waste']) ? implode(',', $postData['source_food_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_food_waste = isset($postData['monthly_tracking_food_waste']) ? $postData['monthly_tracking_food_waste'] : 0;
-				$this->site_waste_model->unit_measure_food_waste = NULL;
-				$this->site_waste_model->disposal_cost_food_waste = NULL;
-				$this->site_waste_model->total_food_waste = NULL;
-				$this->site_waste_model->is_check_food_waste = isset($postData['is_check_food_waste']) ? $postData['is_check_food_waste'] : 0;
-				if (!($this->site_waste_model->is_check_food_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'food_waste');
-				}
-				$this->site_waste_model->typical_destination_landfill_other = isset($postData['typical_destination_landfill_other']) ? $postData['typical_destination_landfill_other'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_landfill_other = isset($postData['unit_measure_dropdown_landfill_other']) ? $postData['unit_measure_dropdown_landfill_other'] : 0;
-				$this->site_waste_model->source_landfill_other = isset($postData['source_landfill_other']) ? implode(',', $postData['source_landfill_other']) : 0;
-				$this->site_waste_model->monthly_tracking_landfill_other = isset($postData['monthly_tracking_landfill_other']) ? $postData['monthly_tracking_landfill_other'] : 0;
-				$this->site_waste_model->unit_measure_landfill_other = NULL;
-				$this->site_waste_model->disposal_cost_landfill_other = NULL;
-				$this->site_waste_model->total_landfill_other = NULL;
-				$this->site_waste_model->is_check_landfill_other = isset($postData['is_check_landfill_other']) ? $postData['is_check_landfill_other'] : 0;
-				if (!($this->site_waste_model->is_check_landfill_other)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'landfill_other');
-				}
-				$this->site_waste_model->typical_destination_hazardous_waste = isset($postData['typical_destination_hazardous_waste']) ? $postData['typical_destination_hazardous_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_hazardous_waste = isset($postData['unit_measure_dropdown_hazardous_waste']) ? $postData['unit_measure_dropdown_hazardous_waste'] : 0;
-				$this->site_waste_model->source_hazardous_waste = isset($postData['source_hazardous_waste']) ? implode(',', $postData['source_hazardous_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_hazardous_waste = isset($postData['monthly_tracking_hazardous_waste']) ? $postData['monthly_tracking_hazardous_waste'] : 0;
-				$this->site_waste_model->unit_measure_hazardous_waste = NULL;
-				$this->site_waste_model->disposal_cost_hazardous_waste = NULL;
-				$this->site_waste_model->total_hazardous_waste = NULL;
-				$this->site_waste_model->is_check_hazardous_waste = isset($postData['is_check_hazardous_waste']) ? $postData['is_check_hazardous_waste'] : 0;
-				if (!($this->site_waste_model->is_check_hazardous_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'hazardous_waste');
-				}
-				$this->site_waste_model->typical_destination_universal_waste = isset($postData['typical_destination_universal_waste']) ? $postData['typical_destination_universal_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_universal_waste = isset($postData['unit_measure_dropdown_universal_waste']) ? $postData['unit_measure_dropdown_universal_waste'] : 0;
-				$this->site_waste_model->source_universal_waste = isset($postData['source_universal_waste']) ? implode(',', $postData['source_universal_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_universal_waste = isset($postData['monthly_tracking_universal_waste']) ? $postData['monthly_tracking_universal_waste'] : 0;
-				$this->site_waste_model->unit_measure_universal_waste = NULL;
-				$this->site_waste_model->disposal_cost_universal_waste = NULL;
-				$this->site_waste_model->total_universal_waste = NULL;
-				$this->site_waste_model->is_check_universal_waste = isset($postData['is_check_universal_waste']) ? $postData['is_check_universal_waste'] : 0;
-				if (!($this->site_waste_model->is_check_universal_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'universal_waste');
-				}
-				$this->site_waste_model->typical_destination_other_materials = isset($postData['typical_destination_other_materials']) ? $postData['typical_destination_other_materials'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_other_materials = isset($postData['unit_measure_dropdown_other_materials']) ? $postData['unit_measure_dropdown_other_materials'] : 0;
-				$this->site_waste_model->source_other_materials = isset($postData['source_other_materials']) ? implode(',', $postData['source_other_materials']) : 0;
-				$this->site_waste_model->monthly_tracking_other_materials = isset($postData['monthly_tracking_other_materials']) ? $postData['monthly_tracking_other_materials'] : 0;
-				$this->site_waste_model->unit_measure_other_materials = NULL;
-				$this->site_waste_model->disposal_cost_other_materials = NULL;
-				$this->site_waste_model->total_other_materials = NULL;
-				$this->site_waste_model->is_check_other_materials = isset($postData['is_check_other_materials']) ? $postData['is_check_other_materials'] : 0;
-				if (!($this->site_waste_model->is_check_other_materials)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'other_materials');
-				}
-				$this->site_waste_model->typical_destination_hazardous_and_universal_waste = isset($postData['typical_destination_hazardous_and_universal_waste']) ? $postData['typical_destination_hazardous_and_universal_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_hazardous_and_universal_waste = isset($postData['unit_measure_dropdown_hazardous_and_universal_waste']) ? $postData['unit_measure_dropdown_hazardous_and_universal_waste'] : 0;
-				$this->site_waste_model->source_hazardous_and_universal_waste = isset($postData['source_hazardous_and_universal_waste']) ? implode(',', $postData['source_hazardous_and_universal_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_hazardous_and_universal_waste = isset($postData['monthly_tracking_hazardous_and_universal_waste']) ? $postData['monthly_tracking_hazardous_and_universal_waste'] : 0;
-				$this->site_waste_model->unit_measure_hazardous_and_universal_waste = NULL;
-				$this->site_waste_model->disposal_cost_hazardous_and_universal_waste = NULL;
-				$this->site_waste_model->total_hazardous_and_universal_waste = NULL;
-				$this->site_waste_model->is_check_hazardous_and_universal_waste = isset($postData['is_check_hazardous_and_universal_waste']) ? $postData['is_check_hazardous_and_universal_waste'] : 0;
-				if (!($this->site_waste_model->is_check_hazardous_and_universal_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'hazardous_and_universal_waste');
-				}
-				$this->site_waste_model->typical_destination_medical_waste = isset($postData['typical_destination_medical_waste']) ? $postData['typical_destination_medical_waste'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_medical_waste = isset($postData['unit_measure_dropdown_medical_waste']) ? $postData['unit_measure_dropdown_medical_waste'] : 0;
-				$this->site_waste_model->source_medical_waste = isset($postData['source_medical_waste']) ? implode(',', $postData['source_medical_waste']) : 0;
-				$this->site_waste_model->monthly_tracking_medical_waste = isset($postData['monthly_tracking_medical_waste']) ? $postData['monthly_tracking_medical_waste'] : 0;
-				$this->site_waste_model->unit_measure_medical_waste = NULL;
-				$this->site_waste_model->disposal_cost_medical_waste = NULL;
-				$this->site_waste_model->total_medical_waste = NULL;
-				$this->site_waste_model->is_check_medical_waste = isset($postData['is_check_medical_waste']) ? $postData['is_check_medical_waste'] : 0;
-				if (!($this->site_waste_model->is_check_medical_waste)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'medical_waste');
-				}
-				$this->site_waste_model->typical_destination_tin = isset($postData['typical_destination_tin']) ? $postData['typical_destination_tin'] : 0;
-				$this->site_waste_model->unit_measure_dropdown_tin = isset($postData['unit_measure_dropdown_tin']) ? $postData['unit_measure_dropdown_tin'] : 0;
-				$this->site_waste_model->source_tin = isset($postData['source_tin']) ? implode(',', $postData['source_tin']) : 0;
-				$this->site_waste_model->monthly_tracking_tin = isset($postData['monthly_tracking_tin']) ? $postData['monthly_tracking_tin'] : 0;
-				$this->site_waste_model->unit_measure_tin = NULL;
-				$this->site_waste_model->disposal_cost_tin = NULL;
-				$this->site_waste_model->total_tin = NULL;
-				$this->site_waste_model->is_check_tin = isset($postData['is_check_tin']) ? $postData['is_check_tin'] : 0;
-				if (!($this->site_waste_model->is_check_tin)) {
-					$this->site_waste_model->update_untracked_record($siteId, 'tin');
+
+				if (isset($site_waste['rebates'])) {
+					$this->site_waste_model->rebates = $site_waste['rebates'];
 				}
 
 				$this->site_waste_model->insert_site_waste();
@@ -4267,10 +3882,10 @@ class Sites_admin extends Base_Admin_Controller
 		$data['tab_data'] = isset($tabData) ?  $tabData : [];
 		$data['site_waste'] = isset($site_waste) ?  $site_waste : [];
 		$data['site_detail'] = $this->sites_model->get_site_detail($siteId, $user_id, $role_id);
-		$data_action = 'Import';
+		$data_action = 'Update';
 		$site_id = $_SESSION['admin']['site_id'];
 		$user_id = $_SESSION['admin']['user_id'];
-		saveAuditTrail($user_id, $site_id, 'Import Waste', $data_action);
+		saveAuditTrail($user_id, $siteId, 'Site Waste Settings', $data_action);
 		//Render view
 		$this->theme->view($data, 'admin_waste');
 	}
@@ -4308,6 +3923,14 @@ class Sites_admin extends Base_Admin_Controller
 				$this->site_emission_model->natural_gas_emission_factor = isset($postData['natural_gas_emission_factor']) ? $postData['natural_gas_emission_factor'] : NULL;
 				$this->site_emission_model->district_cooling_emission_factor = isset($postData['district_cooling_emission_factor']) ? $postData['district_cooling_emission_factor'] : NULL;
 				$this->site_emission_model->district_heating_emission_factor = isset($postData['district_heating_emission_factor']) ? $postData['district_heating_emission_factor'] : NULL;
+				$this->site_emission_model->waste_general_waste_to_landfill_emission_factor = isset($postData['waste_general_waste_to_landfill_emission_factor']) ? $postData['waste_general_waste_to_landfill_emission_factor'] : NULL;
+				$this->site_emission_model->waste_recycling_streams_emission_factor = isset($postData['waste_recycling_streams_emission_factor']) ? $postData['waste_recycling_streams_emission_factor'] : NULL;
+				$this->site_emission_model->business_travel_flights_emission_factor = isset($postData['business_travel_flights_emission_factor']) ? $postData['business_travel_flights_emission_factor'] : NULL;
+				$this->site_emission_model->business_travel_car_taxi_emission_factor = isset($postData['business_travel_car_taxi_emission_factor']) ? $postData['business_travel_car_taxi_emission_factor'] : NULL;
+				$this->site_emission_model->employee_commuting_car_emission_factor = isset($postData['employee_commuting_car_emission_factor']) ? $postData['employee_commuting_car_emission_factor'] : NULL;
+				$this->site_emission_model->employee_commuting_bus_emission_factor = isset($postData['employee_commuting_bus_emission_factor']) ? $postData['employee_commuting_bus_emission_factor'] : NULL;
+				$this->site_emission_model->outsourced_laundry_emission_factor = isset($postData['outsourced_laundry_emission_factor']) ? $postData['outsourced_laundry_emission_factor'] : NULL;
+				$this->site_emission_model->purchased_goods_emission_factor = isset($postData['purchased_goods_emission_factor']) ? $postData['purchased_goods_emission_factor'] : NULL;
 				$this->site_emission_model->status = 1;
 
 				if (isset($_FILES) && !empty($_FILES)) {
@@ -4356,6 +3979,33 @@ class Sites_admin extends Base_Admin_Controller
 				saveAuditTrail($user_id, $site_id, 'Import Emissions', $data_action);
 				redirect(BASE_ADMIN_URL_CUSTOM . 'sites/edit/' . $site_id);
 			}
+
+			if (!empty($postData['wasteEmissionFactorsSubmit'])) {
+				$this->load->model('sites/site_waste_scope_1_2_emission_factor_model');
+				$factorRows = isset($postData['waste_ef']) ? $postData['waste_ef'] : [];
+				$factorValues = [];
+				foreach ($factorRows as $masterFactorId => $factorRow) {
+					$epaFactor = (isset($factorRow['epa_source_factor']) && is_numeric($factorRow['epa_source_factor']))
+						? round((float) $factorRow['epa_source_factor'], 4)
+						: null;
+					$hepFactor = (isset($factorRow['hep_factor']) && is_numeric($factorRow['hep_factor']))
+						? round((float) $factorRow['hep_factor'], 2)
+						: null;
+					if ($epaFactor !== null && $hepFactor === null) {
+						$hepFactor = round(convertWasteEmissionFactor($epaFactor, 'tco2e_short_ton'), 2);
+					} elseif ($hepFactor !== null && $epaFactor === null) {
+						$epaFactor = round(convertWasteEmissionFactor($hepFactor, 'kgco2e_mt'), 4);
+					}
+					$factorValues[(int) $masterFactorId] = [
+						'epa_source_factor' => $epaFactor,
+						'hep_factor' => $hepFactor,
+					];
+				}
+				$this->site_waste_scope_1_2_emission_factor_model->saveSiteYearValues($site_id, $year, $factorValues);
+				saveAuditTrail($user_id, $site_id, 'Scope 3 Waste Emission Factors', 'Update');
+				$this->theme->set_message('Waste emission factors saved successfully.', 'success');
+				redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'sites/emission/' . $site_id . '?year=' . $year);
+			}
 		}
 
 		$this->load->model('sites/site_emission_model');
@@ -4365,14 +4015,19 @@ class Sites_admin extends Base_Admin_Controller
 		$site_emission_result = $this->site_emission_model->get_site_emission_model_detail_by_siteId();
 		$site_emission = isset($site_emission_result) && !empty($site_emission_result) ? $site_emission_result[0]['s'] : [];
 
+		$this->load->model('sites/site_waste_scope_1_2_emission_factor_model');
+		$waste_emission_factors = $this->site_waste_scope_1_2_emission_factor_model->getRowsWithValues($year, $site_id);
+
 		//Variable assignments to view
 		$data = array();
 		$data['csrf_token'] = $this->security->get_csrf_token_name();
 		$data['csrf_hash'] = $this->security->get_csrf_hash();
 		$data['site_emission'] = isset($site_emission) && !empty($site_emission) ? $site_emission : [];
+		$data['waste_emission_factors'] = $waste_emission_factors;
 		$data['utilities_year']  = $year;
 		$data['site_id']  = $this->session->userdata[$this->section_name]['site_id'];
 		$data['site_param_id']  = $site_id;
+		$data['site_name'] = $this->sites_model->get_site_detail($site_id, $user_id, $role_id)['site_location_name'];
 		//Render view
 		$this->theme->view($data, 'admin_emission');
 	}
@@ -4629,7 +4284,14 @@ class Sites_admin extends Base_Admin_Controller
 			$objPHPExcel->getActiveSheet()->getStyle('1')->getAlignment()->setWrapText(true);
 			$objPHPExcel->getActiveSheet()->getStyle('1')->applyFromArray($style);
 			$objPHPExcel->getActiveSheet()->getRowDimension('1')->setRowHeight(70);
-			$objPHPExcel->getActiveSheet()->getStyle('A1:G1')->applyFromArray(
+			if($index == 0){
+				$fixedColumns = ['A1:H1','A2:H2'];
+			}
+			else
+			{
+				$fixedColumns = ['A1:G1','A2:G2'];
+			}
+			$objPHPExcel->getActiveSheet()->getStyle($fixedColumns[0])->applyFromArray(
 				array(
 					'fill' => array(
 						'type' => PHPExcel_Style_Fill::FILL_SOLID,
@@ -4637,7 +4299,7 @@ class Sites_admin extends Base_Admin_Controller
 					)
 				)
 			);
-			$objPHPExcel->getActiveSheet()->getStyle('A2:G2')->applyFromArray(
+			$objPHPExcel->getActiveSheet()->getStyle($fixedColumns[1])->applyFromArray(
 				array(
 					'fill' => array(
 						'type' => PHPExcel_Style_Fill::FILL_SOLID,
@@ -4645,7 +4307,7 @@ class Sites_admin extends Base_Admin_Controller
 					)
 				)
 			);
-			$objPHPExcel->getActiveSheet()->setAutoFilter('A2:G2');
+			$objPHPExcel->getActiveSheet()->setAutoFilter($fixedColumns[1]);
 			$this->load->model('sites/site_waste_model');
 			$sites = $this->site_waste_model->getAllSiteRegionWasteData();
 			$columns["attribute"] = 'Attribute';
@@ -4656,6 +4318,7 @@ class Sites_admin extends Base_Admin_Controller
 			if ($index == 0) {
 				$columns["month_id"] = 'Reporting Month';
 				$columns["year_id"] = 'Reporting Year';
+				$columns["rebates"] = 'Rebates';
 			} else {
 				$columns["last_update_by"] = 'Last update by';
 				$columns["last_update_date"] = 'Last update date';
@@ -4678,15 +4341,31 @@ class Sites_admin extends Base_Admin_Controller
 			}
 			$indexColor = 0;
 			// Row 1 to display tabData 6 main heading
+			// If index is 0 then add rebate column
+			if($index == 0){
+				$Heading1MergeIndexDynamic = [
+					'I1:I1',
+					'J1:J1',
+					'K1:X1',
+					'Y1:AF1',
+					'AG1:AM1',
+					'AN1:AV1',
+					'AW1:BB1'
+				];
+			}
+			else
+			{
+				$Heading1MergeIndexDynamic = $Heading1MergeIndex;
+			}
 			foreach ($row1Headings as $key => $column) {
-				$objPHPExcel->getActiveSheet()->mergeCells($Heading1MergeIndex[$indexColor]);
-				$objPHPExcel->getActiveSheet()->getStyle($Heading1MergeIndex[$indexColor])->getFill()->applyFromArray(array(
+				$objPHPExcel->getActiveSheet()->mergeCells($Heading1MergeIndexDynamic[$indexColor]);
+				$objPHPExcel->getActiveSheet()->getStyle($Heading1MergeIndexDynamic[$indexColor])->getFill()->applyFromArray(array(
 					'type' => PHPExcel_Style_Fill::FILL_SOLID,
 					'startcolor' => array(
 						'rgb' => $row1HeadingColors[$indexColor]
 					)
 				));
-				$arr = explode(":", $Heading1MergeIndex[$indexColor], 2);
+				$arr = explode(":", $Heading1MergeIndexDynamic[$indexColor], 2);
 				$cellCord = $arr[0];
 				$objPHPExcel->getActiveSheet()->setCellValue($cellCord, $column);
 				$indexColor++;
@@ -4698,7 +4377,7 @@ class Sites_admin extends Base_Admin_Controller
 			$later2 = 'A';
 			$flag = 0;
 			foreach ($columns as $key => $column) {
-				if ($later1 . $later2 == 'AZ') {
+				if ($later1 . $later2 == 'BB') {
 					break;
 				} else {
 					if (isset($row2Headings[$key]) && !empty($row2Headings[$key])) {
@@ -4742,7 +4421,7 @@ class Sites_admin extends Base_Admin_Controller
 			$later2Row3 = 'H';
 			$flagRow3 = 0;
 			foreach ($columns as $column) {
-				if ($later1Row3 . $later2Row3 == 'AZ') {
+				if ($later1Row3 . $later2Row3 == 'BB') {
 					break;
 				} else {
 					$objPHPExcel->setActiveSheetIndex($index)->setCellValue($later1Row3 . $later2Row3 . "3", $describingLabel);
@@ -4760,7 +4439,7 @@ class Sites_admin extends Base_Admin_Controller
 					}
 					$phpColor = new PHPExcel_Style_Color();
 					$phpColor->setRGB('808080');
-					$objPHPExcel->getActiveSheet()->getStyle('A3:AY3')->getFont()->setColor($phpColor);
+					$objPHPExcel->getActiveSheet()->getStyle('A3:BA3')->getFont()->setColor($phpColor);
 				}
 			}
 
@@ -4772,23 +4451,25 @@ class Sites_admin extends Base_Admin_Controller
 					$sites[$key]['last_update_by'] = $audit_detail['last_update_by'];
 				}
 			} else {
-				// Build month rows into a new array — do not mutate $sites while
-				// foreach-ing it (PHP re-visits new/overwritten keys → duplicate site months).
+				// Waste Amount: one row per (site, month, year).
 				$expandedSites = [];
 				foreach ($sites as $wasteSetting) {
 					$siteWasteUtility = $this->site_waste_model->get_site_waste_utility_data($wasteSetting['id']);
 					foreach ($siteWasteUtility as $wasteData) {
-						if ($wasteData['month_id'] <= 12 && $wasteData['month_id'] >= 1 && $wasteData['year_id'] >= 2016) {
+						$monthId = (int) $wasteData['month_id'];
+						$yearId = (int) $wasteData['year_id'];
+						if ($monthId <= 12 && $monthId >= 1 && $yearId >= 2016) {
+							$uniqueKey = $wasteSetting['id'] . '_' . $monthId . '_' . $yearId;
 							$row = $wasteSetting;
-							$row['year_id'] = $wasteData['year_id'];
-							$row['month_id'] = $wasteData['month_id'];
-							$expandedSites[] = $row;
-							$siteWasteUtilityData[$wasteData['site_id']][$wasteData['month_id']][$wasteData['year_id']] =
+							$row['year_id'] = $yearId;
+							$row['month_id'] = $monthId;
+							$expandedSites[$uniqueKey] = $row;
+							$siteWasteUtilityData[$wasteData['site_id']][$monthId][$yearId] =
 								(!empty($wasteData)) ? $wasteData : '';
 						}
 					}
 				}
-				$sites = $expandedSites;
+				$sites = array_values($expandedSites);
 			}
 
 			// Display data from row 4 for each site
@@ -4850,6 +4531,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -5065,6 +4747,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 
@@ -5354,6 +5037,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 
@@ -5507,6 +5191,7 @@ class Sites_admin extends Base_Admin_Controller
 		$columns['show_utility_district_heating'] = 'Show Utility District Heating';
 		$columns['show_utility_district_heating_boiler'] = 'Show Utility District Heating Boiler';
 		$columns['show_waste_management'] = 'Show Waste Management';
+		$columns['show_utility_fleet'] = 'Show Utility Fleet';
 		$columns['show_utility_water_waste'] = 'Show Utility Water Waste';
 		$columns['show_total_utility_notification'] = 'Show Total Utility Notification';
 		$columns['utility_unit_electricity'] = 'Utility Unit Electricity';
@@ -5631,7 +5316,7 @@ class Sites_admin extends Base_Admin_Controller
 								$val = $countries[$SearchKey]['c']['country'];
 							} else if ($key == 'site_type') {
 								$val = $site_types[$val];
-							} else if (in_array($key, ['chsb_reporting', 'chsb_segment', 'csr', 'daily_metering', 'is_chilled_water_system', 'is_split_dx_unit', 'is_vrv', 'is_ro_plant', 'is_renewable_energy', 'is_used_in_cron', 'is_hourly', 'show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_utility_district_heating_boiler', 'show_waste_management', 'show_utility_water_waste', 'show_total_utility_notification'])) {
+							} else if (in_array($key, ['chsb_reporting', 'chsb_segment', 'csr', 'daily_metering', 'is_chilled_water_system', 'is_split_dx_unit', 'is_vrv', 'is_ro_plant', 'is_renewable_energy', 'is_used_in_cron', 'is_hourly', 'show_utility_electricity', 'show_utility_fuel_oil', 'show_utility_lpg', 'show_utility_water', 'show_utility_irrigation_water', 'show_utility_natural_gas', 'show_utility_district_cooling', 'show_utility_district_heating', 'show_utility_district_heating_boiler', 'show_waste_management', 'show_utility_fleet', 'show_utility_water_waste', 'show_total_utility_notification'])) {
 								if ($val == 1) {
 									$val = 'Yes';
 								}
@@ -5700,6 +5385,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -5756,6 +5442,7 @@ class Sites_admin extends Base_Admin_Controller
 		$columns['utility_unit_district_heating'] = 'District Heating Unit Choice';
 		$columns['show_utility_waste_water'] = 'Show waste water';
 		$columns['show_utility_waste_management'] = 'Show Waste Management';
+		$columns['show_utility_fleet'] = 'Show Utility Fleet';
 		$columns['show_utility_irrigation_water'] = 'Show Irrigation Water';
 		$site_id = 1;
 		$sites = $this->sites_model->get_site_listing_for_users($site_id, $role_id, $user_id);
@@ -5836,6 +5523,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -5898,6 +5586,11 @@ class Sites_admin extends Base_Admin_Controller
 			}
 		}
 
+		if(empty($filesToZip)) {
+			$this->theme->set_message("No invoices found for the selected site and year.", 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites#group-report2');
+			return;
+		}
 
 		if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
 			$this->addArrayToZip($zip, $filesToZip, $basePath);
@@ -5911,14 +5604,17 @@ class Sites_admin extends Base_Admin_Controller
 				header('Content-Length: ' . filesize($zipFileName));
 				readfile($zipFileName);
 			}
-			echo "ZIP archive created successfully.";
 			$data_action = 'Update';
 			$site_id = $_SESSION['admin']['site_id'];
 			$user_id = $_SESSION['admin']['user_id'];
 			saveAuditTrail($user_id, $site_id, 'Export Utility Invoices', $data_action);
-			exit;
+			$this->theme->set_message("ZIP archive created successfully.", 'success');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites#group-report2');
+			return;
 		} else {
-			echo "Failed to create ZIP archive.";
+			$this->theme->set_message("Failed to create ZIP archive.", 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites#group-report2');
+			return;
 		}
 	}
 
@@ -6068,6 +5764,7 @@ class Sites_admin extends Base_Admin_Controller
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
 
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 		$objWriter->save('php://output');
 		exit;
@@ -6084,6 +5781,10 @@ class Sites_admin extends Base_Admin_Controller
 	    $lastYear = (int) (clone $baseDate)->modify('-1 year')->format('Y');
 		$this->load->model('sites/sites_model');
 		$objWriter = $this->sites_model->generateGroupUtilityReport($currentYear,$currMonth,$prevYear,$prevMonth,$lastYear);
+		if ($objWriter === false) {
+			$this->theme->set_message('No hotels are ticked for monthly reporting. The Group Utility Report cannot be generated.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+		}
 		exit;
 	}
 
@@ -6117,7 +5818,8 @@ class Sites_admin extends Base_Admin_Controller
 			'Waste diverted from landfill (%)',
 			'Waste per occupied room (kg)',
 			'Organic waste per guest (kg)',
-			'Recyclables per guest (kg)'
+			'Recyclables per guest (kg)',
+			'Rebates'
 		];
 		$childLabels = [
 			$lastYear,
@@ -6156,7 +5858,11 @@ class Sites_admin extends Base_Admin_Controller
 
 			'Recyclables per guest (kg) '.$lastYear,
 			'Recyclables per guest (kg) '.$currentYear,
-			'Recyclables per guest (kg) % Variance'
+			'Recyclables per guest (kg) % Variance',
+
+			'Rebates '.$lastYear,
+			'Rebates '.$currentYear,
+			'Rebates % Variance',
 		];
 		require_once APPPATH . 'libraries/PHPExcel/PHPExcel.php';
 		$this->lang->load('sites/sites', 'english'); 
@@ -6228,15 +5934,29 @@ class Sites_admin extends Base_Admin_Controller
 				$dataWaste = $this->site_waste_model->getWasteReportData($site_id, $dataCal['waste'], $currentYear, $currMonth);
 			
 				$wasteReportMap = [];
-				foreach ($dataWaste['wasteReport'] as $row) {
-					$wasteReportMap[$row['metric']] = $row;
+
+				if (!empty($dataWaste['wasteReport']) && is_array($dataWaste['wasteReport'])) {
+					foreach ($dataWaste['wasteReport'] as $row) {
+						if (isset($row['metric'])) {
+							$wasteReportMap[$row['metric']] = $row;
+						}
+					}
 				}
 
 				$wastePerGuestMap = [];
-				foreach ($dataWaste['wastePerGuest'] as $row) {
-					$wastePerGuestMap[$row['metric']] = $row;
+
+				if (!empty($dataWaste['wastePerGuest']) && is_array($dataWaste['wastePerGuest'])) {
+					foreach ($dataWaste['wastePerGuest'] as $row) {
+						if (isset($row['metric'])) {
+							$wastePerGuestMap[$row['metric']] = $row;
+						}
+					}
 				}
-				
+				$rebates = [];
+				if (!empty($dataWaste['rebates']) && is_array($dataWaste['rebates'])) {
+					$rebates[$dataWaste['rebates']['metric']] = $dataWaste['rebates'];
+				}
+
 				foreach ($columns as $column) {
 
 					/* ================= HOTEL NAME ================= */
@@ -6281,6 +6001,10 @@ class Sites_admin extends Base_Admin_Controller
 							$metric = 'Recyclables (kg/Guest Night)';
 							break;
 
+						case strpos($column, 'Rebates') !== false :
+							$metric = 'Rebates';
+							break;
+
 						default:
 							$rowsWasteData[$site_id][$column] = '';
 							continue 2;
@@ -6307,6 +6031,15 @@ class Sites_admin extends Base_Admin_Controller
 									: $source['current']);
 					} else {
 						$rowsWasteData[$site_id][$column] = '';
+					}
+					if (isset($rebates[$metric])) {
+						$source = $rebates[$metric];
+						$rowsWasteData[$site_id][$column] =
+							(strpos($column, '% Variance') != false)
+								? $source['value']
+								: ((strpos(trim($column), trim((string)$lastYear)) != false)
+									? $source['previous']
+									: $source['current']);
 					}
 				}
 
@@ -6341,8 +6074,101 @@ class Sites_admin extends Base_Admin_Controller
 		// If you're serving to IE over SSL, then the following may be needed
 		header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 		header('Pragma: public'); // HTTP/1.0
+		sanitize_report_spreadsheet($objPHPExcel);
 		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
 		$objWriter->save('php://output');
+		exit;
+	}
+
+	/**
+	 * Download the Utilities Management Dashboard PDF(s) for last month
+	 * (files written this month by the corporate report cron).
+	 */
+	public function download_corporate_utilities_dashboard()
+	{
+		$role_id = isset($this->session->userdata[$this->section_name]['role_id'])
+			? (int) $this->session->userdata[$this->section_name]['role_id']
+			: 0;
+		$username = isset($this->session->userdata[$this->section_name]['username'])
+			? strtolower($this->session->userdata[$this->section_name]['username'])
+			: '';
+
+		if (!in_array($role_id, array(1, 6), true) || $username === '') {
+			$this->theme->set_message(lang('permission-not-allowed'), 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+
+		$cronDir = BASE_PATH_CUSTOM . '/assets/uploads/cron/';
+		if (!is_dir($cronDir)) {
+			$this->theme->set_message('No corporate dashboard reports are available yet.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+
+		$pattern = $cronDir . $username . '*upper_management_report*.pdf';
+		$files = glob($pattern);
+		if (empty($files)) {
+			// Fallback: any upper management PDF for this user prefix
+			$files = glob($cronDir . $username . '*.pdf');
+		}
+
+		if (empty($files)) {
+			$this->theme->set_message('No Utilities Management Dashboard PDF found for your account. It will appear here after the next corporate report cron run.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+
+		// Cron writes last-month data during the current month. Ignore older
+		// runs (e.g. July files that still show June) so this download matches last month.
+		$startOfThisMonth = strtotime(date('Y-m-01 00:00:00'));
+		$currentMonthFiles = array_values(array_filter($files, function ($file) use ($startOfThisMonth) {
+			return filemtime($file) >= $startOfThisMonth;
+		}));
+		if (empty($currentMonthFiles)) {
+			$lastMonthLabel = date('F Y', strtotime('first day of last month'));
+			$this->theme->set_message('The Utilities Management Dashboard for ' . $lastMonthLabel . ' is not available yet. It is created when the corporate report cron runs this month.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+		$files = $currentMonthFiles;
+
+		usort($files, function ($a, $b) {
+			return filemtime($b) - filemtime($a);
+		});
+
+		// Prefer today's regional dashboards; otherwise newest file
+		$latestMtime = filemtime($files[0]);
+		$latestFiles = array_values(array_filter($files, function ($file) use ($latestMtime) {
+			return filemtime($file) >= ($latestMtime - 60);
+		}));
+
+		if (count($latestFiles) === 1) {
+			$file = $latestFiles[0];
+			header('Content-Type: application/pdf');
+			header('Content-Disposition: attachment; filename="' . basename($file) . '"');
+			header('Content-Length: ' . filesize($file));
+			readfile($file);
+			exit;
+		}
+
+		$zipPath = $cronDir . 'corporate_utilities_dashboard_' . $username . '_' . date('YmdHis') . '.zip';
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+			$this->theme->set_message('Unable to prepare corporate dashboard download.', 'error');
+			redirect(site_url() . BASE_ADMIN_URL_CUSTOM . 'reports/sites');
+			return;
+		}
+		foreach ($latestFiles as $file) {
+			$zip->addFile($file, basename($file));
+		}
+		$zip->close();
+
+		header('Content-Type: application/zip');
+		header('Content-Disposition: attachment; filename="' . basename($zipPath) . '"');
+		header('Content-Length: ' . filesize($zipPath));
+		readfile($zipPath);
+		@unlink($zipPath);
 		exit;
 	}
 }

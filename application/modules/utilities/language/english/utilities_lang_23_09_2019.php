@@ -15,20 +15,20 @@ $lang['project'] = 'Project';
 
 // Tariff
 $lang['kva'] = 'kva';
-$lang['kwh'] = 'KWh';
-$lang['$-kwh'] = '('.CURRENCY_SYMBOL.'/KWh)';
+$lang['kWh'] = 'kWh';
+$lang['$-kWh'] = '('.CURRENCY_SYMBOL.'/kWh)';
 $lang['kva-/-kw'] = 'KVA/KW';
 $lang['tariff-kva-kw'] = 'Tariff ('.CURRENCY_SYMBOL.'/KVA || '.CURRENCY_SYMBOL.'/KW)';
 $lang['total-cost'] = 'Cost ('.CURRENCY_SYMBOL.')';
 $lang['purchased-electricity'] = "Purchased Electricity";
 $lang['tariff'] = "Tariff";
-$lang['tariff1-name'] = 'Tariff ('.CURRENCY_SYMBOL.'/KWh)';
-$lang['tariff1-kwh'] = 'KWh';
+$lang['tariff1-name'] = 'Tariff ('.CURRENCY_SYMBOL.'/kWh)';
+$lang['tariff1-kWh'] = 'kWh';
 $lang['tariff1-cost'] = 'Cost';
 $lang['tariff1-total-cost'] = 'Cost ('.CURRENCY_SYMBOL.')';
 $lang['maximum-demand'] = 'Maximum Demand';
 $lang['total-maximum-demand'] = 'Total Demand Cost';
-$lang['demand-kwh-label'] = 'Maximum Demand Quantity';
+$lang['demand-kWh-label'] = 'Maximum Demand Quantity';
 $lang['demand-price-label'] = 'Maximum Demand Price';
 $lang['total-electricity-cost'] = 'Total Electricity Cost';
 $lang['total-purchased-electricity'] = 'Total Purchased Electricity';
@@ -38,13 +38,13 @@ $lang['onsite-generators-cost']='Onsite Generators';
 $lang['onsite-generators-quantity-label']='Onsite Generators Quantity';
 $lang['onsite-generators-price-label']='Onsite Generators Price';
 $lang['total-onsite-generators-cost'] = 'Total Generators Cost';
-$lang['total-electricity-kwh'] = 'Total Electricity Kwh';
+$lang['total-electricity-kWh'] = 'Total Electricity kWh';
 $lang['total-purchased-electricity-cost'] = 'Total Purchased Electricity Cost ('.CURRENCY_SYMBOL.')';
 $lang['purchased-electricity-label'] = 'Purchased Electricity';
 $lang['total-purchased-electricity-label'] = 'Total Electricity';
 
 $lang['average-pf'] = 'Average PF';
-$lang['average-cost-per-kwh'] = 'Average Cost per KWh';
+$lang['average-cost-per-kWh'] = 'Average Cost per kWh';
 
 $lang['fixed-fees'] = 'Fixed Fees';
 $lang['fixed-cost'] = 'Fixed Cost';
@@ -80,9 +80,9 @@ $lang['kg'] = 'Kg';
 $lang['kg_rate'] = ''.CURRENCY_SYMBOL.'/Kg';
 $lang['kg_cost'] = 'Cost ('.CURRENCY_SYMBOL.')';
 
-$lang['kwh-label'] = 'KWh';
-$lang['kwh-label-rate'] = ''.CURRENCY_SYMBOL.'/KWh';
-$lang['kwh-label-cost'] = 'Cost ('.CURRENCY_SYMBOL.')';
+$lang['kWh-label'] = 'kWh';
+$lang['kWh-label-rate'] = ''.CURRENCY_SYMBOL.'/kWh';
+$lang['kWh-label-cost'] = 'Cost ('.CURRENCY_SYMBOL.')';
 //Waste
 $lang['label-waste'] = 'Waste';
 $lang['label-general-waste'] = 'General Waste';
@@ -154,7 +154,7 @@ $lang['total-budgeted-cost-label-11-20'] = 'Total Budgeted Cost ('.CURRENCY_SYMB
 
 // Reports
 $lang['report-setting'] = "Report Settings";
-$lang['report-title'] = 'Total energy Consumption (KWh)';
+$lang['report-title'] = 'Total energy Consumption (kWh)';
 $lang['start-date'] = "Start Date";
 $lang['end-date'] = "End Date";
 $lang['generate-report'] = "Generate Report";
@@ -163,7 +163,7 @@ $lang['current-year'] = 'Current Year';
 $lang['previous-year'] = 'Previous Year';
 $lang['budget'] = 'Budget';
 $lang['month'] = 'Month';
-$lang['vaxis-title'] = 'Consumption (KWh)';
+$lang['vaxis-title'] = 'Consumption (kWh)';
 $lang['haxis-title'] = 'Month';
 $lang['average'] = 'Average';
 
@@ -282,7 +282,3 @@ $lang['insert-invoice-scan'] = 'Insert Invoice Scan';
 $lang['recycling'] = 'Recycling';
 $lang['qty-recycled-kg'] = 'Qty Recycled Kg';
 $lang['revenue-from-recycling-kg'] = 'Revenue From Recycling per Kg';
-
-
-
-

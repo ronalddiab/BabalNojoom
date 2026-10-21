@@ -98,7 +98,7 @@ class Reports_energy_admin extends Base_Admin_Controller {
 
                 'db_key' => 'total_electricity_kwh',
 
-                'unit' => 'KWh',
+                'unit' => 'kWh',
 
                 'Label' => 'Electricity',
 
@@ -148,7 +148,7 @@ class Reports_energy_admin extends Base_Admin_Controller {
 
                 'db_key' => 'district_cooling',
 
-                'unit' => 'KWh',
+                'unit' => 'kWh',
 
                 'Label' => 'District Cooling',
 
@@ -158,7 +158,7 @@ class Reports_energy_admin extends Base_Admin_Controller {
 
                 'db_key' => 'district_heating',
 
-                'unit' => 'KWh',
+                'unit' => 'kWh',
 
                 'Label' => 'District Heating',
 

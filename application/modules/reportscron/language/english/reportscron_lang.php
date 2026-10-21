@@ -576,63 +576,63 @@ $lang['managment_report'] = 'Management report';
 //$lang['excel_cooling_district_usage_by_built_area_unit_previous'] = 'District Cooling/Built area %s (Kg)';
 //
 //// usage_by_conditional_area
-//$lang['excel_electricity_usage_by_conditional_area_cost'] = 'Electricity/Conditional area ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_electricity_usage_by_conditional_area_unit'] = 'Electricity/Conditional area (kWh)';
+//$lang['excel_electricity_usage_by_conditional_area_cost'] = 'Electricity/Conditioned area ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_electricity_usage_by_conditional_area_unit'] = 'Electricity/Conditioned area (kWh)';
 //
-//$lang['excel_fuel_usage_by_conditional_area_cost'] = 'Fuel/Conditional area ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_fuel_usage_by_conditional_area_unit'] = 'Fuel/Conditional area (Liters)';
+//$lang['excel_fuel_usage_by_conditional_area_cost'] = 'Fuel/Conditioned area ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_fuel_usage_by_conditional_area_unit'] = 'Fuel/Conditioned area (Liters)';
 //
-//$lang['excel_lpg_usage_by_conditional_area_cost'] = 'LPG/Conditional area ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_lpg_usage_by_conditional_area_unit'] = 'LPG/Conditional area (Kg)';
+//$lang['excel_lpg_usage_by_conditional_area_cost'] = 'LPG/Conditioned area ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_lpg_usage_by_conditional_area_unit'] = 'LPG/Conditioned area (Kg)';
 //
-//$lang['excel_natural_gas_usage_by_conditional_area_cost'] = 'Natural Gas/Conditional area ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_natural_gas_usage_by_conditional_area_unit'] = 'Natural Gas/Conditional area (m3)';
+//$lang['excel_natural_gas_usage_by_conditional_area_cost'] = 'Natural Gas/Conditioned area ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_natural_gas_usage_by_conditional_area_unit'] = 'Natural Gas/Conditioned area (m3)';
 //
-//$lang['excel_water_usage_by_conditional_area_cost'] = 'Water/Conditional area ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_water_usage_by_conditional_area_unit'] = 'Water/Conditional area (m3)';
+//$lang['excel_water_usage_by_conditional_area_cost'] = 'Water/Conditioned area ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_water_usage_by_conditional_area_unit'] = 'Water/Conditioned area (m3)';
 //
-//$lang['excel_heating_district_usage_by_conditional_area_cost'] = 'District Heating/Conditional area ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_heating_district_usage_by_conditional_area_unit'] = 'District Heating/Conditional area (Kg)';
+//$lang['excel_heating_district_usage_by_conditional_area_cost'] = 'District Heating/Conditioned area ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_heating_district_usage_by_conditional_area_unit'] = 'District Heating/Conditioned area (Kg)';
 //
-//$lang['excel_cooling_district_usage_by_conditional_area_cost'] = 'District Cooling/Conditional area ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_cooling_district_usage_by_conditional_area_unit'] = 'District Cooling/Conditional area (Kg)';
+//$lang['excel_cooling_district_usage_by_conditional_area_cost'] = 'District Cooling/Conditioned area ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_cooling_district_usage_by_conditional_area_unit'] = 'District Cooling/Conditioned area (Kg)';
 //
 //
 //
-//$lang['excel_electricity_usage_by_conditional_area_cost_current'] = 'Electricity/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_electricity_usage_by_conditional_area_cost_previous'] = 'Electricity/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_electricity_usage_by_conditional_area_unit_current'] = 'Electricity/Conditional area %s (kWh)';
-//$lang['excel_electricity_usage_by_conditional_area_unit_previous'] = 'Electricity/Conditional area %s (kWh)';
+//$lang['excel_electricity_usage_by_conditional_area_cost_current'] = 'Electricity/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_electricity_usage_by_conditional_area_cost_previous'] = 'Electricity/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_electricity_usage_by_conditional_area_unit_current'] = 'Electricity/Conditioned area %s (kWh)';
+//$lang['excel_electricity_usage_by_conditional_area_unit_previous'] = 'Electricity/Conditioned area %s (kWh)';
 //
-//$lang['excel_fuel_usage_by_conditional_area_cost_current'] = 'Fuel/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_fuel_usage_by_conditional_area_cost_previous'] = 'Fuel/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_fuel_usage_by_conditional_area_unit_current'] = 'Fuel/Conditional area %s (Liters)';
-//$lang['excel_fuel_usage_by_conditional_area_unit_previous'] = 'Fuel/Conditional area %s (Liters)';
+//$lang['excel_fuel_usage_by_conditional_area_cost_current'] = 'Fuel/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_fuel_usage_by_conditional_area_cost_previous'] = 'Fuel/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_fuel_usage_by_conditional_area_unit_current'] = 'Fuel/Conditioned area %s (Liters)';
+//$lang['excel_fuel_usage_by_conditional_area_unit_previous'] = 'Fuel/Conditioned area %s (Liters)';
 //
-//$lang['excel_lpg_usage_by_conditional_area_cost_current'] = 'LPG/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_lpg_usage_by_conditional_area_cost_previous'] = 'LPG/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_lpg_usage_by_conditional_area_unit_current'] = 'LPG/Conditional area %s (Kg)';
-//$lang['excel_lpg_usage_by_conditional_area_unit_previous'] = 'LPG/Conditional area %s (Kg)';
+//$lang['excel_lpg_usage_by_conditional_area_cost_current'] = 'LPG/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_lpg_usage_by_conditional_area_cost_previous'] = 'LPG/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_lpg_usage_by_conditional_area_unit_current'] = 'LPG/Conditioned area %s (Kg)';
+//$lang['excel_lpg_usage_by_conditional_area_unit_previous'] = 'LPG/Conditioned area %s (Kg)';
 //
-//$lang['excel_natural_gas_usage_by_conditional_area_cost_current'] = 'Natural Gas/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_natural_gas_usage_by_conditional_area_cost_previous'] = 'Natural Gas/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_natural_gas_usage_by_conditional_area_unit_current'] = 'Natural Gas/Conditional area %s (m3)';
-//$lang['excel_natural_gas_usage_by_conditional_area_unit_previous'] = 'Natural Gas/Conditional area %s (m3)';
+//$lang['excel_natural_gas_usage_by_conditional_area_cost_current'] = 'Natural Gas/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_natural_gas_usage_by_conditional_area_cost_previous'] = 'Natural Gas/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_natural_gas_usage_by_conditional_area_unit_current'] = 'Natural Gas/Conditioned area %s (m3)';
+//$lang['excel_natural_gas_usage_by_conditional_area_unit_previous'] = 'Natural Gas/Conditioned area %s (m3)';
 //
-//$lang['excel_water_usage_by_conditional_area_cost_current'] = 'Water/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_water_usage_by_conditional_area_cost_previous'] = 'Water/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_water_usage_by_conditional_area_unit_current'] = 'Water/Conditional area %s (m3)';
-//$lang['excel_water_usage_by_conditional_area_unit_previous'] = 'Water/Conditional area %s (m3)';
+//$lang['excel_water_usage_by_conditional_area_cost_current'] = 'Water/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_water_usage_by_conditional_area_cost_previous'] = 'Water/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_water_usage_by_conditional_area_unit_current'] = 'Water/Conditioned area %s (m3)';
+//$lang['excel_water_usage_by_conditional_area_unit_previous'] = 'Water/Conditioned area %s (m3)';
 //
-//$lang['excel_heating_district_usage_by_conditional_area_cost_current'] = 'District Heating/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_heating_district_usage_by_conditional_area_cost_previous'] = 'District Heating/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_heating_district_usage_by_conditional_area_unit_current'] = 'District Heating/Conditional area %s (Kg)';
-//$lang['excel_heating_district_usage_by_conditional_area_unit_previous'] = 'District Heating/Conditional area %s (Kg)';
+//$lang['excel_heating_district_usage_by_conditional_area_cost_current'] = 'District Heating/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_heating_district_usage_by_conditional_area_cost_previous'] = 'District Heating/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_heating_district_usage_by_conditional_area_unit_current'] = 'District Heating/Conditioned area %s (Kg)';
+//$lang['excel_heating_district_usage_by_conditional_area_unit_previous'] = 'District Heating/Conditioned area %s (Kg)';
 //
-//$lang['excel_cooling_district_usage_by_conditional_area_cost_current'] = 'District Cooling/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_cooling_district_usage_by_conditional_area_cost_previous'] = 'District Cooling/Conditional area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
-//$lang['excel_cooling_district_usage_by_conditional_area_unit_current'] = 'District Cooling/Conditional area %s (Kg)';
-//$lang['excel_cooling_district_usage_by_conditional_area_unit_previous'] = 'District Cooling/Conditional area %s (Kg)';
+//$lang['excel_cooling_district_usage_by_conditional_area_cost_current'] = 'District Cooling/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_cooling_district_usage_by_conditional_area_cost_previous'] = 'District Cooling/Conditioned area %s ('.CURRENCY.CURRENCY_SYMBOL.')';
+//$lang['excel_cooling_district_usage_by_conditional_area_unit_current'] = 'District Cooling/Conditioned area %s (Kg)';
+//$lang['excel_cooling_district_usage_by_conditional_area_unit_previous'] = 'District Cooling/Conditioned area %s (Kg)';
 //
 //// Usage by usage_by_laundered
 //$lang['excel_water_usage_by_laundered_cost_current'] = 'Water/laundered %s ('.CURRENCY.CURRENCY_SYMBOL.')';
@@ -670,3 +670,48 @@ $lang['utilities-daily-export'] = 'Export to Month';
 $lang['utility-export-success'] = "Utilities exported successfully";
 $lang['utility-export-error'] = "Unable to export Utilities, please try again!";
 $lang['utility-export-no-data'] = "Utilities not found";
+
+$lang['fleet_petrol'] = 'Fleet Petrol';
+
+// Modern MTD PDF Report Keys
+// progress_table_new.php
+$lang['performance_overview'] = 'PERFORMANCE OVERVIEW';
+$lang['progress_reduction_targets'] = 'Progress on reduction targets';
+$lang['performance_ytd'] = 'Performance YTD';
+$lang['performance_ytd_desc'] = 'Performance YTD = how far the YTD intensity sits above the target intensity (red = above target).';
+$lang['base_year_ytd'] = 'BASE YEAR YTD';
+$lang['reduction_target'] = 'REDUCTION TARGET';
+$lang['ytd_intensity'] = 'YTD INTENSITY';
+$lang['vs_target'] = 'vs target';
+// carbon_footprint_new.php
+$lang['carbon_emissions'] = 'Carbon emissions';
+$lang['carbon_emissions_by_source'] = 'Carbon emissions by source (Scope 1 & 2)';
+$lang['total_emissions'] = 'TOTAL EMISSIONS';
+$lang['per_guest_night'] = 'PER GUEST NIGHT';
+$lang['total_scope_1'] = 'Total Scope 1';
+$lang['total_scope_2'] = 'Total Scope 2';
+$lang['unit_kgco2e'] = 'kgCO₂e';
+// admin_landing_pdf_reports_monthly_hidden_piecharts_new.php
+$lang['energy_cost_header'] = 'ENERGY & COST';
+$lang['energy_cost_split'] = 'Energy and cost split';
+$lang['consumption_kwh_label'] = 'Consumption (kWh)';
+$lang['energy_label_prefix'] = 'ENERGY';
+$lang['utilities_cost_prefix'] = 'UTILITIES COST';
+$lang['cost_per_room_night_label'] = 'COST PER ROOM NIGHT';
+$lang['cost_per_m2_label'] = 'COST PER M²';
+// admin_landing_pdf_reports_table_new.php
+$lang['monthly_utilities_report'] = 'Monthly utilities report';
+$lang['variance_legend'] = 'Green = lower than comparison (better), Red = higher (worse)';
+$lang['diff_vs_last_year'] = 'Difference v/s last year';
+$lang['diff_vs_budget'] = 'Difference v/s budget';
+$lang['cost_last_year_tariff_line1'] = 'Cost @ last';
+$lang['cost_last_year_tariff_line2'] = 'year tariff';
+// admin_landing_pdf_reports_waste_trends.php
+$lang['waste_trends_title'] = 'Waste trends';
+$lang['total_waste_by_destination'] = 'Total waste by destination';
+$lang['waste_per_room_night'] = 'Waste per room night';
+$lang['food_waste_per_room_night'] = 'Food waste per room night';
+$lang['recyclables_rate'] = 'Recyclables rate';
+$lang['recyclables_total_waste'] = 'Recyclables / total waste';
+$lang['waste_diverted_landfill'] = 'Waste diverted from landfill';
+$lang['waste_diverted_all_except_landfill'] = 'All except landfill';

@@ -59,7 +59,7 @@ if (!defined('BASEPATH'))
                             <th class="text-center "><strong><?php echo lang('target-date'); ?></strong></th>
                             <th class="text-center "><strong><?php echo lang('completed-date'); ?></strong></th>
                             <th class="text-center action-col"><strong><?php echo lang('status'); ?></strong></th>
-                            <th class="text-center "><strong><?php echo lang('kwh-savings'); ?></strong></th>
+                            <th class="text-center "><strong><?php echo lang('kWh-savings'); ?></strong></th>
                             <th class="text-center "><strong><?php echo lang('cost-savings'); ?></strong></th>
                             <th class="text-center"><strong><?php echo lang('details'); ?></strong></th>
                             <th class="text-center digits-col"><strong><?php echo 'Delete'; ?></strong></th>
