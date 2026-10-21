@@ -2,7 +2,7 @@ name: Deploy to cPanel
 
 on:
   push:
-    branches: [main]
+    branches: [main,master]
   workflow_dispatch:
 
 jobs:
@@ -29,6 +29,11 @@ jobs:
               --exclude-glob system/ \
               --exclude-glob user_guide/ \
               --exclude-glob vendor/ \
+              --exclude-glob assets/imported_excels/ \
+              --exclude-glob application/third_party/ \
+              --exclude-glob application/libraries/ \
+              --exclude-glob application/logs/ \
+              --exclude-glob application/plugins/ \
               --exclude-glob .editorconfig \
               --exclude-glob annual_report.js \
               --exclude-glob contributing.md \
