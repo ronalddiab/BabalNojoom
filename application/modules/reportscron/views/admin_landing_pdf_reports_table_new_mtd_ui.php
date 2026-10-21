@@ -204,7 +204,7 @@ if (isset($pdf) && !empty($utility_cost_chart)) {
     }
 
     if ($site_detail['show_utility_electricity']) {
-        $drawSection('Electricity', '#5B9BE8');
+        $drawSection('Electricity', '#5B9BD5');
         $electricity_tariff_cl_diff = $total_sum_data_electricity_tariff - $total_sum_pre_data_electricity_tariff;
         $electricity_cost_cl_diff = $total_sum_data_electricity - $total_sum_pre_data_electricity;
         $electricity_actual_budget_diff = $currentBudgetActualData["total_electricity_kwh_actual"] - $currentBudgetActualData["total_electricity_kwh_budget"];
@@ -228,7 +228,7 @@ if (isset($pdf) && !empty($utility_cost_chart)) {
     }
 
     if ($site_detail['show_utility_water']) {
-        $drawSection('Water', '#2E9E6A');
+        $drawSection('Water', '#70AD47');
         $water_cl_cost_diff = $total_sum_data_water - $total_sum_pre_data_water;
         $water_act_bud_diff = $currentBudgetActualData["water_total_consumption_actual"] - $currentBudgetActualData["water_total_consumption_budget"];
         $water_act_bud_diff_pct = ($currentBudgetActualData["water_total_consumption_budget"] != 0) ? ($currentBudgetActualData["water_total_consumption_actual"] - $currentBudgetActualData["water_total_consumption_budget"]) * 100 / $currentBudgetActualData["water_total_consumption_budget"] : 0;
@@ -251,7 +251,7 @@ if (isset($pdf) && !empty($utility_cost_chart)) {
     }
 
     if ($site_detail['show_utility_district_cooling']) {
-        $drawSection('District cooling', '#2D55A8');
+        $drawSection('District cooling', '#255E91');
         $cooling_district_cl_cost_diff = $total_sum_data_cooling_district - $total_sum_pre_data_cooling_district;
         $district_cooling_act_bud_diff = $currentBudgetActualData["district_cooling_actual"] - $currentBudgetActualData["district_cooling_budget"];
         $district_cooling_act_bud_diff_pct = ($currentBudgetActualData["district_cooling_budget"] != 0) ? ($currentBudgetActualData["district_cooling_actual"] - $currentBudgetActualData["district_cooling_budget"]) * 100 / $currentBudgetActualData["district_cooling_budget"] : 0;
@@ -275,7 +275,7 @@ if (isset($pdf) && !empty($utility_cost_chart)) {
     }
 
     if (isset($site_detail['show_utility_lpg']) && $site_detail['show_utility_lpg']) {
-        $drawSection('LPG', '#E8A33D');
+        $drawSection('LPG', '#FFC000');
         $lpg_cl_cost_diff = $total_sum_data_lpg - $total_sum_pre_data_lpg;
         $lpg_act_bud_diff = $currentBudgetActualData["total_lpg_actual"] - $currentBudgetActualData["total_lpg_budget"];
         $lpg_act_bud_diff_pct = ($currentBudgetActualData["total_lpg_budget"] != 0) ? $lpg_act_bud_diff * 100 / $currentBudgetActualData["total_lpg_budget"] : 0;
@@ -295,7 +295,7 @@ if (isset($pdf) && !empty($utility_cost_chart)) {
     }
 
     if ($site_detail['show_utility_fuel_oil']) {
-        $drawSection('Fuel', '#FF6464');
+        $drawSection('Fuel', '#ED7D31');
         $fuel_oil_unit = GetSiteUtilityUnitName($site_id, 'fuel_oil');
         $fuel_cl_cost_diff = $total_sum_data_fuel - $total_sum_pre_data_fuel;
         $fuel_oil_act_bud_diff = $currentBudgetActualData["total_fuel_oil_actual"] - $currentBudgetActualData["total_fuel_oil_budget"];
@@ -319,7 +319,7 @@ if (isset($pdf) && !empty($utility_cost_chart)) {
     }
 
     if ($site_detail['show_utility_natural_gas']) {
-        $drawSection('Natural gas', '#64C864');
+        $drawSection('Natural gas', '#4472C4');
         $natural_gas_unit = GetSiteUtilityUnitName($site_id, 'natural_gas');
         $natural_gas_cl_cost_diff = $total_sum_data_natural_gas - $total_sum_pre_data_natural_gas;
         $natural_gas_act_bud_diff = $currentBudgetActualData["total_natural_gas_actual"] - $currentBudgetActualData["total_natural_gas_budget"];
@@ -343,7 +343,7 @@ if (isset($pdf) && !empty($utility_cost_chart)) {
     }
 
     if ($site_detail['show_utility_district_heating']) {
-        $drawSection('District heating', '#C86464');
+        $drawSection('District heating', '#FF69B4');
         $district_heating_unit = GetSiteUtilityUnitName($site_id, 'district_heating');
         $heating_district_cl_cost_diff = $total_sum_data_heating_district - $total_sum_pre_data_heating_district;
         $district_heating_act_bud_diff = $currentBudgetActualData["district_heating_actual"] - $currentBudgetActualData["district_heating_budget"];
