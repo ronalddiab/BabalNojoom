@@ -206,12 +206,18 @@
                             <?php
 
                             $if_site_header = true;
+                            $if_corporate_dashboard = false;
 
 
 
                             if($ci->uri->segment(1) == 'dashboard' && $ci->uri->segment(2) == 'sites'){
 
                                 $if_site_header = false;
+
+                            }
+                            if($ci->uri->segment(1) == 'corporate_dashboard' ){
+
+                                $if_corporate_dashboard = true;
 
                             }
 
@@ -304,9 +310,36 @@ if(document.getElementById("menu46") != null) {
 }
                             </script>
 
-                            <?php 
+                            <?php
+                            if($if_corporate_dashboard)
+                            {
+                                 if (file_exists(BASE_PATH_CUSTOM . "/assets/uploads/" .$ci->session->userdata[$ci->theme->get('section_name')]['hotel_logo'])) {
 
-                            if($if_site_header){
+                                    $header_logo_src = site_url() . "assets/uploads/" . $ci->session->userdata[$ci->theme->get('section_name')]['hotel_logo'];
+
+                                } else {
+
+                                    $header_logo_src = site_url() . NOT_AVAILABLE_SITE_LOGO;
+
+                                }
+                                $hotel_display_name = $hotel_name;
+                                ?>
+                                <div class="csd-root">
+                                    <div class="topbar">
+                                        <div class="brand">
+                                        <span class="hotel-logo">
+                                            <img class="siteImage" alt="" src="<?php echo $header_logo_src; ?>">
+                                        </span>
+                                        <div>
+                                            <h1><?php echo $hotel_display_name; ?></h1>
+                                            <span>Corporate Sustainability Dashboard — Group Portfolio</span>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php }
+                            else{
+                                if($if_site_header){
 
                                 if ($ci->session->userdata[$ci->theme->get('section_name')]['site_id'] == 0) {
 
@@ -324,7 +357,7 @@ if(document.getElementById("menu46") != null) {
 
                                     }
 
-                                }                              
+                                }
 
 
 
@@ -348,18 +381,19 @@ if(document.getElementById("menu46") != null) {
 
                             }
 
-                            ?>
+                                ?>
 
-                            <span class="hotel-logo">
+                                <span class="hotel-logo">
 
-                                <img class="siteImage" alt="" src="<?php echo $header_logo_src; ?>">
+                                    <img class="siteImage" alt="" src="<?php echo $header_logo_src; ?>">
 
-                            </span>
+                                </span>
 
-                            <h5><?php echo $hotel_display_name; ?>
+                                <h5><?php echo $hotel_display_name; ?>
 
-                            </h5>
+                                </h5>
 
+                            <?php } ?>
                         </div>
 
                         <div class="col-sm-6">
